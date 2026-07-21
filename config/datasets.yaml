@@ -16,7 +16,7 @@
 
 datasets:
   vendas:
-    padrao: true
+    padrao: false
     workspace_id: "00000000-0000-0000-0000-000000000000"
     dataset_id: "00000000-0000-0000-0000-000000000000"
     descricao: >-
