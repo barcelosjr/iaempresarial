@@ -1,0 +1,67 @@
+# =============================================================================
+# Template do Briefing Diário para a diretoria
+# =============================================================================
+# Este arquivo define, de forma editável, os KPIs que entram no briefing.
+#
+# IMPORTANTE: os nomes de MEDIDAS (ex.: [Faturamento]) e de TABELAS/COLUNAS
+# (ex.: 'Calendario'[Data]) abaixo são EXEMPLOS. Ajuste-os para os nomes reais
+# do seu modelo — consulte `dictionary/modelo_semantico.md` (gerado por
+# `python scripts/gerar_dicionario.py`) para saber os nomes corretos.
+#
+# Cada bloco executa uma consulta DAX (somente leitura) e entra no relatório.
+# Campos de um bloco:
+#   nome     -> título da seção no briefing
+#   dataset  -> (opcional) apelido do dataset em config/datasets.yaml
+#   dax      -> a consulta DAX a executar
+# =============================================================================
+
+titulo: "Briefing diário para a diretoria"
+dataset: vendas   # apelido padrão (de config/datasets.yaml)
+
+blocos:
+  - nome: "Faturamento de hoje"
+    dax: |
+      EVALUATE
+      ROW(
+          "Faturamento hoje",
+          CALCULATE([Faturamento], 'Calendario'[Data] = TODAY())
+      )
+
+  - nome: "Faturamento no mês (acumulado)"
+    dax: |
+      EVALUATE
+      ROW(
+          "Faturamento no mês",
+          TOTALMTD([Faturamento], 'Calendario'[Data])
+      )
+
+  - nome: "Títulos a vencer nos próximos 7 dias"
+    dataset: financeiro
+    dax: |
+      EVALUATE
+      TOPN(
+          20,
+          FILTER(
+              'Titulos',
+              'Titulos'[Vencimento] >= TODAY()
+                  && 'Titulos'[Vencimento] <= TODAY() + 7
+                  && 'Titulos'[Status] = "Aberto"
+          ),
+          'Titulos'[Vencimento], ASC
+      )
+      ORDER BY 'Titulos'[Vencimento] ASC
+
+  - nome: "Top 5 clientes do mês"
+    dax: |
+      EVALUATE
+      TOPN(
+          5,
+          SUMMARIZECOLUMNS(
+              'Cliente'[Nome],
+              FILTER(ALL('Calendario'), 'Calendario'[Data] >= EOMONTH(TODAY(), -1) + 1
+                  && 'Calendario'[Data] <= TODAY()),
+              "Faturamento", [Faturamento]
+          ),
+          [Faturamento], DESC
+      )
+      ORDER BY [Faturamento] DESC

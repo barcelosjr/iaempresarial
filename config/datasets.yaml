@@ -1,0 +1,39 @@
+# =============================================================================
+# Mapeamento de datasets (modelos semânticos) do Power BI
+# =============================================================================
+# Cada entrada abaixo dá um "apelido" amigável a um dataset do Power BI, para
+# que as consultas e o Claude possam se referir a ele por nome (ex.: "vendas")
+# em vez de decorar GUIDs.
+#
+# O apelido marcado com `padrao: true` é usado quando nenhum dataset é
+# especificado. Se nenhum tiver `padrao: true`, o cliente usa PBI_WORKSPACE_ID
+# e PBI_DATASET_ID do .env.
+#
+# Preencha workspace_id e dataset_id com os GUIDs reais dos seus modelos.
+# Para descobrir os IDs: abra o dataset no Power BI Service e copie da URL,
+# ou rode `python scripts/gerar_dicionario.py` após configurar o .env.
+# =============================================================================
+
+datasets:
+  vendas:
+    padrao: true
+    workspace_id: "00000000-0000-0000-0000-000000000000"
+    dataset_id: "00000000-0000-0000-0000-000000000000"
+    descricao: >-
+      Modelo de vendas e faturamento. Contém pedidos, itens, produtos,
+      clientes e as medidas oficiais de faturamento e margem.
+
+  financeiro:
+    padrao: false
+    workspace_id: "00000000-0000-0000-0000-000000000000"
+    dataset_id: "00000000-0000-0000-0000-000000000000"
+    descricao: >-
+      Modelo financeiro: títulos a pagar/receber, fluxo de caixa e
+      contas por vencimento.
+
+  contabil:
+    padrao: false
+    workspace_id: "00000000-0000-0000-0000-000000000000"
+    dataset_id: "00000000-0000-0000-0000-000000000000"
+    descricao: >-
+      Modelo contábil: plano de contas, lançamentos e demonstrativos.
