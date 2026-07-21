@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Segredos e credenciais — NUNCA commitar
+# ---------------------------------------------------------------------------
+.env
+.env.local
+.token_cache.json
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Dados locais (DuckDB) e saídas geradas
+# ---------------------------------------------------------------------------
+*.duckdb
+*.duckdb.wal
+local_data/warehouse.duckdb
+reports/*
+!reports/.gitkeep
+
+# Dicionário gerado automaticamente a partir do modelo real (pode conter
+# nomes internos de tabelas/medidas). Mantido fora do versionamento por padrão.
+dictionary/modelo_semantico.md
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.installed.cfg
+*.egg
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Caches de ferramentas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.cache/
+
+# ---------------------------------------------------------------------------
+# Editores / SO
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

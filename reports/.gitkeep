@@ -1,0 +1,2 @@
+# Esta pasta guarda as saídas geradas (briefings, análises .md/.xlsx/.html).
+# O conteúdo é ignorado pelo git (ver .gitignore); apenas este .gitkeep é versionado.
