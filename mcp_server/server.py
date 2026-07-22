@@ -29,7 +29,7 @@ from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 from config.settings import RAIZ_PROJETO, carregar_configuracao  # noqa: E402
 from local_data.ingest import ErroDuckDB, consultar_select, listar_tabelas  # noqa: E402
-from powerbi import dax_lib  # noqa: E402
+from powerbi import dax_financeiro, dax_lib  # noqa: E402
 from powerbi.client import ErroPowerBI, PowerBIClient  # noqa: E402
 from powerbi.schema import extrair_esquema  # noqa: E402
 
@@ -235,6 +235,227 @@ def consultar_duckdb(sql: str, limite: int = 100) -> str:
         tabelas = listar_tabelas()
         disp = ", ".join(tabelas) if tabelas else "(nenhuma — rode a ingestão primeiro)"
         return f"❌ {exc}\n\nTabelas disponíveis no banco local: {disp}"
+
+
+# --------------------------------------------------------------------------- #
+# Relatórios financeiros (DRE, Balanço, Fluxo de Caixa)
+# --------------------------------------------------------------------------- #
+def _formatar_relatorio(df: pd.DataFrame, titulo: str, query: str) -> str:
+    """Formata um relatório financeiro por completo (sem truncar).
+
+    Diferente de :func:`_formatar_resultado`, aqui não há truncamento: os
+    relatórios têm tamanho fixo e pequeno (dezenas de linhas), e cortá-los
+    inutilizaria a leitura. Os valores saem no padrão brasileiro.
+
+    Args:
+        df: Resultado da consulta, com Ordem/Bloco/Linha/Tipo/Valor.
+        titulo: Cabeçalho do relatório (inclui período e filtros).
+        query: A consulta executada (para auditoria).
+
+    Returns:
+        O relatório em texto, agrupado por bloco.
+    """
+    if df.empty:
+        return f"{titulo}\n\n(nenhuma linha retornada)"
+
+    df = df.rename(columns=lambda c: c.strip("[]"))
+    df = df.sort_values("Ordem")
+
+    def moeda(valor: float) -> str:
+        texto = f"{abs(valor):,.2f}".replace(",", "@").replace(".", ",")
+        texto = texto.replace("@", ".")
+        return f"({texto})" if valor < 0 else texto
+
+    linhas: list[str] = [titulo, ""]
+    bloco_atual = None
+    for _, r in df.iterrows():
+        if r["Bloco"] != bloco_atual:
+            bloco_atual = r["Bloco"]
+            linhas.append(f"\n**{bloco_atual}**")
+        tipo = str(r["Tipo"])
+        rotulo = str(r["Linha"])
+        valor = float(r["Valor"] or 0)
+        if tipo == "INDICADOR":
+            texto = f"{valor * 100:,.1f}%".replace(",", ".")
+        else:
+            texto = moeda(valor)
+        marcador = "**" if tipo in ("SUBTOTAL", "CHECK") else ""
+        linhas.append(f"  {marcador}{rotulo}{marcador}: {texto}")
+
+    linhas.append("\n— Query executada (auditoria) —")
+    linhas.append(query.strip())
+    return "\n".join(linhas)
+
+
+def _titulo(nome: str, periodo: str, empresa: str | None, modo: str = "mensal") -> str:
+    """Monta o cabeçalho do relatório com período, modo e filtro aplicado."""
+    rotulo_modo = {
+        "mensal": periodo,
+        "trimestral": f"trimestre encerrado em {periodo}",
+        "anual": f"ano encerrado em {periodo}",
+    }.get(modo, periodo)
+    sufixo = f"EMPRESA={empresa}" if empresa else "consolidado (todas as empresas)"
+    return f"# {nome} — período {rotulo_modo} | {sufixo}"
+
+
+def _executar_relatorio(
+    nome: str,
+    query: str,
+    periodo: str,
+    empresa: str | None,
+    dataset: str | None,
+    modo: str = "mensal",
+) -> str:
+    """Executa e formata um relatório financeiro, traduzindo erros."""
+    try:
+        cliente = _obter_cliente()
+        df = cliente.execute_dax(query, dataset_id=dataset)
+    except ErroPowerBI as exc:
+        return f"❌ Erro ao gerar {nome}:\n{exc}"
+    return _formatar_relatorio(df, _titulo(nome, periodo, empresa, modo), query)
+
+
+@mcp.tool()
+def relatorio_dre(
+    periodo: str,
+    empresa: str | None = None,
+    modo: str = "mensal",
+    dataset: str | None = None,
+) -> str:
+    """Gera a DRE completa de um período (estrutura oficial da empresa).
+
+    Os subtotais (Receita Líquida, Lucro Bruto, EBITDA, EBIT, LAIR, Lucro
+    Líquido) e as margens já vêm calculados.
+
+    Escolha do modo (evita somar meses manualmente/em várias chamadas):
+
+    * ``"mensal"`` (padrão) — só o mês de ``periodo``.
+    * ``"trimestral"`` — soma os 3 meses do trimestre encerrado em ``periodo``.
+      Exige período 03, 06, 09 ou 12 (ex.: "03/2026" = jan+fev+mar/2026).
+    * ``"anual"`` — soma janeiro a dezembro do ano de ``periodo``. Exige
+      período 12 (ex.: "12/2025" = ano inteiro de 2025).
+
+    COMO LER OS SINAIS — importante para não inverter a interpretação:
+    custos, despesas e deduções aparecem como **número positivo** nas linhas de
+    detalhe (ex.: "Custo de Veículos Novos: 16.777.905,30"), seguindo o padrão
+    de relatório contábil da empresa, mas **subtraem** nos subtotais. Portanto:
+
+    * Uma linha de custo/despesa alta e positiva **reduz** o lucro.
+    * Só os subtotais e indicadores trazem o sinal econômico real — um LAIR ou
+      Lucro Líquido negativo significa prejuízo.
+    * Nunca some linhas de detalhe direto para "conferir" um subtotal: as
+      subtrativas entrariam com o sinal trocado. Use o subtotal já calculado.
+
+    Args:
+        periodo: Período no formato "MM/AAAA" (ex.: "12/2024").
+        empresa: Filtro opcional por EMPRESA (ex.: "KOBE"). None = consolidado.
+        modo: "mensal" (padrão), "trimestral" ou "anual".
+        dataset: Apelido ou GUID do dataset. ``None`` = padrão.
+
+    Returns:
+        A DRE formatada por blocos, com a query executada para auditoria.
+    """
+    try:
+        query = dax_financeiro.dre(periodo, empresa=empresa, modo=modo)
+    except ValueError as exc:
+        return f"❌ {exc}"
+    return _executar_relatorio("DRE", query, periodo, empresa, dataset, modo)
+
+
+@mcp.tool()
+def relatorio_balanco(
+    periodo: str,
+    empresa: str | None = None,
+    dataset: str | None = None,
+) -> str:
+    """Gera o Balanço Patrimonial acumulado até o período informado.
+
+    O saldo acumula desde 01/2024 (início do modelo, já com o saldo de
+    abertura) até o período pedido. Inclui a linha de CHECK
+    ``Ativo - (Passivo + PL)``, que deve ser zero.
+
+    ATENÇÃO: na base atual a apuração de resultado é lançada **por trimestre**,
+    então o CHECK só fecha em 03, 06, 09 e 12. Em outros meses o CHECK traz o
+    resultado ainda não apurado — reporte a divergência, não a esconda.
+
+    Args:
+        periodo: Período no formato "MM/AAAA" (ex.: "12/2024").
+        empresa: Filtro opcional por EMPRESA.
+        dataset: Apelido ou GUID do dataset. ``None`` = padrão.
+
+    Returns:
+        O Balanço formatado por blocos, com o CHECK e a query executada.
+    """
+    try:
+        query = dax_financeiro.balanco(periodo, empresa=empresa)
+    except ValueError as exc:
+        return f"❌ {exc}"
+    return _executar_relatorio("Balanço Patrimonial", query, periodo, empresa, dataset)
+
+
+@mcp.tool()
+def relatorio_fluxo_caixa(
+    periodo: str,
+    empresa: str | None = None,
+    modo: str = "mensal",
+    dataset: str | None = None,
+) -> str:
+    """Gera o Fluxo de Caixa (método indireto) do período.
+
+    Combina o resultado da DRE, variações de saldo do Balanço e somas por
+    NATUREZA. Traz o CHECK final comparando o Saldo de Caixa Final com a linha
+    DISPONIBILIDADES do Balanço.
+
+    Escolha do modo:
+
+    * ``"mensal"`` — mês contra mês anterior. Aceita qualquer período.
+    * ``"trimestral"`` — fim de trimestre contra fim de trimestre (ex.: 12/2024
+      vs 09/2024), somando os três meses. Exige período 03, 06, 09 ou 12.
+
+    ATENÇÃO — **nenhum dos modos zera o CHECK.** O resíduo (dezenas de milhares
+    de reais, ~0,02% do Ativo) vem das fórmulas do documento, que trocam a
+    variação de saldo por outra métrica em 17 contas: imobilizado/intangível
+    (somas brutas por NATUREZA) e três contas de PL (substituídas pelo Lucro
+    Líquido da DRE). Os desvios têm sinais opostos e quase se cancelam.
+    **Sempre reporte o valor do CHECK junto do relatório — nunca o esconda.**
+
+    Args:
+        periodo: Período no formato "MM/AAAA" (ex.: "12/2024").
+        empresa: Filtro opcional por EMPRESA.
+        modo: "mensal" (padrão) ou "trimestral".
+        dataset: Apelido ou GUID do dataset. ``None`` = padrão.
+
+    Returns:
+        O Fluxo de Caixa formatado por seções, com o CHECK e a query executada.
+    """
+    try:
+        query = dax_financeiro.fluxo_caixa(periodo, empresa=empresa, modo=modo)
+    except ValueError as exc:
+        return f"❌ {exc}"
+    nome = f"Fluxo de Caixa ({modo})"
+    return _executar_relatorio(nome, query, periodo, empresa, dataset)
+
+
+@mcp.tool()
+def periodos_financeiros(dataset: str | None = None) -> str:
+    """Lista os períodos disponíveis na base contábil, em ordem cronológica.
+
+    Útil antes de pedir um relatório, para saber o intervalo coberto e evitar
+    pedir um período inexistente.
+
+    Args:
+        dataset: Apelido ou GUID do dataset. ``None`` = padrão.
+
+    Returns:
+        Os períodos disponíveis (formato MM/AAAA) e a chave AAAAMM.
+    """
+    query = dax_financeiro.periodos_disponiveis()
+    try:
+        cliente = _obter_cliente()
+        df = cliente.execute_dax(query, dataset_id=dataset)
+    except ErroPowerBI as exc:
+        return f"❌ Erro ao listar períodos:\n{exc}"
+    return _formatar_resultado(df, query, 100)
 
 
 def main() -> None:
