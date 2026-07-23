@@ -84,11 +84,12 @@ Ordem, agrupamento e nomes de linha: **exatamente** os dos arquivos-fonte. Proib
 
 - Gerar via skill `pdf` (ler a SKILL.md **depois** de já ter os dados).
 - Nome do arquivo: `[DRE|Balanco|FluxoCaixa|Financeiro]_GrupoMult_[Empresa|Consolidado]_MM-AAAA.pdf` (`Financeiro` = combinado).
-- **Destino: `reports/` na raiz do projeto** (conforme o CLAUDE.md; a pasta é gitignored — os PDFs nunca vão para o repositório).
 
-## 5. Artefato HTML — padrão dashboard moderno (referência: Wink/Orbix em fundo claro)
+## 5. Artefato HTML — padrão dashboard moderno (referências: Wink/Orbix + shadcn `dashboard-4`, sempre em claro)
 
 Estética-alvo: dashboard SaaS premium **claro** — quase monocromático, muito espaço em branco, cards com borda sutil, dados como protagonista. **Fundo escuro é proibido em qualquer hipótese**, mesmo que a inspiração original seja dark: transpor sempre para claro.
+
+**Implementação**: single-file HTML+CSS+JS. **Não usar** shadcn/React/npm/build — reproduzir o padrão visual do shadcn com CSS puro. Gráficos em SVG inline ou Chart.js via CDN.
 
 ### 5.1 Tokens
 
@@ -107,23 +108,43 @@ Estética-alvo: dashboard SaaS premium **claro** — quase monocromático, muito
 - Fonte: `-apple-system, "SF Pro Text", Inter, "Segoe UI", sans-serif`; números com `font-variant-numeric: tabular-nums`.
 - Sombra máxima `0 1px 3px rgba(0,0,0,.06)`; grid de 8 pt; sem emojis; sem ícones decorativos coloridos (ícones lineares monocromáticos permitidos).
 
-### 5.2 Estrutura obrigatória (ordem fixa)
+### 5.2 Layout — grid de 4 colunas (padrão `dashboard-4`)
+
+- Grid responsivo: `1 col` (mobile) → `2 cols` (≥768 px) → `4 cols` (≥1024 px); gap 16 px.
+- Ocupação: KPI cards = 1 coluna cada; gráfico principal = **largura total** (4 cols); gráfico/painel secundário = 2 cols; tabelas = largura total.
+- Card: fundo `#FFFFFF`, borda 1 px `borda`, raio 12–16 px, padding 20–24 px, estrutura interna header → conteúdo → footer.
+
+### 5.3 Estrutura obrigatória (ordem fixa)
 
 1. **Header**: `GRUPO MULT — [Empresa]` + nome do relatório à esquerda; à direita, **seletor de período em chips** (Mensal | Trimestral | Anual — ativo em `texto-900`/pill branca, estilo Day/Week/Month do Wink; sem dado para o modo, desabilitar o chip) e chip com `MM/AAAA`.
-2. **Faixa de KPI cards** (4 cards, padrão Wink): rótulo pequeno em `texto-500` → **valor grande** (28–32 px, negrito) → linha inferior com **chip de variação** `↑ 18,6%`/`↓ 3,2%` vs. período anterior (quando houver comparativo) + legenda `vs. MM/AAAA`. **Mini-sparkline** monocromática no card quando houver série de meses disponível.
+2. **Faixa de KPI cards** (4 cards). Anatomia fixa (padrão shadcn stats):
+   - Topo: rótulo em `texto-500`, 12 px, peso normal.
+   - Meio: **valor** 24–32 px, semibold, `tabular-nums`, tracking apertado.
+   - Rodapé (12 px): **Delta** + legenda `vs. MM/AAAA` em `texto-500` (só quando houver comparativo).
+   - **Mini-sparkline** monocromática quando houver série de meses disponível.
    - DRE → Receita Líquida, Lucro Bruto, EBITDA, Lucro Líquido (margens % na legenda do card).
    - Balanço → Total do Ativo, Passivo Circulante, Patrimônio Líquido, CHECK.
    - Fluxo → Caixa Operacional, Investimento, Financiamento, Saldo Final.
-3. **Gráfico de evolução** (card largo, se houver ≥ 3 períodos de dados): linha/área da métrica principal (DRE: Receita Líquida × Lucro Líquido; Fluxo: barras de variação líquida por mês, positivas/negativas nas cores de chip). Monocromático + `accent` no ponto/período selecionado, com tooltip. Eixos e grid em `borda`. Donut só para composição (ex.: receita por linha de negócio) e só se pedido.
-4. **Painel lateral ou faixa "Indicadores de saúde"** (estilo Exstart, versão clara): % Margem Bruta, % EBITDA/RL, % Margem Líquida (DRE) ou CHECKs (Balanço/Fluxo), cada um com valor + selo ✓/✗ em chip. Sem "metas" inventadas — só as definidas em `regras_negocio.md`, se existirem.
-5. **Tabelas** por bloco, hierarquia da Seção 3: cabeçalho de bloco em `superficie`; total-chave em negrito com barra lateral `accent` de 3 px; coluna Δ% com chips quando houver comparativo.
-6. Combinado: **tabs** (DRE / Balanço / Fluxo de Caixa) sob o header — nunca as três em rolagem única.
-7. CHECKs ao final da demonstração, com selo.
+3. **Gráfico de evolução** (card de largura total, se houver ≥ 3 períodos): **área com gradiente vertical** — stroke 2 px na cor da série, preenchimento do stroke a 20% de opacidade desvanecendo a 0% (padrão `dashboard-4`); grid **vertical tracejado** em `borda`; eixo X sem linha e sem tick marks, só rótulos em `texto-500`; tooltip com data + valor formatado. DRE: Receita Líquida × Lucro Líquido; Fluxo: barras de variação líquida por mês nas cores de chip. Footer do card com Delta primeiro→último período + legenda. Seletor de intervalo no header do card (ex.: 6/12 meses) se houver série longa.
+4. **Painel "Indicadores de saúde"** (card de 2 cols): % Margem Bruta, % EBITDA/RL, % Margem Líquida (DRE) ou CHECKs (Balanço/Fluxo), cada um com valor + selo ✓/✗ em chip. Sem "metas" inventadas — só as definidas em `regras_negocio.md`, se existirem.
+5. **Composição (donut)** — só se pedido (ex.: receita por linha de negócio): regra `dashboard-4` — **máx. 5 fatias** (top 4 + "Outros" agregando o resto), rótulo `%` dentro da fatia, separação entre fatias com stroke branco 3–4 px, cantos levemente arredondados, legenda abaixo. Tons dessaturados coerentes com a paleta clara.
+6. **Tabelas** por bloco, hierarquia da Seção 3: cabeçalho de bloco em `superficie`; total-chave em negrito com barra lateral `accent` de 3 px; coluna Δ% com Deltas quando houver comparativo.
+7. Combinado: **tabs** (DRE / Balanço / Fluxo de Caixa) sob o header — nunca as três em rolagem única.
+8. CHECKs ao final da demonstração, com selo.
 
-### 5.3 Comportamento
+### 5.4 Componente Delta (variação) — regra única
+
+Adaptação do `Delta` do shadcn; usar em KPI cards, footers de gráfico e colunas Δ%:
+
+- Formato: ícone de direção + valor **absoluto** com 1 casa decimal + `%` (a direção fica no ícone/cor, nunca sinal `-`). Ex.: `↑ 8,2%` · `↓ 1,3%` · `— 0,0%`.
+- Cores: positivo `#1E7E34`, negativo `#B02A37`, zero `texto-500`. Duas variantes: **inline** (texto colorido, padrão) e **badge** (chip com fundo `#E7F4EB`/`#FBEAEC`, para KPI cards e tabelas).
+- Semântica contábil: a cor segue o **efeito no resultado**, não o sinal aritmético (queda de despesa = verde).
+
+### 5.5 Comportamento
 
 - Single-file (HTML+CSS+JS juntos). Sem `localStorage`.
 - Interações permitidas: tabs, seletor de período (se os dados dos modos estiverem embutidos), colapsar/expandir blocos (abertos por padrão), sticky no cabeçalho da tabela, hover sutil, tooltip de gráfico, transições ≤ 200 ms.
+- **Opcional** (permitido, não obrigatório): fade-in de entrada dos cards ao carregar — opacidade + leve translateY (≤ 8 px), duração ≤ 400 ms, escalonado ≤ 80 ms entre cards, uma única vez no load. Respeitar `prefers-reduced-motion` (desativar se ativo).
 - Proibido: fundo/tema escuro, gradientes de fundo, glow/neon, mascotes/ilustrações, contadores animados, parallax, dados fictícios para "preencher" gráfico (sem série suficiente → omitir o gráfico).
 - Responsivo (mín. 360 px); KPI cards empilham em 2×2; tabelas com rolagem horizontal se preciso.
 
@@ -136,7 +157,6 @@ Estética-alvo: dashboard SaaS premium **claro** — quase monocromático, muito
 5. Paleta e tipografia exatas do formato entregue (Seção 4 PDF / Seção 5 artefato); nenhuma cor fora dos tokens.
 6. PDF: blocos sem quebra interna, cabeçalhos repetidos, nome de arquivo no padrão 4.4.
 7. Período, filtro de empresa e medida/fonte citados (regra do CLAUDE.md).
-8. PDFs salvos em `reports/` (conforme o CLAUDE.md — pasta gitignored). Nenhum outro arquivo de entrega gravado no projeto; artefatos HTML são só publicados, nunca salvos na pasta.
 
 ## 7. Proibições (resumo)
 

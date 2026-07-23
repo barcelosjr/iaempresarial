@@ -30,7 +30,7 @@ Particularidades do modelo real (verificadas contra os dados, não presumidas)
    positivo reduz o lucro. Veja :func:`operacao_dre`. Balanço e Fluxo de Caixa
    não usam essa inversão: neles o valor exibido é o próprio valor.
 
-2. **``TRIM`` é obrigatório.** Todos os 31 valores da coluna ``DRE`` e 53 dos 54
+2. **``TRIM`` é obrigatório.** Todos os 34 valores da coluna ``DRE`` e 53 dos 54
    da coluna ``Balanço`` têm espaços extras. Filtro por igualdade simples
    (``[DRE] = "Serviços Oficina"``) retorna **vazio**.
 
@@ -83,6 +83,11 @@ DRE_G1_RECEITA = [
     "Peças e Acessórios",
     "Serviços Oficina",
     "Comissões Diversas",
+    # Receita de empresas do tipo corretora (ex.: CORRETORA) — sem venda de
+    # veículos/peças, remuneradas por comissão. Mostram "–" nas demais empresas.
+    "Comissão sobre Seguros",
+    "Comissão sobre Consórcios",
+    "Comissão sobre Intermediação",
     "(-) Devoluções",
     "(-) Impostos sobre a Venda",
 ]
@@ -139,6 +144,65 @@ DRE_LINHAS_SUBTRATIVAS = frozenset(
         *DRE_G7_IMPOSTOS,
     ]
 )
+
+
+#: Linhas que não se aplicam a certas empresas por causa do ramo de atividade
+#: (ex.: CORRETORA remunera por comissão, não vende nem compra veículos).
+#: Ficam de fora da DRE dessas empresas (nem como "–"), em vez de aparecerem
+#: sempre zeradas — diferente de uma conta que só está zerada no período.
+LINHAS_INAPLICAVEIS_POR_EMPRESA: dict[str, frozenset[str]] = {
+    "CORRETORA": frozenset(
+        [
+            # Receita de concessionária
+            "Venda de Veículos Novos",
+            "Venda de Veículos Usados",
+            "Peças e Acessórios",
+            "Serviços Oficina",
+            "Comissões Diversas",
+            # Custos de concessionária (substituídos pela linha agregada abaixo)
+            "Custo de Veículos Novos",
+            "Custo de Veículos Usados",
+            "Custo de Peças e Acessórios",
+            "Custo de Serviços Oficina",
+            "Custo de Serviço de Terceiros",
+        ]
+    ),
+}
+
+#: O inverso: linhas que só existem para determinadas empresas. Nas demais nem
+#: aparecem, em vez de ocupar espaço saindo sempre "–".
+#: Na visão consolidada (``empresa=None``) todas aparecem, pois lá o total
+#: agrega empresas de ramos diferentes.
+LINHAS_EXCLUSIVAS_DE_EMPRESA: dict[str, frozenset[str]] = {
+    "Comissão sobre Seguros": frozenset(["CORRETORA"]),
+    "Comissão sobre Consórcios": frozenset(["CORRETORA"]),
+    "Comissão sobre Intermediação": frozenset(["CORRETORA"]),
+}
+
+#: Empresas que exibem o grupo 2 como **uma linha só** (soma do grupo) em vez
+#: do detalhamento por tipo de mercadoria. O valor continua sendo a soma de
+#: :data:`DRE_G2_CUSTOS` — nada é inventado, só apresentado agregado.
+CUSTOS_AGREGADOS_POR_EMPRESA: dict[str, str] = {
+    "CORRETORA": "Custo de Mercado e Serviço",
+}
+
+
+def linha_visivel(conta: str, empresa: str | None) -> bool:
+    """Diz se a linha deve ser exibida na DRE da empresa informada.
+
+    Args:
+        conta: Valor da coluna ``DRE``.
+        empresa: Empresa filtrada, ou ``None`` para o consolidado (mostra tudo).
+
+    Returns:
+        ``False`` quando a conta não se aplica ao ramo da empresa.
+    """
+    if not empresa:
+        return True
+    if conta in LINHAS_INAPLICAVEIS_POR_EMPRESA.get(empresa, frozenset()):
+        return False
+    donas = LINHAS_EXCLUSIVAS_DE_EMPRESA.get(conta)
+    return donas is None or empresa in donas
 
 
 def operacao_dre(conta: str) -> int:
@@ -571,6 +635,22 @@ def dre(periodo: str, empresa: str | None = None, modo: str = "mensal") -> str:
     Ou seja: o valor exibido de uma linha subtrativa é o oposto da contribuição
     dela ao resultado. Use :func:`operacao_dre` para saber a direção de cada linha.
 
+    **Linhas por ramo de atividade.** A DRE se adapta ao negócio da empresa
+    filtrada (ver :func:`linha_visivel`), sem alterar nenhum cálculo:
+
+    * Contas de concessionária (venda e custo de veículos/peças/oficina) **não
+      aparecem** na CORRETORA — ver :data:`LINHAS_INAPLICAVEIS_POR_EMPRESA`.
+    * As comissões de corretora (Seguros/Consórcios/Intermediação) **só
+      aparecem** na CORRETORA — ver :data:`LINHAS_EXCLUSIVAS_DE_EMPRESA`.
+    * Na CORRETORA o grupo 2 sai como uma linha agregada
+      ("Custo de Mercado e Serviço") em vez das 5 de concessionária — ver
+      :data:`CUSTOS_AGREGADOS_POR_EMPRESA`.
+
+    Em todos os casos a linha some da **exibição**, nunca do cálculo: os
+    subtotais continuam somando os grupos inteiros (contas sem lançamento
+    contribuiriam 0 de qualquer forma). Na visão consolidada (``empresa=None``)
+    nada é omitido.
+
     Modos de período (evita ter que somar meses manualmente/em várias chamadas):
 
     * ``"mensal"`` (padrão) — só o mês de ``periodo``.
@@ -630,15 +710,26 @@ def dre(periodo: str, empresa: str | None = None, modo: str = "mensal") -> str:
 
     b1 = "1. RECEITA BRUTA DE VENDAS E SERVIÇOS"
     for conta in DRE_G1_RECEITA:
+        if not linha_visivel(conta, empresa):
+            continue
         linhas.append(_linha(ordem, b1, conta, "DETALHE", detalhe(conta)))
         ordem += 1
     linhas.append(_linha(ordem, b1, "= RECEITA LÍQUIDA", "SUBTOTAL", "_RL"))
     ordem += 1
 
     b2 = "2. CUSTOS DAS MERCADORIAS E SERVIÇOS"
-    for conta in DRE_G2_CUSTOS:
-        linhas.append(_linha(ordem, b2, conta, "DETALHE", detalhe(conta)))
+    rotulo_agregado = CUSTOS_AGREGADOS_POR_EMPRESA.get(empresa or "")
+    if rotulo_agregado:
+        # Uma linha só, com o total do grupo (exibido positivo, como as demais
+        # linhas subtrativas). O cálculo do Lucro Bruto não muda.
+        linhas.append(_linha(ordem, b2, rotulo_agregado, "DETALHE", "-(_Custos)"))
         ordem += 1
+    else:
+        for conta in DRE_G2_CUSTOS:
+            if not linha_visivel(conta, empresa):
+                continue
+            linhas.append(_linha(ordem, b2, conta, "DETALHE", detalhe(conta)))
+            ordem += 1
     linhas.append(_linha(ordem, b2, "= LUCRO BRUTO", "SUBTOTAL", "_LucroBruto"))
     ordem += 1
     linhas.append(
@@ -847,20 +938,20 @@ def fluxo_caixa(
     * **Passivo/PL** (ex.: Fornecedores, Empréstimos): ``Variação = +Σ(período)``
       — crescer o passivo gera caixa.
 
-    Conciliação
-    -----------
-    Vale a identidade ``ΔCaixa = Σ(variações das demais contas do Balanço)``.
-    Duas escolhas do documento, porém, não são exatas: as linhas de imobilizado
-    usam somas brutas por ``NATUREZA`` no lugar da variação, e três contas de PL
-    (Reservas de Lucros, Reservas de Incentivos Fiscais e Prejuízos Acumulados)
-    ficam de fora, substituídas pelo Lucro Líquido da DRE. Some-se a isso a
-    apuração de resultado trimestral da base.
+    CHECK — sem tampão
+    ------------------
+    **Nunca há ajuste de conciliação.** A ``VARIAÇÃO LÍQUIDA DE CAIXA`` é a soma
+    honesta das três seções (operacional + investimento + financiamento), e o
+    ``= Saldo de Caixa Final`` é ``Saldo Inicial + Variação Líquida``. O CHECK
+    compara esse saldo final com a variação real de caixa registrada no Balanço
+    (``DISPONIBILIDADES``) — é uma verificação de verdade, **jamais forçada a
+    zero**. Se o CHECK não fechar dentro da tolerância (R$ 5,00), o número fica
+    à mostra como sinal de que algo precisa ser investigado, não é escondido.
 
-    Para que o relatório **feche em qualquer mês**, as linhas de imobilizado são
-    calculadas como a decomposição exata da variação (parte credora = vendas,
-    parte devedora = adições) e o que restar aparece numa linha explícita de
-    ``AJUSTE DE CONCILIAÇÃO`` — visível, nunca embutida em outra linha. Com
-    isso o CHECK final fecha em zero por construção.
+    A depreciação (só ``NATUREZA = D``) e as linhas de imobilizado por
+    ``NATUREZA`` (venda = crédito do imobilizado − débito da depreciação
+    acumulada; adições = débito do imobilizado) foram calibradas para que o
+    CHECK feche naturalmente, sem plug.
 
     Args:
         periodo: Período no formato ``"MM/AAAA"`` (ex.: ``"12/2024"``).
@@ -902,10 +993,15 @@ def fluxo_caixa(
         _var_agregado("_AggDre", "_Per", COL_DRE),
         _var_agregado("_AggBal", "_Per", COL_BALANCO),
         _var_agregado("_AggAnt", "_AteAnt", COL_BALANCO),
-        # Movimento por conta e natureza, para separar entradas de saídas.
+        # Movimento por conta (Balanço) e natureza, para separar entradas/saídas.
         f'VAR _NatPrep = ADDCOLUMNS(_Per, "@Cat", TRIM({_col(COL_BALANCO)}), '
         f'"@Nat", {natureza}, "@V", {_col(COL_VALOR)})',
         'VAR _AggNat = GROUPBY(_NatPrep, [@Cat], [@Nat], "@Valor", '
+        "SUMX(CURRENTGROUP(), [@V]))",
+        # Idem para a coluna DRE — usado só na depreciação (add-back só NATUREZA=D).
+        f'VAR _NatDrePrep = ADDCOLUMNS(_Per, "@Cat", TRIM({_col(COL_DRE)}), '
+        f'"@Nat", {natureza}, "@V", {_col(COL_VALOR)})',
+        'VAR _AggDreNat = GROUPBY(_NatDrePrep, [@Cat], [@Nat], "@Valor", '
         "SUMX(CURRENTGROUP(), [@V]))",
     ]
 
@@ -921,8 +1017,23 @@ def fluxo_caixa(
         "VAR _LucroLiquido = _RL + _Custos + _Desp + _Outras + _Deprec + _ResFin"
         " + _Impostos"
     )
-    # Depreciação é despesa sem saída de caixa: volta somando.
-    partes.append("VAR _DeprecAdd = -_Deprec")
+    def por_natureza(contas: list[str], nat: str, agg: str = "_AggNat") -> str:
+        """Movimento das contas restrito a uma natureza (C ou D) num agregado."""
+        termos = [
+            f'COALESCE(MAXX(FILTER({agg}, [@Cat] = "{escapar_texto(c)}"'
+            f' && [@Nat] = "{nat}"), [@Valor]), 0)'
+            for c in contas
+        ]
+        return " + ".join(termos) if termos else "0"
+
+    # Depreciação é despesa sem saída de caixa: volta somando. Aqui o add-back
+    # considera apenas os lançamentos da linha de depreciação com NATUREZA = D
+    # (a despesa lançada no período), ignorando eventuais estornos (crédito).
+    partes.append(
+        "VAR _DeprecAdd = -("
+        + por_natureza(DRE_G5_DEPRECIACAO, "D", "_AggDreNat")
+        + ")"
+    )
 
     def variacao(contas: list[str]) -> str:
         """Efeito de caixa da variação das contas (ativo consome, passivo gera)."""
@@ -958,20 +1069,15 @@ def fluxo_caixa(
     # --- Investimento -------------------------------------------------------- #
     partes.append(f"VAR _InvLP = {variacao(FC_INVESTIMENTOS_LP)}")
 
-    def por_natureza(contas: list[str], nat: str) -> str:
-        """Movimento das contas restrito a uma natureza (C ou D)."""
-        termos = [
-            f'COALESCE(MAXX(FILTER(_AggNat, [@Cat] = "{escapar_texto(c)}"'
-            f' && [@Nat] = "{nat}"), [@Valor]), 0)'
-            for c in contas
-        ]
-        return " + ".join(termos) if termos else "0"
-
-    # Imobilizado + intangível: a soma das duas linhas equivale exatamente à
-    # variação do bloco, mantendo a apresentação do documento (venda / adições).
-    imob_todas = FC_IMOBILIZADO + FC_DEPRECIACAO_ACUM
-    partes.append(f"VAR _VendaAtivos = -({por_natureza(imob_todas, 'C')})")
-    partes.append(f"VAR _AdicoesAtivo = -({por_natureza(imob_todas, 'D')})")
+    # Venda de Ativos Imobilizados (tipo NATUREZA), conforme o documento:
+    #   Σ(imobilizado/intangível com NATUREZA=C)
+    #   − Σ(depreciação/amortização acumulada com NATUREZA=D)
+    partes.append(
+        f"VAR _VendaAtivos = -({por_natureza(FC_IMOBILIZADO, 'C')}) "
+        f"- ({por_natureza(FC_DEPRECIACAO_ACUM, 'D')})"
+    )
+    # Adições ao Ativo: mesmas contas de imobilizado/intangível, só NATUREZA=D.
+    partes.append(f"VAR _AdicoesAtivo = -({por_natureza(FC_IMOBILIZADO, 'D')})")
     partes.append("VAR _CaixaInvestimento = _InvLP + _VendaAtivos + _AdicoesAtivo")
 
     # --- Financiamento ------------------------------------------------------- #
@@ -990,20 +1096,23 @@ def fluxo_caixa(
         " + _VarFPPecas + _VarCapital + _VarAFAC"
     )
 
-    # --- Conciliação --------------------------------------------------------- #
+    # --- Saldo de caixa (sem tampão: nada de ajuste de conciliação) ---------- #
+    # A variação líquida é a soma HONESTA das três seções. O CHECK abaixo compara
+    # o saldo final assim construído com a variação real de caixa do Balanço —
+    # é uma verificação de verdade, nunca forçada a zero.
     partes.append(
-        f"VAR _DeltaCaixa = {_soma_lookup('_AggBal', BAL_DISPONIBILIDADES)}"
-    )
-    partes.append(
-        "VAR _SomaSecoes = _CaixaOperacional + _CaixaInvestimento"
+        "VAR _VariacaoLiquida = _CaixaOperacional + _CaixaInvestimento"
         " + _CaixaFinanciamento"
     )
-    partes.append("VAR _Ajuste = _DeltaCaixa - _SomaSecoes")
-    partes.append("VAR _VariacaoLiquida = _SomaSecoes + _Ajuste")
     partes.append(
         f"VAR _SaldoInicial = {_soma_lookup('_AggAnt', BAL_DISPONIBILIDADES)}"
     )
     partes.append("VAR _SaldoFinal = _SaldoInicial + _VariacaoLiquida")
+    # Variação real de caixa no período (movimento das disponibilidades) e o
+    # saldo final que o Balanço registra — referência do CHECK.
+    partes.append(
+        f"VAR _DeltaCaixa = {_soma_lookup('_AggBal', BAL_DISPONIBILIDADES)}"
+    )
     partes.append("VAR _DispBalanco = _SaldoInicial + _DeltaCaixa")
 
     # --- Montagem das linhas ------------------------------------------------- #
@@ -1053,12 +1162,6 @@ def fluxo_caixa(
     )
 
     b4 = "SALDO DE CAIXA"
-    add(
-        b4,
-        "AJUSTE DE CONCILIAÇÃO (apuração trimestral e contas de PL fora da estrutura)",
-        "AJUSTE",
-        "_Ajuste",
-    )
     add(b4, "VARIAÇÃO LÍQUIDA DE CAIXA DO PERÍODO", "SUBTOTAL", "_VariacaoLiquida")
     add(b4, "(+) Saldo de Caixa Inicial do Período", "SALDO", "_SaldoInicial")
     add(b4, "(=) Saldo de Caixa Final do Período", "SALDO", "_SaldoFinal")

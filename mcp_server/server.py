@@ -29,7 +29,7 @@ from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 from config.settings import RAIZ_PROJETO, carregar_configuracao  # noqa: E402
 from local_data.ingest import ErroDuckDB, consultar_select, listar_tabelas  # noqa: E402
-from powerbi import dax_financeiro, dax_lib  # noqa: E402
+from powerbi import dax_financeiro, dax_kpis, dax_lib  # noqa: E402
 from powerbi.client import ErroPowerBI, PowerBIClient  # noqa: E402
 from powerbi.schema import extrair_esquema  # noqa: E402
 
@@ -412,12 +412,13 @@ def relatorio_fluxo_caixa(
     * ``"trimestral"`` — fim de trimestre contra fim de trimestre (ex.: 12/2024
       vs 09/2024), somando os três meses. Exige período 03, 06, 09 ou 12.
 
-    ATENÇÃO — **nenhum dos modos zera o CHECK.** O resíduo (dezenas de milhares
-    de reais, ~0,02% do Ativo) vem das fórmulas do documento, que trocam a
-    variação de saldo por outra métrica em 17 contas: imobilizado/intangível
-    (somas brutas por NATUREZA) e três contas de PL (substituídas pelo Lucro
-    Líquido da DRE). Os desvios têm sinais opostos e quase se cancelam.
-    **Sempre reporte o valor do CHECK junto do relatório — nunca o esconda.**
+    CHECK sem tampão: a Variação Líquida é a soma honesta das três seções e o
+    Saldo Final = Saldo Inicial + Variação Líquida. O CHECK compara esse saldo
+    com a variação real de caixa do Balanço — **nunca é forçado a zero e não há
+    ajuste de conciliação**. Na maioria dos meses fecha (≈ 0); em alguns meses
+    fora de fim de trimestre pode sobrar um resíduo real (a base apura o
+    resultado por trimestre). **Sempre reporte o valor do CHECK — nunca o
+    esconda nem tente compensá-lo.**
 
     Args:
         periodo: Período no formato "MM/AAAA" (ex.: "12/2024").
@@ -456,6 +457,88 @@ def periodos_financeiros(dataset: str | None = None) -> str:
     except ErroPowerBI as exc:
         return f"❌ Erro ao listar períodos:\n{exc}"
     return _formatar_resultado(df, query, 100)
+
+
+def _formatar_indicadores(
+    df: pd.DataFrame, titulo: str, query: str
+) -> str:
+    """Formata os KPIs agrupados, com explicação e o 'melhor se…' de cada um."""
+    if df.empty:
+        return f"{titulo}\n\n(nenhuma linha retornada)"
+
+    df = df.rename(columns=lambda c: c.strip("[]")).sort_values("Ordem")
+    meta = dax_kpis.metadados()
+
+    def formatar_valor(unidade: str, valor: float) -> str:
+        if valor is None:
+            return "–"
+        v = float(valor)
+        if unidade == "%":
+            return f"{v * 100:,.1f}%".replace(",", ".")
+        if unidade == "x":
+            return f"{v:,.2f}x".replace(".", ",")
+        if unidade == "dias":
+            return f"{v:,.0f} dias".replace(",", ".")
+        return f"{v:,.2f}".replace(".", ",")
+
+    linhas: list[str] = [titulo, ""]
+    grupo_atual = None
+    for _, r in df.iterrows():
+        if r["Grupo"] != grupo_atual:
+            grupo_atual = r["Grupo"]
+            linhas.append(f"\n## {grupo_atual}")
+        nome = str(r["Indicador"])
+        info = meta.get(nome, {})
+        valor = formatar_valor(str(r["Unidade"]), r["Valor"])
+        linhas.append(f"- **{nome}: {valor}**")
+        if info:
+            linhas.append(
+                f"  {info['explicacao']} · _melhor: {info['melhor_se']}_"
+            )
+
+    linhas.append("\n— Query executada (auditoria) —")
+    linhas.append(query.strip())
+    return "\n".join(linhas)
+
+
+@mcp.tool()
+def relatorio_indicadores(
+    periodo: str,
+    empresa: str | None = None,
+    modo: str = "mensal",
+    dataset: str | None = None,
+) -> str:
+    """Gera os KPIs de análise financeira (rentabilidade, liquidez, endividamento,
+    eficiência) de um período, com explicação e benchmark de cada indicador.
+
+    Reaproveita os componentes da DRE e do Balanço — não recalcula nada. Cada
+    indicador vem com uma explicação curta e um "melhor se…" (direção ideal).
+
+    Convenções fixas (definidas com o gestor): EBITDA anualizado no múltiplo de
+    dívida; indicadores em dias usam saldo final + 30 dias/mês; Custo de Pessoal
+    = Folha + Gastos Diversos com Funcionários; Margem EBIT sai como EBIT/RL e
+    também EBIT/Lucro Bruto.
+
+    Args:
+        periodo: Período no formato "MM/AAAA" (ex.: "03/2026").
+        empresa: Filtro opcional por EMPRESA. None = consolidado.
+        modo: "mensal" (padrão), "trimestral" ou "anual".
+        dataset: Apelido ou GUID do dataset. ``None`` = padrão.
+
+    Returns:
+        Os indicadores agrupados, com valor, explicação e benchmark, e a query.
+    """
+    try:
+        query = dax_kpis.indicadores(periodo, empresa=empresa, modo=modo)
+    except ValueError as exc:
+        return f"❌ {exc}"
+    try:
+        cliente = _obter_cliente()
+        df = cliente.execute_dax(query, dataset_id=dataset)
+    except ErroPowerBI as exc:
+        return f"❌ Erro ao gerar os indicadores:\n{exc}"
+    titulo = _titulo("Indicadores de Análise", periodo, empresa, modo)
+    return _formatar_indicadores(df, titulo, query)
 
 
 def main() -> None:

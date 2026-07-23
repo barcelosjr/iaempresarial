@@ -94,43 +94,67 @@ saldo do Balanço (mais alguns casos que filtram diretamente por `NATUREZA`).
 | 3 | Peças e Acessórios             | DETALHE  | +        |
 | 4 | Serviços Oficina                | DETALHE  | +        |
 | 5 | Comissões Diversas             | DETALHE  | +        |
-| 6 | (-) Devoluções                  | DETALHE  | -        |
-| 7 | (-) Impostos sobre a Venda      | DETALHE  | -        |
+| 6 | Comissão sobre Seguros          | DETALHE  | +        |
+| 7 | Comissão sobre Consórcios       | DETALHE  | +        |
+| 8 | Comissão sobre Intermediação    | DETALHE  | +        |
+| 9 | (-) Devoluções                  | DETALHE  | -        |
+| 10 | (-) Impostos sobre a Venda      | DETALHE  | -        |
 
-**= RECEITA LÍQUIDA** (SUBTOTAL) = soma das linhas 1 a 7 (respeitando a operação de cada uma)
+Linhas 6–8 são receita **exclusiva** de empresas do tipo corretora (remuneradas
+por comissão, sem venda de veículos/peças — ex.: CORRETORA). Ver a regra de
+adaptação por ramo de atividade abaixo.
+
+**= RECEITA LÍQUIDA** (SUBTOTAL) = soma das linhas 1 a 10 (respeitando a operação de cada uma)
 
 ## 2. CUSTOS DAS MERCADORIAS E SERVIÇOS
 
 | # | Valor coluna DRE (base)         | Tipo     | Operação |
 |---|-----------------------------------|----------|----------|
-| 8  | Custo de Veículos Novos            | DETALHE  | -        |
-| 9  | Custo de Veículos Usados           | DETALHE  | -        |
-| 10 | Custo de Peças e Acessórios        | DETALHE  | -        |
-| 11 | Custo de Serviços Oficina          | DETALHE  | -        |
-| 12 | Custo de Serviço de Terceiros      | DETALHE  | -        |
+| 11 | Custo de Veículos Novos            | DETALHE  | -        |
+| 12 | Custo de Veículos Usados           | DETALHE  | -        |
+| 13 | Custo de Peças e Acessórios        | DETALHE  | -        |
+| 14 | Custo de Serviços Oficina          | DETALHE  | -        |
+| 15 | Custo de Serviço de Terceiros      | DETALHE  | -        |
 
-**= LUCRO BRUTO** (SUBTOTAL) = RECEITA LÍQUIDA + soma das linhas 8 a 12
+**= LUCRO BRUTO** (SUBTOTAL) = RECEITA LÍQUIDA + soma das linhas 11 a 15
 **% Margem Bruta** (INDICADOR) = LUCRO BRUTO / RECEITA LÍQUIDA
+
+### Adaptação por ramo de atividade (grupos 1 e 2)
+
+A estrutura acima é a da **concessionária**. Quando a DRE é filtrada por uma
+empresa de outro ramo, as linhas que não existem naquele negócio **não são
+exibidas** (em vez de saírem sempre `–`, o que poluiria o relatório). Isso é
+só apresentação: **nenhum subtotal muda**, pois conta sem lançamento
+contribuiria zero de qualquer forma. Na visão **consolidada** (sem filtro de
+empresa) nada é omitido.
+
+Regras vigentes (implementadas em `powerbi/dax_financeiro.py`):
+
+| Empresa | Grupo 1 (Receita) | Grupo 2 (Custos) |
+|---|---|---|
+| Concessionárias (KOBE, RENAULT, ROYAL, OMODA, MEGA STORE, MIT, MULT BOATS) | Linhas 1–5, 9, 10. **Sem** as comissões 6–8 | Linhas 11–15, detalhadas |
+| **CORRETORA** | Linhas 6–10. **Sem** venda de veículos/peças/oficina (1–5) | Linha única **"Custo de Mercado e Serviço"** (= soma do grupo), no lugar de 11–15 |
+| Consolidado (todas) | Todas as 10 | Linhas 11–15, detalhadas |
 
 ## 3. DESPESAS OPERACIONAIS
 
 | #  | Valor coluna DRE (base)                | Tipo     | Operação |
 |----|-------------------------------------------|----------|----------|
-| 13 | Folha de Pagamento                         | DETALHE  | -        |
-| 14 | Despesas Comerciais                        | DETALHE  | -        |
-| 15 | Despesas Gerais                            | DETALHE  | -        |
-| 16 | Manutenção de Bens                         | DETALHE  | -        |
-| 17 | Serviços Profissionais                     | DETALHE  | -        |
-| 18 | Taxas e Impostos Diversos                  | DETALHE  | -        |
-| 19 | Despesas de Funcionamento                  | DETALHE  | -        |
-| 20 | Alugueis e Condomínios                     | DETALHE  | -        |
-| 21 | Despesas Gerais e Rateio do Grupo          | DETALHE  | -        |
-| 22 | Outras Despesas Operacionais               | DETALHE  | -        |
-| 23 | Gastos Diversos com Funcionários           | DETALHE  | -        |
+| 16 | Folha de Pagamento                         | DETALHE  | -        |
+| 17 | Despesas Comerciais                        | DETALHE  | -        |
+| 18 | Despesas Gerais                            | DETALHE  | -        |
+| 19 | Manutenção de Bens                         | DETALHE  | -        |
+| 20 | Serviços Profissionais                     | DETALHE  | -        |
+| 21 | Taxas e Impostos Diversos                  | DETALHE  | -        |
+| 22 | Despesas de Funcionamento                  | DETALHE  | -        |
+| 23 | Alugueis e Condomínios                     | DETALHE  | -        |
+| 24 | Despesas Gerais e Rateio do Grupo          | DETALHE  | -        |
+| 25 | Outras Despesas Operacionais               | DETALHE  | -        |
+| 26 | Gastos Diversos com Funcionários           | DETALHE  | -        |
 
 (Este grupo não gera subtotal próprio **na fórmula** — entra direto no cálculo do
 EBITDA, junto com o grupo 4. **Porém, no layout visual**, o cabeçalho do bloco
-"3. DESPESAS OPERACIONAIS" exibe a soma das linhas 13 a 23 como um **subtotal de
+"3. DESPESAS OPERACIONAIS" exibe a soma das linhas 16 a 26 como um **subtotal de
 exibição** (não é uma linha de detalhe nem é usada como input em nenhuma outra
 fórmula — serve só de referência visual no cabeçalho do bloco, como no relatório de
 referência do usuário).
@@ -139,38 +163,38 @@ referência do usuário).
 
 | #  | Valor coluna DRE (base)         | Tipo     | Operação |
 |----|-----------------------------------|----------|----------|
-| 24 | (+) Receitas Diversas              | DETALHE  | +        |
-| 25 | (+) Receitas Não Operacionais      | DETALHE  | +        |
-| 26 | (-) Despesas Não Dedutíveis        | DETALHE  | -        |
-| 27 | (-) Despesas Não Operacionais      | DETALHE  | -        |
+| 27 | (+) Receitas Diversas              | DETALHE  | +        |
+| 28 | (+) Receitas Não Operacionais      | DETALHE  | +        |
+| 29 | (-) Despesas Não Dedutíveis        | DETALHE  | -        |
+| 30 | (-) Despesas Não Operacionais      | DETALHE  | -        |
 
-**= EBITDA** (SUBTOTAL) = LUCRO BRUTO + soma do grupo 3 (linhas 13 a 23) + soma do grupo 4 (linhas 24 a 27)
+**= EBITDA** (SUBTOTAL) = LUCRO BRUTO + soma do grupo 3 (linhas 16 a 26) + soma do grupo 4 (linhas 27 a 30)
 **% EBITDA/RL** (INDICADOR) = EBITDA / RECEITA LÍQUIDA
 
 ## 5. DEPRECIAÇÃO E AMORTIZAÇÃO
 
 | #  | Valor coluna DRE (base)              | Tipo     | Operação |
 |----|------------------------------------------|----------|----------|
-| 28 | Depreciação e Amortização de Ativos       | DETALHE  | -        |
+| 31 | Depreciação e Amortização de Ativos       | DETALHE  | -        |
 
-**= EBIT (Resultado Operacional)** (SUBTOTAL) = EBITDA + linha 28
+**= EBIT (Resultado Operacional)** (SUBTOTAL) = EBITDA + linha 31
 
 ## 6. RESULTADO FINANCEIRO
 
 | #  | Valor coluna DRE (base)         | Tipo     | Operação |
 |----|-----------------------------------|----------|----------|
-| 29 | (+) Receitas Financeiras           | DETALHE  | +        |
-| 30 | (-) Despesas Financeiras           | DETALHE  | -        |
+| 32 | (+) Receitas Financeiras           | DETALHE  | +        |
+| 33 | (-) Despesas Financeiras           | DETALHE  | -        |
 
-**= LAIR (Resultado antes do IR)** (SUBTOTAL) = EBIT + linhas 29 e 30
+**= LAIR (Resultado antes do IR)** (SUBTOTAL) = EBIT + linhas 32 e 33
 
 ## 7. IMPOSTOS SOBRE O LUCRO
 
 | #  | Valor coluna DRE (base) | Tipo     | Operação |
 |----|-----------------------------|----------|----------|
-| 31 | (-) IR e CSLL                 | DETALHE  | -        |
+| 34 | (-) IR e CSLL                 | DETALHE  | -        |
 
-**= LUCRO LÍQUIDO DO EXERCÍCIO** (SUBTOTAL) = LAIR + linha 31
+**= LUCRO LÍQUIDO DO EXERCÍCIO** (SUBTOTAL) = LAIR + linha 34
 **% Margem Líquida** (INDICADOR) = LUCRO LÍQUIDO DO EXERCÍCIO / RECEITA LÍQUIDA
 
 ## Resumo dos indicadores calculados — DRE
@@ -200,6 +224,9 @@ blocos numerados com cabeçalho, igual ao relatório de referência)*
 | Peças e Acessórios                  | 800.000        |
 | Serviços Oficina                     | 400.000        |
 | Comissões Diversas                  | 100.000        |
+| Comissão sobre Seguros              | –              |
+| Comissão sobre Consórcios           | –              |
+| Comissão sobre Intermediação        | –              |
 | (-) Devoluções                       | (50.000)       |
 | (-) Impostos sobre a Venda           | (600.000)      |
 | **= RECEITA LÍQUIDA**               | **7.650.000**  |
@@ -537,13 +564,20 @@ combinando:
   a lógica de "variação de saldo" nessas linhas específicas.
 - As linhas de **subtotal** (`=`) nunca existem em nenhuma base — são sempre
   calculadas somando os itens de detalhe do grupo.
+- **PROIBIDO ajuste de conciliação / tampão.** A `VARIAÇÃO LÍQUIDA DE CAIXA` é a
+  soma honesta das três seções (operacional + investimento + financiamento) e o
+  `= Saldo de Caixa Final` = `Saldo Inicial + Variação Líquida`. O CHECK compara
+  esse saldo final com a variação real de caixa do Balanço (`DISPONIBILIDADES`)
+  e é uma verificação de verdade — **jamais forçado a zero, nunca com linha de
+  ajuste**. Se sobrar resíduo, ele fica à mostra para investigação, não é
+  escondido nem compensado.
 
 ## I. ATIVIDADES OPERACIONAIS
 
 | # | Linha do Fluxo de Caixa                    | Tipo    | Fonte / Fórmula                                                                 |
 |---|-----------------------------------------------|---------|------------------------------------------------------------------------------------|
 | 1 | Lucro Líquido do Exercício                     | DRE     | = LUCRO LÍQUIDO DO EXERCÍCIO (subtotal da DRE, período selecionado)                |
-| 2 | Depreciação e Amortização de Ativos            | DRE     | = valor de "Depreciação e Amortização de Ativos" na DRE, período selecionado (somado de volta, pois é despesa não-caixa) |
+| 2 | Depreciação e Amortização de Ativos            | DRE/NATUREZA | = Σ dos lançamentos da linha "Depreciação e Amortização de Ativos" (coluna DRE) **apenas com `NATUREZA = D`**, período selecionado, somado de volta (despesa não-caixa). Considera só a despesa lançada (débito), ignorando estornos a crédito. |
 | 3 | Ajustes de Exercícios Anteriores               | VARIAÇÃO| = variação do saldo da conta "Ajustes de Exercícios Anteriores" (Patrimônio Líquido no Balanço) |
 | 4 | Outros Ajustes                                 | MANUAL  | Lançamento manual — **ignorar por enquanto** (sem fórmula)                          |
 

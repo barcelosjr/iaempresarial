@@ -104,7 +104,10 @@ def test_dre_inclui_todas_as_contas_da_estrutura():
         + fin.DRE_G6_FINANCEIRO
         + fin.DRE_G7_IMPOSTOS
     )
-    assert len(contas) == 31, "a DRE do documento tem 31 linhas de detalhe"
+    assert len(contas) == 34, (
+        "31 linhas do documento original + 3 de receita da CORRETORA "
+        "(Comissão sobre Seguros/Consórcios/Intermediação)"
+    )
     for conta in contas:
         assert conta in query
 
@@ -251,16 +254,28 @@ def test_somar_meses(chave, delta, esperado):
 # --------------------------------------------------------------------------- #
 # Conciliação do Fluxo de Caixa
 # --------------------------------------------------------------------------- #
-def test_fluxo_tem_linha_de_ajuste_explicita():
-    """O resíduo aparece nomeado, nunca embutido em outra linha."""
-    assert "AJUSTE DE CONCILIAÇÃO" in fin.fluxo_caixa("12/2024")
-
-
-def test_fluxo_fecha_por_construcao():
-    """Variação líquida = seções + ajuste ⇒ CHECK zero em qualquer mês."""
+def test_fluxo_nunca_tem_ajuste_de_conciliacao():
+    """Proibido tampão: nenhuma linha ou variável de ajuste de conciliação."""
     query = fin.fluxo_caixa("02/2025")
-    assert "VAR _Ajuste = _DeltaCaixa - _SomaSecoes" in query
-    assert "VAR _VariacaoLiquida = _SomaSecoes + _Ajuste" in query
+    assert "AJUSTE DE CONCILIAÇÃO" not in query
+    assert "_Ajuste" not in query
+
+
+def test_fluxo_variacao_liquida_e_soma_honesta_das_secoes():
+    """Variação líquida = soma das 3 seções, sem forçar o CHECK a zero."""
+    query = fin.fluxo_caixa("02/2025")
+    assert (
+        "VAR _VariacaoLiquida = _CaixaOperacional + _CaixaInvestimento"
+        " + _CaixaFinanciamento" in query
+    )
+    assert "_SaldoFinal - _DispBalanco" in query
+
+
+def test_depreciacao_add_back_so_natureza_d():
+    """O add-back de depreciação usa só lançamentos com NATUREZA = D."""
+    query = fin.fluxo_caixa("12/2024")
+    assert "_AggDreNat" in query
+    assert "VAR _DeprecAdd = -(" in query
 
 
 def test_dividendos_ficam_fora_do_subtotal():
@@ -303,6 +318,9 @@ def test_operacao_dre_subtrativa(conta):
         "Peças e Acessórios",
         "Serviços Oficina",
         "Comissões Diversas",
+        "Comissão sobre Seguros",
+        "Comissão sobre Consórcios",
+        "Comissão sobre Intermediação",
         "(+) Receitas Diversas",
         "(+) Receitas Financeiras",
     ],
@@ -311,7 +329,7 @@ def test_operacao_dre_aditiva(conta):
     assert fin.operacao_dre(conta) == 1
 
 
-def test_todas_as_31_linhas_tem_operacao_definida():
+def test_todas_as_linhas_tem_operacao_definida():
     contas = (
         fin.DRE_G1_RECEITA
         + fin.DRE_G2_CUSTOS
@@ -321,7 +339,7 @@ def test_todas_as_31_linhas_tem_operacao_definida():
         + fin.DRE_G6_FINANCEIRO
         + fin.DRE_G7_IMPOSTOS
     )
-    assert len(contas) == 31
+    assert len(contas) == 34
     assert {fin.operacao_dre(c) for c in contas} == {1, -1}
     # 20 linhas subtrativas (5 custos + 11 despesas + 4 deduções/outras) + demais
     assert sum(1 for c in contas if fin.operacao_dre(c) == -1) == len(
@@ -412,3 +430,141 @@ def test_dre_modo_invalido_propaga_erro():
 def test_dre_trimestral_periodo_invalido_propaga_erro():
     with pytest.raises(ValueError):
         fin.dre("02/2026", modo="trimestral")
+
+
+# --------------------------------------------------------------------------- #
+# Linhas inaplicáveis por ramo de atividade (ex.: CORRETORA)
+# --------------------------------------------------------------------------- #
+def test_corretora_omite_linhas_de_concessionaria():
+    """A conta some da EXIBIÇÃO (ROW), mas segue existindo no cálculo da VAR."""
+    query = fin.dre("01/2026", empresa="CORRETORA")
+    secao_exibicao = query.split("RETURN UNION")[1]
+    for conta in fin.LINHAS_INAPLICAVEIS_POR_EMPRESA["CORRETORA"]:
+        assert f'"Linha", "{conta}"' not in secao_exibicao
+
+
+def _linhas_exibidas(query):
+    """Rótulos que a consulta realmente imprime (seção RETURN UNION)."""
+    import re as _re
+    return _re.findall(r'"Linha", "([^"]+)"', query.split("RETURN UNION")[1])
+
+
+def test_outras_empresas_mantem_linhas_de_concessionaria():
+    exibidas = _linhas_exibidas(fin.dre("01/2026", empresa="KOBE"))
+    for conta in fin.LINHAS_INAPLICAVEIS_POR_EMPRESA["CORRETORA"]:
+        assert conta in exibidas
+
+
+def test_outras_empresas_nao_mostram_comissoes_de_corretora():
+    """Comissões de Seguros/Consórcios/Intermediação são exclusivas da CORRETORA."""
+    exibidas = _linhas_exibidas(fin.dre("01/2026", empresa="KOBE"))
+    for conta in fin.LINHAS_EXCLUSIVAS_DE_EMPRESA:
+        assert conta not in exibidas
+
+
+def test_corretora_agrega_custos_em_linha_unica():
+    exibidas = _linhas_exibidas(fin.dre("01/2026", empresa="CORRETORA"))
+    assert "Custo de Mercado e Serviço" in exibidas
+    for conta in fin.DRE_G2_CUSTOS:
+        assert conta not in exibidas
+
+
+def test_consolidado_mantem_todas_as_linhas():
+    """Sem filtro de empresa (visão consolidada), nada é omitido."""
+    exibidas = _linhas_exibidas(fin.dre("01/2026"))
+    for conta in fin.LINHAS_INAPLICAVEIS_POR_EMPRESA["CORRETORA"]:
+        assert conta in exibidas
+    for conta in fin.LINHAS_EXCLUSIVAS_DE_EMPRESA:
+        assert conta in exibidas
+    assert "Custo de Mercado e Serviço" not in exibidas
+
+
+@pytest.mark.parametrize(
+    ("conta", "empresa", "esperado"),
+    [
+        ("Comissão sobre Seguros", "CORRETORA", True),
+        ("Comissão sobre Seguros", "KOBE", False),
+        ("Comissão sobre Seguros", None, True),
+        ("Venda de Veículos Novos", "CORRETORA", False),
+        ("Venda de Veículos Novos", "KOBE", True),
+        ("Custo de Veículos Novos", "CORRETORA", False),
+        ("Folha de Pagamento", "CORRETORA", True),
+    ],
+)
+def test_linha_visivel(conta, empresa, esperado):
+    assert fin.linha_visivel(conta, empresa) is esperado
+
+
+def test_corretora_mantem_linhas_proprias_de_comissao():
+    """As linhas de comissão da corretora continuam aparecendo normalmente."""
+    query = fin.dre("01/2026", empresa="CORRETORA")
+    for conta in ("Comissão sobre Seguros", "Comissão sobre Consórcios", "Comissão sobre Intermediação"):
+        assert conta in query
+
+
+def test_omissao_nao_afeta_calculo_da_receita_liquida():
+    """RECEITA LÍQUIDA soma DRE_G1_RECEITA inteiro, independente da omissão de exibição."""
+    query = fin.dre("01/2026", empresa="CORRETORA")
+    assert "VAR _RL = " in query
+    for conta in fin.DRE_G1_RECEITA:
+        assert conta in query.split("RETURN UNION")[0]  # aparece no calculo (VARs), so nao na exibicao
+
+
+# --------------------------------------------------------------------------- #
+# KPIs de análise (dax_kpis)
+# --------------------------------------------------------------------------- #
+from powerbi import dax_kpis as kpi  # noqa: E402
+
+
+def test_kpis_consulta_e_somente_leitura():
+    assert kpi.indicadores("03/2026", modo="trimestral").lstrip().startswith("EVALUATE")
+
+
+def test_kpis_usa_valor_ajustado():
+    q = kpi.indicadores("03/2026", empresa="KOBE", modo="trimestral")
+    assert "'lancamentos'[VALOR_AJUSTADO]" in q
+    assert "'lancamentos'[VALOR]" not in q
+
+
+def test_kpis_todos_os_grupos_presentes():
+    q = kpi.indicadores("03/2026", modo="trimestral")
+    for grupo in ("Rentabilidade", "Liquidez", "Endividamento", "Eficiência"):
+        assert grupo in q
+
+
+def test_kpis_ebitda_anualizado_por_modo():
+    """O fator de anualização vem do nº de meses do modo."""
+    assert "DIVIDE(12, 1)" in kpi.indicadores("02/2026", modo="mensal")
+    assert "DIVIDE(12, 3)" in kpi.indicadores("03/2026", modo="trimestral")
+    assert "DIVIDE(12, 12)" in kpi.indicadores("12/2026", modo="anual")
+
+
+def test_kpis_dias_base_por_modo():
+    assert "VAR _Dias = 30" in kpi.indicadores("02/2026", modo="mensal")
+    assert "VAR _Dias = 90" in kpi.indicadores("03/2026", modo="trimestral")
+    assert "VAR _Dias = 360" in kpi.indicadores("12/2026", modo="anual")
+
+
+def test_kpis_margem_ebit_em_duas_linhas():
+    nomes = {k.nome for k in kpi._kpis()}
+    assert "Margem EBIT" in nomes
+    assert "EBIT / Lucro Bruto" in nomes
+
+
+def test_kpis_metadados_cobre_todos():
+    meta = kpi.metadados()
+    for k in kpi._kpis():
+        assert k.nome in meta
+        assert meta[k.nome]["explicacao"]
+        assert meta[k.nome]["melhor_se"]
+
+
+def test_kpis_custo_pessoal_inclui_gastos_funcionarios():
+    q = kpi.indicadores("03/2026", empresa="KOBE", modo="trimestral")
+    assert "Folha de Pagamento" in q
+    assert "Gastos Diversos com Funcionários" in q
+
+
+def test_kpis_modo_invalido():
+    with pytest.raises(ValueError):
+        kpi.indicadores("03/2026", modo="semestral")
