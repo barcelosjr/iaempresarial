@@ -21,6 +21,20 @@ reports/*
 dictionary/modelo_semantico.md
 
 # ---------------------------------------------------------------------------
+# Extrações e análises com dados reais da empresa — NUNCA commitar.
+# Arquivos gerados durante consultas/comparações (CSV e JSONs de análise).
+# ---------------------------------------------------------------------------
+*.csv
+*_analise.json
+*_kpis.json
+sem_*.json
+desp_*.json
+manutencao_*.json
+*_dados.json
+dre_multi_empresa.json
+balanco_*.json
+
+# ---------------------------------------------------------------------------
 # Python
 # ---------------------------------------------------------------------------
 __pycache__/
