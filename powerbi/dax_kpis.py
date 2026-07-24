@@ -13,11 +13,14 @@ Reaproveita integralmente os componentes já calculados pela DRE e pelo Balanço
 
 Convenções (decididas com o gestor — mudam o número, não são "padrão universal"):
 
-1. **Dívida Líquida / EBITDA**: o EBITDA do período é **anualizado**
-   (``× 12/nº de meses``) antes de dividir a dívida. Assim o múltiplo fica em
-   base anual comparável, independentemente do recorte.
+1. **Dívida Líquida / EBITDA**: usa o **EBITDA do próprio período** (não
+   anualizado). A dívida financeira que entra é Empréstimos Bancários + Conta
+   Garantida + Financiamentos + Empréstimos e Financiamentos LP (na versão "com
+   floor plan", somam-se os 3 Floor Plan); menos as Disponibilidades.
 2. **Indicadores em dias** (giro de estoque, PMR, PMP, ciclo): usam o **saldo
    final** do Balanço e **30 dias por mês** do período (mês=30, tri=90, ano=360).
+   O **giro de peças** divide pelo custo de peças **+ custo de serviços da
+   oficina** (a oficina também consome o estoque de peças).
 3. **Margem EBIT**: duas linhas distintas — ``EBIT / Receita Líquida`` (margem
    operacional) e ``EBIT / Lucro Bruto``.
 4. **Custo de Pessoal**: ``Folha de Pagamento + Gastos Diversos com Funcionários``.
@@ -41,7 +44,8 @@ FLOOR_PLAN = [
     "Floor Plan Veículos Usados",
     "Floor Plan Peças e Acessórios",
 ]
-#: Dívida financeira "estrutural" (empréstimos e financiamentos, curto + longo prazo).
+#: Dívida financeira "estrutural" que entra na Dívida Líquida (curto + longo
+#: prazo). Composição definida pelo gestor.
 DIVIDA_FINANCEIRA = [
     "Empréstimos Bancários",
     "Empréstimos de Terceiros",
@@ -112,13 +116,13 @@ def _kpis() -> list[KPI]:
             "melhor moderado — muito alto indica caixa ocioso"),
         # ---- Endividamento e alavancagem ----------------------------------- #
         KPI("Endividamento", "Dívida Líquida c/ Floor Plan / EBITDA", "x",
-            "DIVIDE(_DivLiqCom, _EbitdaAnual)",
-            "Anos de EBITDA para quitar a dívida líquida, incluindo o floor plan.",
+            "DIVIDE(_DivLiqCom, _Ebitda)",
+            "Dívida líquida (com floor plan) sobre o EBITDA do período.",
             "melhor quanto menor (o floor plan naturalmente infla)"),
         KPI("Endividamento", "Dívida Líquida s/ Floor Plan / EBITDA", "x",
-            "DIVIDE(_DivLiqSem, _EbitdaAnual)",
-            "Idem, sem o floor plan — a dívida estrutural da empresa.",
-            "melhor quanto menor (< 3 costuma ser confortável)"),
+            "DIVIDE(_DivLiqSem, _Ebitda)",
+            "Dívida líquida estrutural (sem floor plan) sobre o EBITDA do período.",
+            "melhor quanto menor"),
         KPI("Endividamento", "Endividamento Geral (PT/AT)", "%",
             "DIVIDE(_PassivoTotal, _AtivoTotal)",
             "Quanto do ativo é financiado por capital de terceiros.",
@@ -137,8 +141,9 @@ def _kpis() -> list[KPI]:
             "Dias que o estoque de veículos usados leva para girar.",
             "melhor quanto menor"),
         KPI("Eficiência", "Giro de Estoque de Peças", "dias",
-            "DIVIDE(_EstPecas, _CustoPecas) * _Dias",
-            "Dias que o estoque de peças leva para girar.",
+            "DIVIDE(_EstPecas, _CustoPecas + _CustoOficina) * _Dias",
+            "Dias de giro do estoque de peças, considerando o consumo em vendas "
+            "(custo de peças) e na oficina (custo de serviços).",
             "melhor quanto menor"),
         KPI("Eficiência", "PMR — Prazo Médio de Recebimento", "dias",
             "DIVIDE(_ContasReceber, _RL) * _Dias",
@@ -218,9 +223,8 @@ def indicadores(
         # Posições do Balanço acumuladas até o fim do período.
         fin._var_base("_Ate", "<=", chave_ate, ent),
         fin._var_agregado(bal, "_Ate", fin.COL_BALANCO),
-        # Constantes do modo.
+        # Constante do modo (base de dias: 30 por mês do período).
         f"VAR _Dias = {n_meses * 30}",
-        f"VAR _FatorAnual = DIVIDE(12, {n_meses})",
         # --- Base: DRE (fluxos do período) ---------------------------------- #
         f"VAR _RL = {fin._soma_lookup(dre, fin.DRE_G1_RECEITA)}",
         f"VAR _Custos = {fin._soma_lookup(dre, fin.DRE_G2_CUSTOS)}",
@@ -234,10 +238,10 @@ def indicadores(
         "VAR _Lair = _Ebit + _ResFin",
         f"VAR _Impostos = {fin._soma_lookup(dre, fin.DRE_G7_IMPOSTOS)}",
         "VAR _LucroLiquido = _Lair + _Impostos",
-        "VAR _EbitdaAnual = _Ebitda * _FatorAnual",
         # magnitudes positivas
         f'VAR _DespFin = -({fin._lookup(dre, "(-) Despesas Financeiras")})',
         "VAR _CustoTotal = -_Custos",
+        f'VAR _CustoOficina = -({fin._lookup(dre, "Custo de Serviços Oficina")})',
         f'VAR _CustoVN = -({fin._lookup(dre, "Custo de Veículos Novos")})',
         f'VAR _CustoVU = -({fin._lookup(dre, "Custo de Veículos Usados")})',
         f'VAR _CustoPecas = -({fin._lookup(dre, "Custo de Peças e Acessórios")})',

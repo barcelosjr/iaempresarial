@@ -514,10 +514,11 @@ def relatorio_indicadores(
     Reaproveita os componentes da DRE e do Balanço — não recalcula nada. Cada
     indicador vem com uma explicação curta e um "melhor se…" (direção ideal).
 
-    Convenções fixas (definidas com o gestor): EBITDA anualizado no múltiplo de
-    dívida; indicadores em dias usam saldo final + 30 dias/mês; Custo de Pessoal
-    = Folha + Gastos Diversos com Funcionários; Margem EBIT sai como EBIT/RL e
-    também EBIT/Lucro Bruto.
+    Convenções fixas (definidas com o gestor): Dívida Líquida / EBITDA usa o
+    EBITDA do próprio período (não anualizado); indicadores em dias usam saldo
+    final + 30 dias/mês; giro de peças divide por custo de peças + custo da
+    oficina; Custo de Pessoal = Folha + Gastos Diversos com Funcionários; Margem
+    EBIT sai como EBIT/RL e também EBIT/Lucro Bruto.
 
     Args:
         periodo: Período no formato "MM/AAAA" (ex.: "03/2026").

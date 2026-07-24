@@ -532,11 +532,28 @@ def test_kpis_todos_os_grupos_presentes():
         assert grupo in q
 
 
-def test_kpis_ebitda_anualizado_por_modo():
-    """O fator de anualização vem do nº de meses do modo."""
-    assert "DIVIDE(12, 1)" in kpi.indicadores("02/2026", modo="mensal")
-    assert "DIVIDE(12, 3)" in kpi.indicadores("03/2026", modo="trimestral")
-    assert "DIVIDE(12, 12)" in kpi.indicadores("12/2026", modo="anual")
+def test_kpis_divida_usa_ebitda_do_periodo_nao_anualizado():
+    """Dívida Líquida / EBITDA usa o EBITDA do período, sem anualizar."""
+    q = kpi.indicadores("03/2026", empresa="KOBE", modo="trimestral")
+    assert "DIVIDE(_DivLiqCom, _Ebitda)" in q
+    assert "DIVIDE(_DivLiqSem, _Ebitda)" in q
+    assert "_EbitdaAnual" not in q
+    assert "_FatorAnual" not in q
+
+
+def test_kpis_divida_financeira_composicao():
+    """Dívida financeira = os 6 componentes definidos pelo gestor."""
+    assert set(kpi.DIVIDA_FINANCEIRA) == {
+        "Empréstimos Bancários", "Empréstimos de Terceiros", "Conta Garantida",
+        "Financiamentos", "Notas Comerciais", "Empréstimos e Financiamentos LP",
+    }
+
+
+def test_kpis_giro_pecas_soma_custo_oficina():
+    """O giro de peças divide por custo de peças + custo de serviços da oficina."""
+    q = kpi.indicadores("03/2026", empresa="KOBE", modo="trimestral")
+    assert "DIVIDE(_EstPecas, _CustoPecas + _CustoOficina)" in q
+    assert "Custo de Serviços Oficina" in q
 
 
 def test_kpis_dias_base_por_modo():
