@@ -1,0 +1,2505 @@
+<title>Painel Financeiro — ROYAL ENFIELD</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --sidebar:#000000; --sidebar-hover:#141414; --sidebar-active:#1A1A1A;
+    --ink:#111111; --muted-1:#595959; --muted-2:#6B6B6B; --muted-3:#7A7A7A; --muted-4:#9A9A9A; --muted-5:#6B6B6B;
+    --border:#E0E0E0; --border-soft:#ECECEC; --subtotal:#F4F4F4; --total-bg:#FBE4E7; --total-ink:#8C0026;
+    --accent:#C3002F; --accent-hover:#8C0026; --pos:#5B7553; --neg:#B23B3B; --bar-neutral:#D6D6D6;
+    --card-bg:#FFFFFF;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+    --sans: 'Segoe UI', Inter, -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+  a{color:var(--accent)}
+  ::-webkit-scrollbar{height:8px;width:8px}
+  ::-webkit-scrollbar-thumb{background:#CCCCCC;border-radius:4px}
+  .shell{display:flex;min-height:100vh;background:var(--bg)}
+
+  /* ---- Sidebar ---- */
+  .sidebar{width:264px;flex-shrink:0;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;
+    padding:28px 20px;gap:26px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .brand-title{font-family:var(--serif);font-size:20px;font-weight:600;letter-spacing:-0.01em}
+  .brand-sub{font-size:12px;color:var(--muted-4);margin-top:2px}
+  .nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);margin:0 0 10px}
+  .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:20px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;
+    font-size:14px;color:var(--muted-4);background:transparent;border:none;text-align:left;width:100%;font-family:inherit}
+  .nav-item:hover{background:var(--sidebar-hover)}
+  .nav-item .dot{width:6px;height:6px;border-radius:50%;background:transparent;flex-shrink:0}
+  .nav-item.active{background:var(--sidebar-active);color:#fff;font-weight:600}
+  .nav-item.active .dot{background:var(--accent)}
+  .brand-list{display:flex;flex-direction:column;gap:2px}
+  .brand-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;
+    font-size:13px;color:var(--muted-4);background:transparent;border:none;text-align:left;width:100%;font-family:inherit}
+  .brand-item:hover{background:var(--sidebar-hover)}
+  .brand-item .swatch{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.35);flex-shrink:0}
+  .brand-item.active{background:var(--sidebar-active);color:#fff;font-weight:600}
+  .period-toggle{display:flex;background:var(--sidebar-active);border-radius:8px;padding:3px;gap:2px}
+  .period-item{flex:1;text-align:center;padding:6px 4px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--muted-4);
+    background:transparent;border:none;font-family:inherit}
+  .period-item.active{background:var(--accent);color:#fff;font-weight:600}
+  .sidebar-foot{margin-top:auto;font-size:11px;color:var(--muted-2);padding-top:16px;border-top:1px solid #262626}
+
+  /* ---- Main ---- */
+  /* Sem max-width: as tabelas de DRE/Fluxo/Balanço têm até 15 colunas (12 meses +
+     Acum. + Ano Anterior + Dif.%) e precisam do espaço todo da janela para caber
+     sem rolagem horizontal. */
+  .main{flex:1;padding:40px 32px;min-width:0}
+  .page-head{margin-bottom:28px}
+  .page-eyebrow{font-size:12px;color:var(--muted-3);margin-bottom:6px;font-weight:500}
+  .page-title{font-family:var(--serif);font-size:32px;font-weight:600;color:var(--ink);text-wrap:balance}
+  .page-desc{font-size:14px;color:var(--muted-1);margin-top:6px}
+
+  .toast{display:none;align-items:center;gap:8px;background:#FBE4E7;color:var(--total-ink);border:1px solid #F3C6CE;
+    border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:20px}
+  .toast.show{display:flex}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:16px;margin-bottom:32px}
+  .kpi-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px 22px;
+    display:flex;flex-direction:column;gap:6px;min-width:0;container-type:inline-size}
+  .kpi-label{font-size:12.5px;color:var(--muted-1);font-weight:500}
+  .kpi-value{font-family:var(--serif);font-size:clamp(15px,8.5cqi,23px);font-weight:600;color:var(--ink);
+    font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kpi-sub{font-size:12px;color:var(--muted-2)}
+  .kpi-delta{font-size:12px;font-weight:600}
+  .kpi-delta.pos{color:var(--pos)}
+  .kpi-delta.neg{color:var(--neg)}
+
+  .section-label{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);
+    margin-bottom:14px;font-weight:600}
+  .panel{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:32px}
+
+  .trend-chart{display:flex;gap:14px;align-items:flex-end;height:190px}
+  .trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+  .trend-bars{width:100%;display:flex;gap:3px;align-items:flex-end;justify-content:center;height:150px}
+  .trend-bar{width:42%;border-radius:4px 4px 0 0}
+  .trend-bar.rl{background:var(--bar-neutral)}
+  .trend-bar.ebitda{background:var(--accent)}
+  .trend-bar.ebitda.negative{background:repeating-linear-gradient(135deg, var(--neg), var(--neg) 3px, #fff 3px, #fff 6px)}
+  .trend-month{font-size:11px;color:var(--muted-2)}
+  .legend{display:flex;gap:20px;margin-top:16px;font-size:12px;color:var(--muted-1);flex-wrap:wrap}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-swatch{width:10px;height:10px;border-radius:2px}
+
+  .hbars{display:flex;flex-direction:column;gap:14px}
+  .hbar-row{display:flex;align-items:center;gap:12px}
+  .hbar-label{width:150px;font-size:13px;color:#333;flex-shrink:0}
+  .hbar-track{flex:1;background:#EDEDED;border-radius:6px;height:22px}
+  .hbar-fill{height:100%;border-radius:6px}
+  .hbar-value{width:110px;text-align:right;font-size:13px;font-variant-numeric:tabular-nums;font-weight:600;flex-shrink:0}
+
+  .footnote{font-size:12px;color:var(--muted-2);margin-top:-18px;margin-bottom:32px}
+
+  .page-updated{font-size:12px;color:var(--muted-2);border-top:1px solid var(--border);
+    margin-top:8px;padding-top:14px}
+
+  .placeholder-card{background:var(--card-bg);border:1px dashed var(--border);border-radius:12px;padding:48px 32px;
+    text-align:center;color:var(--muted-1);font-size:14px}
+  .placeholder-card b{color:var(--ink);display:block;font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:8px}
+
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);margin-bottom:14px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media (max-width:800px){ .two-col{grid-template-columns:1fr} }
+  table.fin{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.fin th{text-align:right;padding:12px 8px;color:var(--muted-1);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;font-size:12.5px}
+  table.fin th:first-child{text-align:left;position:sticky;left:0;background:var(--card-bg);min-width:175px;padding-left:16px;z-index:1}
+  table.fin td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--border-soft);font-variant-numeric:tabular-nums;
+    color:#333;white-space:nowrap}
+  table.fin td:first-child{text-align:left;position:sticky;left:0;background:var(--card-bg)}
+  /* Colunas do ano anterior: mesma tabela, peso visual menor (é referência, não o dado principal). */
+  table.fin th.ano-ant, table.fin td.ano-ant{color:var(--muted-1);font-weight:400}
+  table.fin tr.subtotal{background:var(--subtotal)}
+  table.fin tr.subtotal td{font-weight:700;color:var(--ink)}
+  table.fin tr.subtotal td:first-child{background:var(--subtotal)}
+  table.fin tr.total{background:var(--total-bg)}
+  table.fin tr.total td{font-weight:700;color:var(--total-ink)}
+  table.fin tr.total td:first-child{background:var(--total-bg)}
+  table.fin td.pct{color:var(--muted-2);font-weight:400;font-size:12px}
+  table.fin tr.group td{background:#333333;color:#FFFFFF;font-weight:700;font-size:11.5px;
+    text-transform:uppercase;letter-spacing:.03em;padding:9px 16px;border-bottom:1px solid var(--border)}
+  /* Título do bloco pode quebrar linha — é o único texto longo o bastante pra
+     empurrar a coluna "Conta" inteira e sobrar menos espaço pros meses. */
+  table.fin tr.group td:first-child{background:#333333;text-align:left;white-space:normal;line-height:1.3}
+  table.fin tr.pct td{font-style:italic;color:var(--muted-1);font-size:12px;background:#FAFAFA}
+  table.fin tr.pct td:first-child{background:#FAFAFA}
+  table.fin tr.check td{font-size:11.5px;color:var(--muted-2);font-style:italic}
+  table.fin tr.check td:first-child{background:var(--card-bg)}
+  /* Drill-down da DRE (DESCRICAO_CONTA) — só ROYAL. */
+  table.fin tr.normal.expandivel td:first-child{cursor:pointer}
+  table.fin tr.normal.expandivel td:first-child:hover{color:var(--accent)}
+  .dre-chevron{display:inline-block;width:14px;color:var(--muted-3);font-size:10px}
+  table.fin tr.detalhe-sub td{color:var(--muted-2);font-size:12px;background:#FAFAFA}
+  table.fin tr.detalhe-sub td:first-child{background:#FAFAFA}
+  .callout{background:#FFF7E6;border:1px solid #F0DBA6;color:#7A5B00;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:20px}
+
+  /* Glossário dos indicadores: explicação + fórmula + expectativa, padronizado. */
+  .glossario{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .glossario-item{border:1px solid var(--border);border-radius:10px;padding:14px 16px;background:var(--card-bg)}
+  .glossario-item .g-nome{display:block;font-family:var(--serif);font-size:14px;font-weight:600;color:var(--ink);margin-bottom:5px}
+  .glossario-item .g-explicacao{font-size:12.5px;color:#333;line-height:1.45;margin-bottom:8px}
+  .glossario-item .g-formula{display:block;font-family:'Courier New',monospace;font-size:11px;color:var(--muted-1);
+    background:#F4F4F4;border-radius:5px;padding:5px 8px;margin-bottom:8px;line-height:1.4}
+  .glossario-item .g-expectativa{font-size:12px;color:var(--accent);font-weight:600}
+
+  @media (max-width:900px){
+    .shell{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:relative}
+    .main{padding:24px}
+  }
+
+  /* Transição de página + entrada escalonada dos KPI cards (testado antes no painel da CORRETORA). */
+  @keyframes fadeSlideIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  #page-body.page-fade{animation:fadeSlideIn .32s ease-out}
+  .kpi-card{animation:fadeSlideIn .38s ease-out backwards}
+  .kpi-grid .kpi-card:nth-child(1){animation-delay:.00s}
+  .kpi-grid .kpi-card:nth-child(2){animation-delay:.04s}
+  .kpi-grid .kpi-card:nth-child(3){animation-delay:.08s}
+  .kpi-grid .kpi-card:nth-child(4){animation-delay:.12s}
+  .kpi-grid .kpi-card:nth-child(5){animation-delay:.16s}
+  .kpi-grid .kpi-card:nth-child(6){animation-delay:.20s}
+  @media (prefers-reduced-motion: reduce){
+    #page-body.page-fade, .kpi-card{animation:none}
+  }
+</style>
+
+<div class="shell">
+  <nav class="sidebar">
+    <div>
+      <div class="brand-title">Painel Financeiro</div>
+      <div class="brand-sub">ROYAL ENFIELD</div>
+    </div>
+
+    <div>
+      <div class="nav-group" id="nav-visao"></div>
+      <div class="nav-label">Relatórios</div>
+      <div class="nav-group" id="nav-relatorios"></div>
+      <div class="nav-label">Indicadores</div>
+      <div class="nav-group" id="nav-indicadores"></div>
+    </div>
+
+    <div>
+      <div class="nav-label">Ano</div>
+      <div class="period-toggle" id="ano-toggle"></div>
+    </div>
+
+    <div>
+      <div class="nav-label">Período</div>
+      <div class="period-toggle" id="period-toggle"></div>
+    </div>
+
+    <div class="sidebar-foot" id="sidebar-foot">Dados reais · Power BI</div>
+  </nav>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="page-eyebrow" id="page-eyebrow"></div>
+      <div class="page-title" id="page-title"></div>
+      <div class="page-desc" id="page-desc"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div id="page-body"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+
+  // ================= DADOS REAIS DO POWER BI (analista-bi MCP) =================
+  // Período do painel: Jan–Jun/2026, por pedido do gestor — julho/2026 fica de
+  // fora (não é falta de dado: a base já tem julho lançado, só não entra aqui).
+  var SNAPSHOT = '05/08/2026';
+
+  // ---- Dados por ano (filtro de Ano na sidebar) ----
+  // Cada entrada tem os mesmos blocos que o painel sempre teve, só que
+  // exclusivos da ROYAL (para não pesar) e trocados via aplicarAno().
+  // Gerado por gerar_dados_royal_ano.py --ano <ano> --mes-final <n>.
+  // 2026 é o ano corrente, em andamento (Jan-Jun); 2025 é ano fechado (Jan-Dez).
+  var DADOS_ANO = {
+    '2026': {
+    meses: ['Jan','Fev','Mar','Abr','Mai','Jun'],
+    dreDet: {'ROYAL': {
+      folha:[-202073.32,-164129.01,-195099.11,-210566.16,-216663.53,-211514.07],
+      receitasDiversas:[58250.88,1838.52,10215.50,16281.96,87821.62,4680.55],
+      servProf:[-13030.71,-16064.17,-14926.24,-15965.20,-25975.58,-14163.90],
+      despGeraisFunc:[-31051.84,-16548.48,-25848.41,-21445.56,-12470.58,-33903.73],
+      gastosFunc:[-30631.68,-30372.25,-46556.09,-10922.66,-27170.76,-25101.17],
+      despComercial:[-88894.91,-78916.93,-294193.37,-181598.66,-97856.80,-121972.69],
+      taxasImpostos:[-2126.50,-2099.69,-3204.09,-4647.74,-17968.14,-15006.18],
+      recFin:[17.55,583.34,52.89,1847.54,17466.77,905.56],
+      despFin:[-26456.04,-98543.64,-29195.31,-47211.93,-42898.51,-90093.81],
+      comissoes:[31384.47,17608.19,21057.77,20814.14,24293.16,22665.40],
+      devolucoes:[-68218.41,-49552.36,-74832.20,-109782.82,-93497.06,-126121.25],
+      receitasNaoOper:[33968.66,0,3280.05,0,0,20267.60],
+      impostosVenda:[-175153.69,-159408.30,-217769.78,-224962.62,-225166.58,-244149.04],
+      vendaVU:[388300.00,175090.00,193950.00,230480.00,239970.00,337470.00],
+      custoVU:[-312950.00,-150109.00,-160410.96,-199050.00,-196725.96,-273900.00],
+      custoTerceiros:[-644.32,0,0,0,0,0],
+      despGerais:[-7629.83,-8583.95,-6744.02,-11558.61,-6259.24,-14810.60],
+      outrasDesp:[-14830.02,-9194.69,-3145.11,-3310.57,-707.45,-2410.23],
+      despNaoOper:[-15522.26,0,0,0,0,-12485.16],
+      alugueis:[-54550.00,-18905.00,-27980.00,-27875.00,-27980.00,-27980.00],
+      custoPecas:[-201829.07,-187725.68,-248656.92,-269989.48,-257428.87,-303740.68],
+      pecas:[560470.15,535895.25,753254.46,799227.48,768104.51,888675.82],
+      manutencao:[-27.22,-38.66,-1590.07,-21288.87,-13343.07,-3323.76],
+      despFuncionamento:[-6491.44,-7123.97,-6754.25,-6550.12,-6179.94,-5967.54],
+      oficina:[218884.57,205942.17,235617.96,221488.79,216345.96,243264.72],
+      custoOficina:[-58318.71,-57927.18,-60861.52,-56437.04,-63381.82,-72892.67],
+      da:[-19350.25,-19467.09,-19498.55,-20156.11,-20502.71,-21572.53],
+      rateioGrupo:[-70022.90,-66077.26,-77911.33,-80753.24,-94999.68,-78022.16],
+      irCsll:[0,0,-164394.60,0,0,-291355.38],
+      vendaVN:[1749526.33,1962510.00,2776580.00,2625169.18,2866430.00,2390680.00],
+      custoVN:[-1421361.06,-1630252.03,-2314752.95,-2151648.29,-2363036.29,-1961626.41],
+      despNaoDedutiveis:[-3000.00,0,0,0,0,0]
+    }},
+    dreDetAnt: {'ROYAL': {
+      folha:[-135472.59,-97693.48,-109598.38,-117572.30,-135295.18,-278171.87],
+      receitasDiversas:[5350.00,0,15420.00,31742.35,2000.00,3225.00],
+      servProf:[-12785.98,-14289.69,-6585.34,-14863.34,-15892.33,-21764.83],
+      despComercial:[-107985.40,-164442.23,-107820.98,-99205.12,-108289.08,-126994.21],
+      custoVN:[-1240730.86,-1396716.64,-1574746.69,-1390391.92,-1695707.41,-2248714.49],
+      alugueis:[-9581.37,-16454.37,-11456.37,-27456.37,-10331.37,-10331.37],
+      despGeraisFunc:[-5597.38,-10941.89,-14094.56,-6940.57,-8781.30,-9178.52],
+      comissoes:[8173.65,14312.14,29012.03,13485.78,16477.71,15363.49],
+      recFin:[62915.54,78.13,103574.46,6683.37,4225.56,308.35],
+      taxasImpostos:[-2485.71,-1682.98,-2274.89,-3829.83,-14065.96,-2801.22],
+      despFin:[-16129.91,-16450.30,-17948.73,-14170.20,-23563.88,-23990.47],
+      gastosFunc:[-23229.91,-19744.72,-6668.02,-15205.30,-28349.71,-6153.06],
+      receitasNaoOper:[47126.66,3064.36,0,0,34300.00,22500.00],
+      impostosVenda:[-95690.32,-104746.47,-114383.57,-99107.17,-125035.63,-141533.06],
+      vendaVU:[132590.00,199490.00,97990.00,228460.00,90980.00,184500.00],
+      custoVU:[-104700.00,-166400.00,-77600.00,-191790.00,-73000.00,-157340.00],
+      manutencao:[-18856.42,-2790.61,-7764.00,-11850.69,-15388.93,-7605.30],
+      outrasDesp:[-1518.74,-4093.02,-2094.26,-1332.40,-2556.22,-2009.80],
+      despNaoOper:[-35137.39,188.28,-8034.92,0,-1600.00,-11420.59],
+      custoPecas:[-82890.32,-104756.27,-96025.65,-91997.14,-129977.50,-149088.48],
+      pecas:[274349.49,330967.31,321702.27,284352.59,396590.54,461012.47],
+      devolucoes:[-110543.25,-17643.47,-19575.21,-92512.65,-254015.87,-62727.53],
+      despGerais:[-3268.55,-4819.33,-9251.54,-7418.85,-4863.31,-11122.20],
+      despFuncionamento:[-3613.06,-6743.54,-4688.89,-3950.00,-3122.52,-2953.82],
+      oficina:[131033.61,141116.99,136349.21,148920.75,160939.32,169971.69],
+      custoOficina:[-30386.42,-31678.05,-31146.14,-41624.36,-42494.06,-46039.84],
+      da:[-12479.60,-12254.80,-12626.06,-12754.50,-13933.68,-18168.68],
+      custoTerceiros:[0,0,-2750.00,0,0,0],
+      rateioGrupo:[-45054.69,-48665.93,-52198.67,-50880.48,-61488.58,-56470.12],
+      irCsll:[0,0,-180526.94,0,0,-195652.54],
+      vendaVN:[1589594.72,1674313.90,1860150.00,1744890.00,2272041.23,2755970.43],
+      despNaoDedutiveis:[0,0,-13240.00,0,-1500.00,0]
+    }},
+    balDet: {'ROYAL': {
+      caixaBancos:[228518.65,396569.13],
+      aplicacoesFinanceiras:[260452.75,128352.45],
+      contasReceber:[6232005.57,2596499.67],
+      cartoesReceber:[862468.82,1202830.92],
+      financiamentosReceber:[150258.96,40566.71],
+      adiantForn:[1661984.43,1092964.70],
+      outrosAdiant:[37563.92,23868.64],
+      outrosCreditos:[37907.74,64337.69],
+      impostosRecuperar:[144927.41,31889.07],
+      estVN:[3932030.30,1775707.17],
+      estVU:[438270.00,268474.00],
+      estPecas:[1426371.38,605831.82],
+      instalacoes:[42118.56,42118.56],
+      veiculos:[543653.01,491231.80],
+      maquinas:[470266.93,256635.44],
+      computadores:[69024.07,42839.34],
+      moveis:[138032.35,110500.53],
+      construcoes:[963866.05,62831.43],
+      benfeitorias:[434013.73,434013.73],
+      deprecAcum:[-755475.82,-527670.19],
+      floorVN:[3815304.92,2039057.27],
+      floorPecas:[307612.21,229030.93],
+      fornecDiv:[677440.35,344691.58],
+      financiamentos:[219333.29,275333.33],
+      obrigSociais:[159816.71,125673.25],
+      obrigTrib:[365820.79,262196.45],
+      adiantCliente:[6730944.27,2527652.00],
+      provisoes:[222752.32,263348.71],
+      outrasContas:[82321.81,146899.54],
+      lucrosPagar:[2063864.34,0],
+      capitalSocial:[1500000.00,1380000.00],
+      reservasLucros:[0,539662.04],
+      reservasIncentivos:[256062.57,256062.57],
+      prejuizosAcum:[916985.23,750784.94]
+    }},
+    mov: {'ROYAL': {
+      outrosAdiant:[7038.85,-3394.88,25871.82,-8105.80,-6179.00,8625.47],
+      impostosRecuperar:[56269.35,-10280.58,-13188.26,48254.31,3222.42,11151.39],
+      caixaBancos:[-2783.16,104336.32,27839.77,-19825.16,18260.41,-26932.95],
+      aplicacoesFinanceiras:[-76894.23,24490.42,183300.08,-169223.75,143996.00,18825.67],
+      fornecDiv:[61059.04,-30473.49,302496.14,-54221.03,-71653.60,-119020.19],
+      adiantCliente:[324219.31,224027.10,214584.03,194340.57,1010725.80,158059.18],
+      lucrosPagar:[-60000.00,-60000.00,-60000.00,-60000.00,-60000.00,-60000.00],
+      adiantForn:[-277186.27,-5914.99,119474.89,113361.50,-27364.62,120986.28],
+      obrigSociais:[-4312.26,-27974.94,14697.85,14945.99,-355.69,-886.89],
+      obrigTrib:[-168862.24,-118335.27,42705.45,-64224.94,-16531.53,215958.51],
+      contasReceber:[470739.04,381973.36,306649.49,416864.69,524041.15,-167460.16],
+      estPecas:[254066.65,-58395.01,-4372.50,302296.86,-10110.29,146805.02],
+      outrasContas:[30371.70,-109001.75,12594.21,60753.76,-60181.73,-16658.17],
+      estVN:[71425.65,318987.05,-763215.46,1312784.94,345453.38,65806.66],
+      veiculos:[-25870.58,27107.63,0,26714.64,0,-18930.43],
+      cartoesReceber:[-10238.21,-776246.81,258927.33,-167078.83,181335.75,-83072.65],
+      provisoes:[15091.51,3310.55,19568.34,11144.93,15623.32,19546.85],
+      floorPecas:[259204.52,-9168.80,-186367.63,191392.02,-159147.96,201717.84],
+      financiamentosReceber:[-5609.56,-22859.04,-14992.00,45482.00,97271.93,-8822.68],
+      outrosCreditos:[6832.56,21818.14,-48081.43,2237.75,12254.04,-10428.72],
+      estVU:[-200341.00,-83109.00,241885.96,55850.00,177154.04,-166120.00],
+      computadores:[3276.00,3381.02,0,6678.10,0,3500.00],
+      maquinas:[0,0,2689.29,0,21474.32,139217.88],
+      moveis:[0,0,1470.42,0,24361.40,0],
+      deprecAcum:[-10959.17,-21384.45,-21419.11,-22086.97,-22468.93,-12604.90],
+      financiamentos:[-4666.67,-4666.67,-4666.67,-4666.67,-4666.67,-4666.67],
+      floorVN:[-353979.12,20387.75,87686.87,1563231.49,636214.40,-168194.67],
+      construcoes:[15060.72,134645.73,150473.05,160416.43,172850.39,171078.47],
+      prejuizosAcum:[0,0,333766.03,0,0,583219.20]
+    }},
+    movAnt: {'ROYAL': {
+      adiantForn:[-67022.04,45959.97,-119881.81,434510.38,-237282.30,194159.57],
+      impostosRecuperar:[250.85,-3666.81,-340.12,24987.05,6380.35,-680.85],
+      outrosAdiant:[-5392.97,14076.58,-1828.82,4811.27,1520.63,417.35],
+      fornecDiv:[85345.37,119431.19,-112404.11,34668.62,75881.87,-18344.24],
+      obrigSociais:[14698.61,-3585.94,11564.57,-1684.96,22667.85,2624.14],
+      aplicacoesFinanceiras:[-105986.86,9049.68,223733.68,-184420.30,52537.80,8460.35],
+      obrigTrib:[-57226.78,-20448.62,149767.42,-98180.16,-27581.31,132891.37],
+      contasReceber:[252421.56,146138.37,119594.70,381919.72,-41660.35,985112.49],
+      estPecas:[45873.23,1141.80,-14902.83,182857.38,40700.04,1243.31],
+      estVN:[-218636.24,165421.35,365822.22,-181591.02,441187.14,-145731.85],
+      veiculos:[-42427.24,27564.98,24546.17,0,20709.06,260421.91],
+      financiamentos:[0,0,0,0,0,275333.33],
+      cartoesReceber:[54784.83,69575.45,29859.24,29940.86,40585.92,65241.38],
+      adiantCliente:[144444.06,212758.14,330424.33,36846.79,213606.30,679360.70],
+      caixaBancos:[238595.17,-215128.25,221913.97,-209585.27,20830.95,220856.06],
+      provisoes:[2319.29,4117.73,13871.09,12439.88,15210.45,125686.04],
+      outrasContas:[56913.08,23523.15,-50942.68,104876.43,-77154.66,35817.61],
+      floorPecas:[-1348.54,-46600.60,-26480.78,113398.51,-41498.96,64760.86],
+      financiamentosReceber:[69541.46,-80185.29,19184.88,60390.95,-75958.19,36865.00],
+      outrosCreditos:[-860.36,4279.13,22456.61,-9392.38,36569.13,-10797.21],
+      estVU:[-7900.00,64990.00,83900.00,-81000.00,1000.00,79284.00],
+      maquinas:[0,0,0,9839.71,26612.51,0],
+      moveis:[0,0,0,7141.81,8746.02,0],
+      floorVN:[-207796.99,-167507.53,577719.08,100340.95,32142.41,358866.88],
+      deprecAcum:[-1733.28,-13488.80,-13897.90,-14039.42,21361.20,-11847.97],
+      computadores:[0,0,0,0,2874.30,0],
+      construcoes:[0,0,0,6240.00,41962.94,14628.49],
+      prejuizosAcum:[0,0,354841.72,0,0,395943.22]
+    }},
+    nat: {'ROYAL': {
+      depD:[-21307.49,-21384.45,-21419.11,-22086.97,-22468.93,-23647.75],
+      imobC:[-25870.58,0,0,0,0,-18930.43],
+      imobD:[18336.72,165134.38,154632.76,193809.17,218686.11,313796.35],
+      acumD:[10348.32,0,0,0,0,11042.85]
+    }},
+    fcCont: {'ROYAL': {
+      lucro:[176700.85,147050.43,10014.75,251924.59,365526.05,-30042.41],
+      depD:[-21307.49,-21384.45,-21419.11,-22086.97,-22468.93,-23647.75]
+    }},
+    saldoIni: {'ROYAL':263581.98},
+    dreDesc: {
+      alugueis: {
+        'ALUGUEIS DE IMOVEIS':[-54450.00,-18150.00,-27225.00,-27225.00,-27225.00,-27225.00],
+        'ALUGUEIS DIVERSOS':[-100.00,-755.00,-755.00,-650.00,-755.00,-755.00]
+      },
+      comissoes: {
+        'BONIFICACAO S/ FINANCIAMENTOS':[4822.45,3091.26,6146.12,6987.72,9225.27,6528.23],
+        'COMISSAO S/ FINANCIAMENTOS':[26562.02,14516.93,14911.65,13826.42,15067.89,16137.17]
+      },
+      custoOficina: {
+        'CUSTO MERC. VENDIDAS - CMV':[-58318.71,-57927.18,-60861.52,-56437.04,-63381.82,-72892.67]
+      },
+      custoPecas: {
+        'CUSTO MERC. VENDIDAS - CMV':[-201829.07,-187725.68,-248656.92,-269989.48,-257428.87,-303740.68]
+      },
+      custoTerceiros: {
+        'SERVICOS PREST. POR TERCEIROS':[-644.32,0,0,0,0,0]
+      },
+      custoVN: {
+        'CUSTO MERC. VENDIDAS - CMV':[-1421361.06,-1630252.03,-2314752.95,-2151648.29,-2363036.29,-1961626.41]
+      },
+      custoVU: {
+        'CUSTO MERC. VENDIDAS - CMV':[-312950.00,-150109.00,-160410.96,-199050.00,-196725.96,-273900.00]
+      },
+      da: {
+        'DEPRECIACAO':[-19350.25,-19467.09,-19498.55,-20156.11,-20502.71,-21572.53]
+      },
+      despComercial: {
+        'COMISSOES S/ VENDAS':[-19770.60,-12585.86,-174269.41,-81263.56,-3484.43,-3013.44],
+        'DESPESAS C/ VENDAS':[-2902.53,-2633.14,-2834.89,-9012.01,-3322.23,-6598.81],
+        'DESPESAS VENDAS ONLINE':[-15278.64,-6897.78,-6556.97,-6695.05,-9518.71,-7765.98],
+        'EMPLACAMENTOS':[-22473.20,-6721.25,-23034.00,-32911.37,-32545.19,-39063.49],
+        'EVENTOS E EXPOSICOES':[-4320.00,0,0,-2000.00,0,-6850.00],
+        'FRETES DIVERSOS':[-64.97,-13879.57,-67427.27,-26941.30,-35471.32,-26561.38],
+        'MIDIA COOPERADA':[-9075.00,0,-7193.07,-226.87,0,-14238.67],
+        'MIDIA NAO COOPERADA':[-2450.25,-453.75,-453.75,-453.75,-453.75,-453.75],
+        'PREPARACAO E REVISAO DE ENTREGA':[-12410.51,-24675.58,-5424.32,-21974.75,-13061.17,-17427.17],
+        'SERVICOS GRATUITOS E CORTESIAS':[-149.21,-11070.00,-6999.69,-120.00,0,0]
+      },
+      despFin: {
+        'DESCONTOS CONCEDIDOS':[-1502.57,-1000.15,-3586.24,-22.01,-5621.18,-0.78],
+        'FLOOR PLAN COMPRAS A PRAZO':[-1213.27,-1072.83,-1139.81,-870.69,-1526.46,-16.14],
+        'I.O.F':[-12136.94,-13126.71,-7671.31,-11215.30,-11392.76,-15753.15],
+        'JUROS PASSIVOS':[-110.71,-4837.87,-4589.62,-2379.12,-4699.75,-1235.68],
+        'JUROS S/ DESCONTO DE CHEQUES E TITULOS':[0,-49784.84,0,-17049.08,-5902.42,-50535.31],
+        'JUROS S/ FINANCIAMENTOS E EMPRESTIMOS':[-2495.10,-2495.10,-2495.10,-2495.10,-2495.10,-2495.10],
+        'TAXAS BANCARIAS':[-867.59,-641.72,-1072.58,-702.77,-726.23,-725.13],
+        'TAXAS CARTAO DE CREDITO':[-8129.86,-25584.42,-8640.65,-12477.86,-10534.61,-19332.52]
+      },
+      despFuncionamento: {
+        'AGUA':[-636.40,-768.16,-774.80,-1040.72,-627.58,-594.18],
+        'ENERGIA ELETRICA':[-5250.60,-5545.45,-4965.81,-4900.00,-4714.53,-4312.82],
+        'INTERNET':[-500.00,-588.42,-676.84,-500.00,-612.74,-725.48],
+        'TELEFONE':[-104.44,-221.94,-336.80,-109.40,-225.09,-335.06]
+      },
+      despGerais: {
+        'COMBUSTIVEIS E LUBRIFICANTES':[-4294.59,-2238.44,-3705.61,-4987.39,-3616.00,-3169.44],
+        'MATERIAL DE CONSUMO E FERRAMENTAS':[-2043.80,-5727.42,-2276.03,-4592.70,-2158.34,-9976.94],
+        'MATERIAL DE ESCRITORIO':[-530.49,-553.59,-662.38,-1190.46,-484.90,-1664.22],
+        'MATERIAL DE LIMPEZA':[-321.81,0,0,-788.06,0,0],
+        'MATERIAL DIVERSOS':[-439.14,-64.50,-100.00,0,0,0]
+      },
+      despGeraisFunc: {
+        'ASSINATURAS DIVERSAS':[-3285.81,-2826.19,-453.20,-964.85,-717.09,-728.02],
+        'COPA/COZINHA/REFEITORIO':[-886.31,-1146.61,-1513.10,-1862.48,-1110.83,-2339.69],
+        'CORREIOS E DESPACHOS':[-977.66,-134.65,-155.10,-195.68,-203.00,-1520.22],
+        'GRAFICA E IMPRESSOS':[-620.00,-72.50,-659.00,-84.00,-25.00,0],
+        'HOSPEDAGEM':[0,0,0,-365.72,-450.00,-2161.49],
+        'MAQUINAS/MOVEIS/EQUIP. NAO IMOBILIZADOS':[-3167.00,-2078.00,0,-444.00,-624.80,0],
+        'PROCESSAMENTO DE DADOS':[-19534.79,-8088.81,-22200.78,-8746.49,-7489.31,-10476.30],
+        'VIAGENS E REPRESENTACOES':[-2580.27,-2201.72,-867.23,-8782.34,-1850.55,-16678.01]
+      },
+      despNaoDedutiveis: {
+        'BRINDES':[-3000.00,0,0,0,0,0]
+      },
+      despNaoOper: {
+        'BAIXA POR DETERIORACAO':[0,0,0,0,0,-4597.58],
+        'PERDA NA ALIENACAO ATIVOS':[-15522.26,0,0,0,0,-7887.58]
+      },
+      devolucoes: {
+        'DEVOLUCAO DE VENDAS':[-68218.41,-49552.36,-74832.20,-109782.82,-93497.06,-126121.25]
+      },
+      folha: {
+        'ADICIONAIS':[0,0,-916.41,-1448.09,-1614.53,-1236.28],
+        'ADICIONAIS S/ PAGAMENTO':[-158.53,-158.53,-158.53,-659.56,-165.00,-165.00],
+        'AVISO PREVIO E INDENIZACOES':[-3599.28,-2586.55,0,-2265.00,0,0],
+        'COMISSOES':[-36330.54,-33605.38,-43459.71,-45901.54,-45591.91,-45373.37],
+        'FGTS':[-6250.38,-5486.72,-7695.11,-7378.83,-7564.12,-7539.50],
+        'GRATIFICACOES':[-2861.18,-1300.53,-2395.66,-2855.16,-2735.46,-2556.83],
+        'HONORARIOS/PRO-LABORE':[-10770.00,-10679.00,-10679.00,-10679.00,-10679.00,-10679.00],
+        'HORAS-EXTRAS':[-193.95,-112.98,-406.44,-128.85,-773.39,-1604.02],
+        'INSS':[-20348.06,-18357.74,-22906.46,-24060.96,-24939.35,-24827.05],
+        'INSS CPP MEI':[-151.00,0,0,-60.00,-171.30,0],
+        'MULTA RESCISORIA - FGTS':[-1710.00,-2033.81,0,-1063.50,-218.39,0],
+        'PREMIOS':[-42540.77,-36145.80,-36853.03,-43689.57,-45441.99,-49864.37],
+        'PROVISAO 13º SALARIO':[-7043.21,-6371.53,-7648.47,-8361.03,-7781.35,-7733.12],
+        'PROVISAO FERIAS':[-15554.75,-7358.58,-13848.76,-13098.89,-11104.22,-10452.45],
+        'PROVISAO FGTS 13º SALARIO':[-555.67,-502.13,-604.27,-661.26,-614.87,-614.87],
+        'PROVISAO FGTS FERIAS':[-1240.89,-580.58,-1099.74,-1039.74,-892.43,-831.60],
+        'PROVISAO INSS 13º SALARIO':[-1922.84,-1739.42,-2088.00,-2282.58,-2124.31,-2111.12],
+        'PROVISAO INSS FERIAS':[-3765.01,-1720.77,-2611.63,-2919.48,-2407.09,-2415.88],
+        'RESCISOES TRABALHISTAS':[-1138.44,0,-865.71,0,0,-901.84],
+        'SALARIOS':[-45938.82,-35388.96,-40862.18,-42013.12,-51844.82,-42607.77]
+      },
+      gastosFunc: {
+        'ASSISTENCIA MEDICA E OCUPACIONAL - PCMSO':[0,-488.70,-567.64,-989.18,-524.99,-578.99],
+        'CONVENIOS':[-28011.39,-4506.71,-30165.42,-4757.34,-20137.99,-19401.94],
+        'GASTOS DIVERSOS':[-250.00,0,-910.31,-1864.90,-2455.00,-600.00],
+        'LANCHES E REFEICOES':[-599.27,-1206.15,-1023.27,-754.81,-853.02,-1287.70],
+        'TREINAMENTOS':[-1093.00,-1000.00,-13000.00,-1000.00,-1000.00,-1000.00],
+        'UNIFORMES':[0,-22462.81,-199.65,-499.12,-617.60,-485.96],
+        'VALE-TRANSPORTE':[-678.02,-707.88,-689.80,-1057.31,-1582.16,-1746.58]
+      },
+      impostosVenda: {
+        'COFINS CUMULATIVA':[-2260.50,-758.43,-1006.17,-942.90,-1297.32,-2784.67],
+        'COFINS NAO-CUMULATIVO':[-44874.27,-40270.71,-50891.13,-55475.21,-54029.73,-59101.91],
+        'COFINS NAO-CUMULATIVO - OUTROS':[-1.33,-44.33,-699.08,-1377.94,-4516.12,-372.82],
+        'ICMS':[-41115.52,-37436.78,-52735.92,-48912.83,-49059.79,-55248.17],
+        'ICMS PARTILHA':[-71127.74,-68102.01,-96067.90,-100834.17,-98254.15,-108149.55],
+        'ISSQN':[-5543.39,-3881.48,-4951.37,-4872.73,-5019.12,-4977.48],
+        'PIS CUMULATIVO':[-489.78,-164.33,-218.01,-204.31,-281.10,-413.22],
+        'PIS NAO-CUMULATIVO - OUTROS':[-0.29,-9.63,-151.77,-299.16,-980.47,-80.94],
+        'PIS NÃO-CUMULATIVO':[-9740.87,-8740.60,-11048.43,-12043.37,-11728.78,-13020.28]
+      },
+      irCsll: {
+        'PROVISAO CSLL S/ LUCRO LIQUIDO':[0,0,-45104.45,0,0,-78711.72],
+        'PROVISAO IRPJ S/ LUCRO LIQUIDO':[0,0,-119290.15,0,0,-212643.66]
+      },
+      manutencao: {
+        'MANUTENCAO DE EDIFICIOS E INSTALACOES':[-27.22,-38.66,0,-18993.63,-12502.43,-976.41],
+        'MANUTENCAO DE MAQUINAS E EQUIPAMENTOS':[0,0,-1510.07,-2295.24,-150.64,-597.13],
+        'MANUTENCAO E CONSERVACAO DE VEICULOS':[0,0,-80.00,0,-690.00,-1750.22]
+      },
+      oficina: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[218884.57,205942.17,235617.96,221488.79,216345.96,243264.72]
+      },
+      outrasDesp: {
+        'ASSOCIACAO E CONTRIBUICAO':[-1418.09,-1907.45,-2274.62,-1536.35,-707.45,-1481.09],
+        'CARTORIO':[-15.58,0,0,-33.24,0,-58.65],
+        'DESPESAS INTERNAS':[0,-357.69,0,0,0,0],
+        'PROCESSOS JUDICIAIS':[0,-5966.56,0,0,0,0],
+        'SEGUROS DE VIDA':[-554.99,-962.99,-870.49,-1740.98,0,-870.49],
+        'SEGUROS S/ PATRIMONIO':[-12841.36,0,0,0,0,0]
+      },
+      pecas: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[560470.15,535895.25,753254.46,799227.48,768104.51,888675.82]
+      },
+      rateioGrupo: {
+        'DESPESAS RATEADAS':[-70022.90,-66077.26,-77911.33,-80753.24,-94999.68,-78022.16]
+      },
+      recFin: {
+        'DESCONTOS OBTIDOS':[0.01,529.01,0.07,1790.38,1928.00,876.37],
+        'JUROS ATIVOS':[10.00,45.51,30.82,38.90,15532.02,17.12],
+        'RENDIMENTOS S/ APLIC. FINANCEIRAS':[7.54,8.82,22.00,18.26,6.75,12.07]
+      },
+      receitasDiversas: {
+        'BONUS/COMISSOES':[0,1213.52,9145.50,16281.96,23225.88,4000.00],
+        'DEALER MARGIN':[0,625.00,0,0,0,0],
+        'RECEITAS DIVERSAS':[58250.88,0,1070.00,0,64595.74,680.55]
+      },
+      receitasNaoOper: {
+        'AVISO PREVIO REAVIDO':[5678.66,0,3280.05,0,0,1267.60],
+        'RECEITA ALIENACAO DE BENS':[28290.00,0,0,0,0,19000.00]
+      },
+      servProf: {
+        'SERVICOS DE CONSULTORIA E ASSESSORIA -PJ':[0,0,0,0,0,-350.00],
+        'SERVICOS DE LIMPEZA - PJ':[-4835.05,-4835.05,-5561.05,-4835.05,-5463.60,-5463.60],
+        'SERVICOS DE SEGURANCA E VIGILANCIA - PJ':[-2190.19,-1825.52,-665.59,-1517.87,-1452.76,-1380.16],
+        'SERVICOS DIVERSOS - PF':[0,-1725.00,0,-2645.00,-270.00,-480.00],
+        'SERVICOS DIVERSOS - PJ':[-1435.24,-1117.62,-2836.87,-950.80,-13655.80,-633.18],
+        'SERVICOS JURIDICOS':[-3176.31,-4241.41,-4541.41,-4241.41,-4084.35,-3854.14],
+        'SERVICOS PJ POR CONTRATO FIXO':[-1393.92,-2319.57,-1321.32,-1775.07,-1049.07,-2002.82]
+      },
+      taxasImpostos: {
+        'ICMS - DIFERENCA DE ALIQUOTA':[-964.35,-1037.87,-841.96,-1369.50,-5138.60,-9828.26],
+        'ICMS - OUTROS':[-240.47,0,-0.05,0,0,-161.50],
+        'IMPOSTO TERRITORIAL E PREDIAL - IPTU':[0,-297.51,-1685.21,-1685.25,-1685.25,-1685.25],
+        'TAXAS DIVERSAS':[-921.68,-764.31,-676.87,-1592.99,-11144.29,-3331.17]
+      },
+      vendaVN: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[1749526.33,1962510.00,2776580.00,2625169.18,2866430.00,2390680.00]
+      },
+      vendaVU: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[388300.00,175090.00,193950.00,230480.00,239970.00,337470.00]
+      }
+    }
+    },
+    '2025': {
+    meses: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+    dreDet: {'ROYAL': {
+      folha:[-135472.59,-97693.48,-109598.38,-117572.30,-135295.18,-278171.87,-118773.27,-162487.59,-188835.89,-184119.94,-195600.96,-306693.42],
+      receitasDiversas:[5350.00,0,15420.00,31742.35,2000.00,3225.00,59558.51,761.40,13572.58,103840.92,15487.56,0],
+      despGerais:[-3268.55,-4819.33,-9251.54,-7418.85,-4863.31,-11122.20,-6823.99,-6039.96,-10435.66,-9518.36,-3144.81,-12544.33],
+      servProf:[-12785.98,-14289.69,-6585.34,-14863.34,-15892.33,-21764.83,-23234.83,-37003.67,-34433.49,-39565.48,-8248.21,-23269.38],
+      gastosFunc:[-23229.91,-19744.72,-6668.02,-15205.30,-28349.71,-6153.06,-8915.85,-18940.01,-30514.51,-18685.85,1724.50,-14349.47],
+      despComercial:[-107985.40,-164442.23,-107820.98,-99205.12,-108289.08,-126994.21,-128352.41,-151298.26,-80085.53,-148091.13,-83873.55,-141016.85],
+      custoVN:[-1240730.86,-1396716.64,-1574746.69,-1390391.92,-1695707.41,-2248714.49,-1910487.82,-2283729.05,-2418001.74,-2388597.26,-2634990.50,-2082414.48],
+      manutencao:[-18856.42,-2790.61,-7764.00,-11850.69,-15388.93,-7605.30,-3140.75,-16671.85,-1704.76,-3276.07,-7260.00,-3405.09],
+      alugueis:[-9581.37,-16454.37,-11456.37,-27456.37,-10331.37,-10331.37,-10331.37,-10331.37,-10751.37,-10331.37,-18900.00,-19550.00],
+      despGeraisFunc:[-5597.38,-10941.89,-14094.56,-6940.57,-8781.30,-9178.52,-8097.12,-9297.62,-9467.85,-15193.52,-12705.76,-29652.00],
+      comissoes:[8173.65,14312.14,29012.03,13485.78,16477.71,15363.49,9951.21,19023.48,17320.73,28350.59,24295.52,16230.79],
+      recFin:[62915.54,78.13,103574.46,6683.37,4225.56,308.35,7799.33,1397.67,169.73,10491.87,137.10,183539.45],
+      taxasImpostos:[-2485.71,-1682.98,-2274.89,-3829.83,-14065.96,-2801.22,-9214.75,-2416.24,-1937.28,-4626.11,-3279.70,-3026.83],
+      despFin:[-16129.91,-16450.30,-17948.73,-14170.20,-23563.88,-23990.47,-27185.52,-23813.34,-31814.69,-26685.52,-27726.54,-44011.20],
+      receitasNaoOper:[47126.66,3064.36,0,0,34300.00,22500.00,0,30.00,0,24711.23,1099.99,554.87],
+      impostosVenda:[-95690.32,-104746.47,-114383.57,-99107.17,-125035.63,-141533.06,-140526.41,-106168.38,-141449.00,-64816.12,-145527.01,-177642.29],
+      vendaVU:[132590.00,199490.00,97990.00,228460.00,90980.00,184500.00,209780.00,296466.00,308490.00,210630.00,137390.00,240480.00],
+      devolucoes:[-110543.25,-17643.47,-19575.21,-92512.65,-254015.87,-62727.53,-48285.93,-28056.73,-188027.70,-146486.66,-121564.01,-155701.99],
+      custoVU:[-104700.00,-166400.00,-77600.00,-191790.00,-73000.00,-157340.00,-171990.00,-238207.00,-198998.99,-184877.00,-116380.00,-199300.00],
+      outrasDesp:[-1518.74,-4093.02,-2094.26,-1332.40,-2556.22,-2009.80,-1715.06,-4802.70,-3918.02,-7618.75,-984.41,-6805.73],
+      despNaoOper:[-35137.39,188.28,-8034.92,0,-1600.00,-11420.59,0,0,-46198.00,-10667.69,0,0],
+      custoPecas:[-82890.32,-104756.27,-96025.65,-91997.14,-129977.50,-149088.48,-150239.50,-88357.52,-144936.48,-213541.85,-210151.61,-177925.87],
+      pecas:[274349.49,330967.31,321702.27,284352.59,396590.54,461012.47,473671.69,315672.94,440345.84,588756.81,570126.62,508972.80],
+      despFuncionamento:[-3613.06,-6743.54,-4688.89,-3950.00,-3122.52,-2953.82,-3226.10,-3337.29,-3847.00,-3796.80,-5662.31,-6710.36],
+      oficina:[131033.61,141116.99,136349.21,148920.75,160939.32,169971.69,150781.69,166757.72,189691.20,222777.18,178809.13,239499.82],
+      custoOficina:[-30386.42,-31678.05,-31146.14,-41624.36,-42494.06,-46039.84,-31154.96,-48447.72,-41518.18,-55346.78,-42913.35,-66633.09],
+      da:[-12479.60,-12254.80,-12626.06,-12754.50,-13933.68,-18168.68,-18301.49,-18753.24,-19187.37,-19230.17,-19300.70,-19300.70],
+      custoTerceiros:[0,0,-2750.00,0,0,0,0,0,0,-63.52,0,-117.97],
+      rateioGrupo:[-45054.69,-48665.93,-52198.67,-50880.48,-61488.58,-56470.12,-67482.46,-64546.89,-58389.40,-62673.98,-54822.19,-57731.73],
+      irCsll:[0,0,-180526.94,0,0,-195652.54,0,0,-344448.75,0,0,-393105.62],
+      vendaVN:[1589594.72,1674313.90,1860150.00,1744890.00,2272041.23,2755970.43,2308760.00,2738371.90,2997402.00,2968890.00,3213910.00,2591670.00],
+      despNaoDedutiveis:[0,0,-13240.00,0,-1500.00,0,0,-10200.00,0,-3744.00,-7020.00,-12636.00]
+    }},
+    dreDetAnt: {'ROYAL': {
+      folha:[-78838.91,-86761.65,-83597.74,-97500.58,-96953.61,-104738.51,-99014.17,-105424.34,-100543.06,-120158.66,-94798.67,-118905.11],
+      receitasDiversas:[0,0,0,26160.89,19000.00,36702.70,6549.87,6088.01,0,6770.25,0,49804.45],
+      servProf:[-6155.85,-7607.49,-7562.15,-6420.99,-6596.54,-7196.54,-7046.54,-13983.68,-7574.04,-7074.04,-8659.38,-7923.95],
+      despFuncionamento:[-4421.22,-3665.58,-4658.84,-4033.69,-3812.18,-3246.07,-3283.54,-3461.73,-3236.02,-4026.49,-3818.35,-4726.54],
+      despComercial:[-33527.21,-48652.53,-44422.29,-58769.54,-46602.11,-35765.49,-36909.06,-57760.91,-110392.77,-121784.86,-65121.95,-98597.31],
+      despGeraisFunc:[-6212.79,-13138.56,-1241.96,-11063.86,-9857.99,-5227.47,-9965.75,-8429.49,-5886.30,-5847.52,-5632.87,-8981.52],
+      gastosFunc:[-13082.45,-10111.91,-10202.18,-13210.54,-10946.11,-2357.17,-22658.28,-12527.35,-17145.80,-20899.20,-3697.98,-14902.61],
+      comissoes:[18003.39,500.00,6727.81,4592.21,2672.69,16364.05,15135.32,17595.14,15196.77,6619.83,29046.97,18722.86],
+      recFin:[19.09,202.12,27109.20,47.75,22.22,1080.22,11319.13,47.71,25.63,113.77,2999.92,135812.59],
+      taxasImpostos:[-2449.20,-1312.19,-1976.01,-10227.94,-2154.90,-2023.83,-2627.62,-2134.58,-1335.30,-2585.90,-1800.85,-2110.00],
+      despFin:[-11221.20,-51727.54,-14599.87,-17108.33,-45654.37,-9817.53,-11532.21,-9067.24,-9660.52,-14948.25,-15405.35,-13553.18],
+      receitasNaoOper:[1981.83,0,668.55,23000.00,27500.00,24000.00,28500.00,0,278.66,48890.00,557.33,26000.00],
+      impostosVenda:[-65628.59,-50534.85,-59397.15,-64322.85,-61699.50,-74877.87,-85488.61,-82002.38,-83026.29,-77817.35,-76452.86,-94206.09],
+      vendaVU:[255590.00,54790.00,83190.00,195660.00,121470.00,26500.00,220480.00,138820.00,82500.00,114990.00,157660.00,82500.00],
+      devolucoes:[-44863.30,-39222.77,-11289.07,-40101.50,-36160.30,-64526.56,-89932.63,-33873.50,-8145.37,-13934.31,-40536.18,-88186.22],
+      custoVU:[-223900.00,-42500.00,-67000.00,-156000.00,-81000.00,-23000.00,-194000.00,-107500.00,-66490.00,-82000.00,-120300.00,-55890.00],
+      despGerais:[-4229.25,-3060.77,-3231.75,-5328.58,-2754.77,-3880.77,-3503.68,-5397.03,-2362.58,-5989.57,-4340.39,-4708.58],
+      manutencao:[0,-34.50,-4267.30,-72.70,-16333.48,-1899.39,-2833.91,-5772.73,-200.00,-1201.56,-7030.00,-16374.31],
+      outrasDesp:[-1819.47,-833.47,-976.41,-857.39,-317.62,-853.99,-974.63,-1484.65,-306.64,-2497.22,-770.06,-1695.13],
+      despNaoOper:[0,0,0,-33930.99,-25641.06,515.82,-20092.11,-14148.77,0,-30940.28,0,-13808.70],
+      alugueis:[-9075.00,-10475.00,-9175.00,-10475.00,-9175.00,-9825.00,-9825.00,-9825.00,-9825.00,-10475.00,-9681.37,-10981.37],
+      custoPecas:[-49434.94,-45516.48,-57505.11,-55057.08,-48721.70,-61948.19,-67494.43,-59546.91,-75994.74,-70992.92,-65001.60,-68435.86],
+      pecas:[163917.96,141933.86,161615.10,182428.45,173502.15,208729.27,236470.46,207379.18,241938.28,236471.28,212899.95,227860.93],
+      oficina:[138123.43,99842.39,101979.09,99059.11,103782.91,116840.08,130217.78,151111.47,135572.93,125470.65,124101.42,129887.36],
+      custoOficina:[-36479.01,-29482.55,-27870.09,-25209.85,-26847.10,-28867.34,-33181.94,-38886.56,-36158.37,-26391.12,-30495.34,-30892.74],
+      custoTerceiros:[-2196.15,0,0,0,-617.09,0,0,0,0,0,0,0],
+      da:[-15602.13,-15993.51,-14940.57,-14953.50,-14673.80,-14673.80,-13811.53,-13415.16,-13415.16,-13415.16,-12785.24,-12785.24],
+      rateioGrupo:[-27096.97,-29950.32,-32973.23,-36479.06,-34945.47,-36882.59,-44682.05,-45324.04,-50240.67,-44573.74,-39169.05,-42036.61],
+      irCsll:[0,0,-14224.02,0,0,-34836.86,0,0,-62690.04,0,0,-125819.91],
+      vendaVN:[593840.00,430840.00,704620.00,665789.00,665170.00,1274540.00,1324506.00,711230.00,1155589.86,1510255.00,907340.00,1278502.00],
+      custoVN:[-421381.12,-316086.07,-599065.87,-491637.01,-555830.49,-1045302.59,-1057966.19,-569302.05,-968951.12,-1271253.18,-747754.85,-1049954.52],
+      despNaoDedutiveis:[-12300.00,-7230.00,0,0,0,0,0,0,-1650.00,0,0,0]
+    }},
+    balDet: {'ROYAL': {
+      caixaBancos:[127623.42,119086.50],
+      aplicacoesFinanceiras:[135958.56,124978.10],
+      contasReceber:[4299198.00,752973.18],
+      cartoesReceber:[1458842.24,912843.24],
+      financiamentosReceber:[59788.31,10727.90],
+      adiantForn:[1618627.64,842520.93],
+      outrosAdiant:[13707.46,10264.60],
+      outrosCreditos:[53275.40,22082.77],
+      impostosRecuperar:[49498.78,4958.60],
+      estVN:[2580788.08,1349235.57],
+      estVU:[412950.00,128200.00],
+      estPecas:[796080.65,348918.89],
+      instalacoes:[42118.56,42118.56],
+      veiculos:[534631.75,200416.92],
+      maquinas:[306885.44,220183.22],
+      computadores:[52188.95,39965.04],
+      moveis:[112200.53,94612.70],
+      construcoes:[159341.26,0],
+      benfeitorias:[434013.73,434013.73],
+      deprecAcum:[-644552.29,-494024.02],
+      floorVN:[2029958.20,1345292.47],
+      floorPecas:[9982.22,166800.44],
+      fornecDiv:[589253.48,160112.88],
+      financiamentos:[247333.31,0],
+      obrigSociais:[163702.65,79388.98],
+      obrigTrib:[475110.81,182974.53],
+      adiantCliente:[4604988.28,910211.68],
+      provisoes:[138466.82,89704.23],
+      outrasContas:[164443.79,53866.61],
+      lucrosPagar:[2423864.34,0],
+      capitalSocial:[1500000.00,1380000.00],
+      reservasLucros:[0,539662.04],
+      reservasIncentivos:[256062.57,256062.57]
+    }},
+    mov: {'ROYAL': {
+      contasReceber:[252421.56,146138.37,119594.70,381919.72,-41660.35,985112.49,-17975.39,252627.27,-117721.14,806971.73,925028.72,-146232.86],
+      adiantForn:[-67022.04,45959.97,-119881.81,434510.38,-237282.30,194159.57,-16079.05,76970.28,467103.42,-107826.01,213261.10,-107766.80],
+      impostosRecuperar:[250.85,-3666.81,-340.12,24987.05,6380.35,-680.85,-9047.51,5371.18,11237.10,6059.77,38237.77,-34248.60],
+      outrosAdiant:[-5392.97,14076.58,-1828.82,4811.27,1520.63,417.35,-18.04,777.87,-4875.63,-3717.10,30743.32,-33071.60],
+      fornecDiv:[85345.37,119431.19,-112404.11,34668.62,75881.87,-18344.24,111248.87,70442.38,-44068.08,8699.48,1394.69,96844.56],
+      obrigSociais:[14698.61,-3585.94,11564.57,-1684.96,22667.85,2624.14,-10136.91,16080.63,11300.90,-2081.67,3428.61,19437.84],
+      obrigTrib:[-57226.78,-20448.62,149767.42,-98180.16,-27581.31,132891.37,-56000.47,-87037.50,282131.26,-106687.27,-125341.48,305849.82],
+      capitalSocial:[0,0,0,0,0,0,0,0,120000.00,0,0,0],
+      aplicacoesFinanceiras:[-105986.86,9049.68,223733.68,-184420.30,52537.80,8460.35,102810.29,12920.98,-45170.63,-188148.61,103349.11,21844.97],
+      estPecas:[45873.23,1141.80,-14902.83,182857.38,40700.04,1243.31,-36378.97,61066.57,111919.32,37241.70,183122.62,-166722.41],
+      estVN:[-218636.24,165421.35,365822.22,-181591.02,441187.14,-145731.85,254921.77,-58922.89,-50382.39,270394.75,199413.66,189656.01],
+      veiculos:[-42427.24,27564.98,24546.17,0,20709.06,260421.91,0,20585.83,22962.04,-19395.98,19248.06,0],
+      financiamentos:[0,0,0,0,0,275333.33,-4666.67,-4666.67,-4666.67,-4666.67,-4666.67,-4666.67],
+      cartoesReceber:[54784.83,69575.45,29859.24,29940.86,40585.92,65241.38,67007.17,-3143.46,27429.59,99030.84,94704.33,-29017.15],
+      adiantCliente:[144444.06,212758.14,330424.33,36846.79,213606.30,679360.70,109308.36,110835.85,95728.79,548431.57,724993.08,488038.63],
+      caixaBancos:[238595.17,-215128.25,221913.97,-209585.27,20830.95,220856.06,-250350.87,108154.76,-162628.13,16735.02,14440.28,4703.23],
+      provisoes:[2319.29,4117.73,13871.09,12439.88,15210.45,125686.04,-101859.89,-108756.24,12098.12,11029.95,15557.40,47048.77],
+      outrasContas:[56913.08,23523.15,-50942.68,104876.43,-77154.66,35817.61,-45435.80,7653.37,7092.85,-33318.65,98295.70,-16743.22],
+      floorPecas:[-1348.54,-46600.60,-26480.78,113398.51,-41498.96,64760.86,-22204.96,-39926.26,73252.62,33602.93,121890.26,-385663.30],
+      financiamentosReceber:[69541.46,-80185.29,19184.88,60390.95,-75958.19,36865.00,92433.00,-65705.22,72193.22,-110170.00,97762.00,-67291.40],
+      outrosCreditos:[-860.36,4279.13,22456.61,-9392.38,36569.13,-10797.21,2482.28,8455.72,-48870.78,-43.44,7795.18,19118.75],
+      estVU:[-7900.00,64990.00,83900.00,-81000.00,1000.00,79284.00,-25390.00,42293.00,-1050.00,36373.00,98750.00,-6500.00],
+      computadores:[0,0,0,0,2874.30,0,3234.73,3285.07,0,2829.81,0,0],
+      maquinas:[0,0,0,9839.71,26612.51,0,50250.00,0,0,0,0,0],
+      moveis:[0,0,0,7141.81,8746.02,0,0,1700.00,0,0,0,0],
+      floorVN:[-207796.99,-167507.53,577719.08,100340.95,32142.41,358866.88,-100695.95,165596.92,-152231.92,-19326.11,788028.83,-690470.84],
+      deprecAcum:[-1733.28,-13488.80,-13897.90,-14039.42,21361.20,-11847.97,-20151.83,-20649.62,-21128.00,-12446.87,-21252.89,-21252.89],
+      construcoes:[0,0,0,6240.00,41962.94,14628.49,53244.89,5862.70,2839.30,9935.98,507.96,24119.00],
+      lucrosPagar:[0,0,0,0,0,0,0,0,0,120000.00,-60000.00,2363864.34],
+      reservasLucros:[0,0,0,0,0,0,0,0,-120000.00,-180000.00,0,-239662.04],
+      prejuizosAcum:[0,0,354841.72,0,0,395943.22,0,0,676082.87,0,0,-1426867.81]
+    }},
+    movAnt: {'ROYAL': {
+      aplicacoesFinanceiras:[20898.97,139811.12,-120784.06,49394.75,-43015.08,-37861.13,6763.40,24782.33,60832.13,22021.92,-5836.89,7970.64],
+      adiantForn:[280484.63,342748.79,-23861.00,-126260.17,392308.78,-49197.36,-169201.98,96575.04,164152.44,-43791.66,72050.80,-93487.38],
+      impostosRecuperar:[45668.72,3.44,-251.71,58.78,30.71,-82.88,-40254.15,4929.67,-5159.57,98.26,7359.14,-7441.81],
+      outrosAdiant:[3179.45,1033.98,7609.90,4727.46,-3452.39,3619.44,1476.94,-8093.89,-731.47,1078.83,-1673.82,1490.17],
+      obrigSociais:[63764.74,-4689.95,5242.90,8108.63,-753.61,4169.92,192.66,8029.28,-11344.98,14368.82,1107.88,-8807.31],
+      obrigTrib:[25482.68,-171.33,20862.80,17330.24,-9372.66,27906.36,-4942.31,-21158.16,82971.09,-14637.57,-58654.75,117358.14],
+      capitalSocial:[1380000.00,0,0,0,0,0,0,0,0,0,0,0],
+      contasReceber:[398673.18,-175982.96,46915.76,42591.53,3193.27,30110.90,359170.60,-360465.73,180414.13,185641.60,10309.78,32401.12],
+      estVN:[1021059.44,20126.27,13118.72,-163253.25,281583.96,-207944.08,2483.23,357950.83,-635559.54,48658.64,163760.01,447251.34],
+      veiculos:[327613.35,25870.58,0,-19395.98,-25220.30,-20387.70,-26207.03,0,0,-41648.10,0,-20207.90],
+      fornecDiv:[120578.35,-23927.09,-16932.86,1160.50,24794.67,-25972.52,33804.30,36386.03,32395.30,-5980.09,-25336.47,9142.76],
+      cartoesReceber:[656872.83,-460457.85,116276.06,141330.40,-231869.54,235547.20,162463.10,112809.81,71717.46,119392.50,21146.21,-32384.94],
+      adiantCliente:[623136.37,37308.41,9925.80,104964.29,-2951.77,-10272.48,231024.39,-82045.17,80086.31,2871.42,172596.11,-256432.00],
+      caixaBancos:[299543.93,-67370.38,9961.97,-16489.60,-23803.92,-521.93,-7752.28,56184.71,-113853.64,52249.84,29284.37,-98346.57],
+      provisoes:[78463.83,10963.52,-5929.26,11067.67,8934.35,-9425.75,5881.50,-1756.90,11638.06,14434.87,9743.15,-44310.81],
+      estPecas:[288027.90,-14555.45,30360.43,-42788.68,26194.36,29722.43,-78859.19,71253.44,-19045.54,-12257.55,65945.70,4921.04],
+      outrasContas:[29587.97,3191.35,3157.91,3301.83,-1595.55,47457.59,18223.95,-23838.01,63739.67,119.70,-64053.87,-25425.93],
+      outrosCreditos:[25268.27,22679.24,-24455.91,2621.77,5906.03,-9327.30,10365.87,4242.49,7290.52,-23000.01,0,491.80],
+      floorPecas:[119082.80,-54487.56,84484.66,-60652.83,-59032.09,72062.94,-100888.62,97758.37,40174.38,-35855.91,59564.50,4589.80],
+      financiamentosReceber:[6626.56,20653.00,-14093.03,-8241.66,985.00,25678.67,45365.25,-20658.79,31387.84,-3866.43,-14937.42,-58171.09],
+      estVU:[31500.00,47500.00,154000.00,-54000.00,-65000.00,58500.00,-46010.00,-78500.00,69700.00,50700.00,-50800.00,10610.00],
+      maquinas:[209085.58,0,7579.28,1710.00,1808.36,0,0,0,0,0,0,0],
+      floorVN:[1159047.96,-11645.02,63230.97,-315668.60,360513.47,-168268.71,-128915.53,199708.31,-505597.42,274649.46,99438.92,318798.66],
+      deprecAcum:[-370577.50,-17608.60,-16448.33,-13553.15,-16154.38,4749.14,-9089.30,-14767.44,-14767.44,-4059.62,-14073.30,-7674.10],
+      reservasLucros:[8087.20,0,0,0,0,0,0,0,0,0,0,531574.84],
+      reservasIncentivos:[181321.61,0,50884.77,0,0,23856.19,0,0,0,0,0,0],
+      prejuizosAcum:[-35008.93,0,0,0,0,112890.38,0,0,191807.75,0,0,-269689.20],
+      instalacoes:[42118.56,0,0,0,0,0,0,0,0,0,0,0],
+      computadores:[39965.04,0,0,0,0,0,0,0,0,0,0,0],
+      moveis:[94612.70,0,0,0,0,0,0,0,0,0,0,0],
+      benfeitorias:[434013.73,0,0,0,0,0,0,0,0,0,0,0]
+    }},
+    nat: {'ROYAL': {
+      depD:[-13736.50,-13488.80,-13897.90,-14039.42,-15338.80,-20005.47,-20151.83,-20649.62,-21128.00,-21175.16,-21252.89,-21252.89],
+      imobC:[-42427.24,0,0,0,-36700.00,-19578.09,0,0,0,-19395.98,0,0],
+      imobD:[0,27564.98,24546.17,23221.52,137604.83,294628.49,106729.62,31433.60,25801.34,12765.79,19756.02,24119.00],
+      acumD:[12003.22,0,0,0,36700.00,8157.50,0,0,0,8728.29,0,0]
+    }},
+    fcCont: {'ROYAL': {
+      lucro:[174160.01,114040.64,66641.07,159904.68,195403.20,40635.34,371435.89,321427.56,-16780.58,468141.03,441530.80,-152337.34],
+      depD:[-13736.50,-13488.80,-13897.90,-14039.42,-15338.80,-20005.47,-20151.83,-20649.62,-21128.00,-21175.16,-21252.89,-21252.89]
+    }},
+    saldoIni: {'ROYAL':244064.60},
+    dreDesc: {
+      alugueis: {
+        'ALUGUEIS DE IMOVEIS':[-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-9581.37,-18150.00,-18150.00],
+        'ALUGUEIS DIVERSOS':[0,-6873.00,-1875.00,-17875.00,-750.00,-750.00,-750.00,-750.00,-1170.00,-750.00,-750.00,-1400.00]
+      },
+      comissoes: {
+        'BONIFICACAO S/ FINANCIAMENTOS':[0,0,0,0,0,0,0,2520.54,0,11141.90,5450.03,6632.53],
+        'COMISSAO S/ FINANCIAMENTOS':[8173.65,14312.14,29012.03,13485.78,16477.71,15363.49,9951.21,16502.94,17320.73,17208.69,18845.49,9598.26]
+      },
+      custoOficina: {
+        'CUSTO MERC. VENDIDAS - CMV':[-30386.42,-31678.05,-31146.14,-41624.36,-42494.06,-46039.84,-31154.96,-48447.72,-41518.18,-55346.78,-42913.35,-66633.09]
+      },
+      custoPecas: {
+        'CUSTO MERC. VENDIDAS - CMV':[-82890.32,-104756.27,-96025.65,-91997.14,-129977.50,-149088.48,-150239.50,-88357.52,-144936.48,-213541.85,-210151.61,-177925.87]
+      },
+      custoTerceiros: {
+        'SERVICOS PREST. POR TERCEIROS':[0,0,-2750.00,0,0,0,0,0,0,-63.52,0,-117.97]
+      },
+      custoVN: {
+        'CUSTO MERC. VENDIDAS - CMV':[-1240730.86,-1396716.64,-1574746.69,-1390391.92,-1695707.41,-2248714.49,-1910487.82,-2283729.05,-2418001.74,-2388597.26,-2634990.50,-2082414.48]
+      },
+      custoVU: {
+        'CUSTO MERC. VENDIDAS - CMV':[-104700.00,-166400.00,-77600.00,-191790.00,-73000.00,-157340.00,-171990.00,-238207.00,-198998.99,-184877.00,-116380.00,-199300.00]
+      },
+      da: {
+        'DEPRECIACAO':[-12479.60,-12254.80,-12626.06,-12754.50,-13933.68,-18168.68,-18301.49,-18753.24,-19187.37,-19230.17,-19300.70,-19300.70]
+      },
+      despComercial: {
+        'COMISSOES S/ VENDAS':[-35298.89,-32789.36,-44132.69,-58814.70,-54630.82,-49032.86,-82256.69,-86526.10,-14806.93,-89861.58,-35970.11,-77533.30],
+        'DESPESAS C/ VENDAS':[-1791.52,-2839.38,-1746.54,-7048.26,-3016.53,-3029.88,-3952.89,-4774.19,-5510.18,-6643.61,-2002.14,-2597.41],
+        'DESPESAS VENDAS ONLINE':[-8961.74,-6654.01,-7237.63,-7862.94,-5409.16,-6556.73,-7369.83,-6010.64,-7474.14,-3848.27,-2345.58,-6332.81],
+        'EMPLACAMENTOS':[-6038.59,-9709.34,-6112.70,-3818.18,-9220.35,-11498.26,-9660.16,-16864.82,-16450.60,-13135.68,-22604.78,-30930.37],
+        'EVENTOS E EXPOSICOES':[0,-5000.00,-5000.00,-5000.00,0,0,-460.00,0,-400.00,0,-100.00,0],
+        'FRETES DIVERSOS':[-48540.19,-84694.01,-21594.36,86.29,-9790.02,-16231.24,-14266.48,-12592.84,-445.63,-203.74,-46.70,-76.19],
+        'MIDIA COOPERADA':[0,0,-4023.17,-6016.72,-5764.37,-5500.00,-5164.70,-154.27,-8566.79,-226.87,-317.62,0],
+        'MIDIA NAO COOPERADA':[-453.75,-4311.37,-4418.12,-5434.57,-453.75,-453.75,-2653.75,-2653.75,-2450.25,-7887.08,-453.75,-2450.25],
+        'PREPARACAO E REVISAO DE ENTREGA':[-6900.72,-17968.25,-12205.77,-5296.04,-5294.08,-15018.50,-2567.91,-14244.38,-23981.01,-22824.50,-20032.87,-21096.52],
+        'SERVICOS GRATUITOS E CORTESIAS':[0,-476.51,-1350.00,0,-14710.00,-19672.99,0,-7477.27,0,-3459.80,0,0]
+      },
+      despFin: {
+        'DESCONTOS CONCEDIDOS':[-2500.00,-1.34,-1201.90,-1.10,-2156.12,-17.51,-788.20,-639.96,-5276.83,-44.73,-2532.64,-11578.35],
+        'FLOOR PLAN COMPRAS A PRAZO':[-2349.71,-938.58,-1787.65,-290.98,-2085.88,-1630.80,-940.65,-1001.58,-1613.48,-596.75,-1428.49,-1579.82],
+        'I.O.F':[-4155.54,-7877.93,-6186.15,-5433.86,-11224.49,-10134.70,-14749.05,-10008.41,-12658.37,-15166.66,-11088.57,-16158.30],
+        'JUROS PASSIVOS':[-343.08,-1039.49,-896.55,-354.43,-700.94,-1396.01,-97.80,-781.48,-1864.73,-53.91,-1250.72,-2559.88],
+        'JUROS S/ FINANCIAMENTOS E EMPRESTIMOS':[0,0,0,0,0,-2495.10,-2495.10,-2495.10,-2495.10,-2495.10,-2495.10,-2495.10],
+        'TAXAS BANCARIAS':[-1120.05,-1341.84,-1350.63,-1332.84,-876.84,-1234.18,-765.78,-828.12,-721.21,-719.51,-1189.09,-950.02],
+        'TAXAS CARTAO DE CREDITO':[-5661.53,-5251.12,-6525.85,-6756.99,-6519.61,-7082.17,-7348.94,-8058.69,-7184.97,-7608.86,-7741.93,-8689.73]
+      },
+      despFuncionamento: {
+        'AGUA':[-206.46,-306.96,-304.16,-306.96,-176.88,-319.74,-271.64,0,0,0,-1466.04,-558.98],
+        'ENERGIA ELETRICA':[-2764.80,-5973.28,-3923.13,-3360.17,-2476.06,-2160.94,-2264.20,-3054.42,-3335.85,-3215.24,-3922.42,-4523.63],
+        'INTERNET':[-417.65,-339.25,-338.85,-259.90,-339.25,-338.89,-436.74,-259.90,-348.05,-259.90,-273.85,-1301.84],
+        'TELEFONE':[-224.15,-124.05,-122.75,-22.97,-130.33,-134.25,-253.52,-22.97,-163.10,-321.66,0,-325.91]
+      },
+      despGerais: {
+        'COMBUSTIVEIS E LUBRIFICANTES':[-1735.49,-3030.99,-2529.80,-3912.97,-2463.46,-3164.22,-3248.80,-1462.13,-6440.21,-4711.96,-2086.93,-7599.75],
+        'MATERIAL DE CONSUMO E FERRAMENTAS':[-652.90,-68.06,-4045.42,-2303.95,-1585.57,-3825.96,-2115.88,-2347.97,-1849.88,-3641.61,-458.83,-3139.48],
+        'MATERIAL DE ESCRITORIO':[-134.88,-777.81,-1996.58,-1201.93,-298.73,-3365.02,-436.89,-904.15,-1369.32,0,-599.05,-726.73],
+        'MATERIAL DE LIMPEZA':[-556.29,-592.47,-629.94,0,-515.55,-559.00,-936.82,-1325.71,-776.25,-1114.89,0,-980.87],
+        'MATERIAL DIVERSOS':[-188.99,-350.00,-49.80,0,0,-208.00,-85.60,0,0,-49.90,0,-97.50]
+      },
+      despGeraisFunc: {
+        'ASSINATURAS DIVERSAS':[-279.44,-424.40,-527.63,-242.72,-545.52,-383.85,-424.93,-494.27,-486.55,-458.29,-223.75,-847.87],
+        'COPA/COZINHA/REFEITORIO':[-198.30,-1337.19,-891.81,-744.34,-1683.56,-1027.15,-780.64,-119.00,-1283.52,-711.58,-782.02,-743.47],
+        'CORREIOS E DESPACHOS':[-125.80,-574.80,-342.30,-608.50,-535.75,-1117.18,-365.88,-69.30,-701.60,-869.60,-268.00,-507.38],
+        'GRAFICA E IMPRESSOS':[0,0,-680.00,-490.72,0,-530.00,-270.00,0,0,0,0,-70.00],
+        'HOSPEDAGEM':[-1536.00,0,0,0,0,0,0,0,0,-3033.30,0,-1369.20],
+        'MAQUINAS/MOVEIS/EQUIP. NAO IMOBILIZADOS':[-1111.41,0,0,0,-1876.14,-1510.44,-937.85,-1460.70,0,-660.00,0,-3341.67],
+        'PROCESSAMENTO DE DADOS':[-1308.25,-4004.38,-7597.91,-4627.93,-4052.72,-4513.35,-5065.47,-6633.45,-5176.30,-5698.03,-10657.07,-22772.41],
+        'VIAGENS E REPRESENTACOES':[-1038.18,-4601.12,-4054.91,-226.36,-87.61,-96.55,-252.35,-520.90,-1819.88,-3762.72,-774.92,0]
+      },
+      despNaoDedutiveis: {
+        'BRINDES':[0,0,-13240.00,0,-1500.00,0,0,-10200.00,0,-3744.00,-7020.00,-12636.00]
+      },
+      despNaoOper: {
+        'BAIXA POR DETERIORACAO':[-4713.37,188.28,-8034.92,0,0,0,0,0,0,0,0,0],
+        'PERDA NA ALIENACAO ATIVOS':[-30424.02,0,0,0,0,-11420.59,0,0,0,-10667.69,0,0],
+        'PERDAS E ROUBOS':[0,0,0,0,-1600.00,0,0,0,-46198.00,0,0,0]
+      },
+      devolucoes: {
+        'DEVOLUCAO DE VENDAS':[-110543.25,-17643.47,-19575.21,-92512.65,-254015.87,-62727.53,-48285.93,-28056.73,-188027.70,-146486.66,-121564.01,-155701.99]
+      },
+      folha: {
+        'ADICIONAIS S/ PAGAMENTO':[-1000.00,-152.00,-1152.00,-1152.00,-1352.00,-1152.00,-158.54,-68.70,-105.69,-158.53,-31.71,-142.68],
+        'AVISO PREVIO E INDENIZACOES':[-3133.42,-506.80,-9.80,0,0,-1585.36,0,-3000.00,0,0,-1585.36,0],
+        'COMISSOES':[-25951.79,-28528.37,-25856.28,-29347.59,-36910.83,-38959.60,-33512.16,-40386.44,-42894.14,-39331.27,-41382.65,-37637.99],
+        'FGTS':[-3628.58,-4113.70,-5090.83,-4975.60,-5677.81,-5999.13,-5887.47,-6795.02,-6994.18,-6773.86,-6995.94,-6847.20],
+        'GRATIFICACOES':[-1278.98,-1420.68,-1340.30,-1300.41,-1642.73,-2146.10,-1778.64,-1903.34,-3864.41,-2101.59,-2267.47,-3882.69],
+        'HONORARIOS/PRO-LABORE':[-8261.32,-8167.00,-8167.00,-8167.00,-8167.00,-8167.00,-8167.00,-8167.00,-8167.00,-8167.00,-10666.95,-10667.00],
+        'HORAS-EXTRAS':[-546.79,0,0,0,-225.96,-443.21,0,0,-67.20,-18.66,-223.18,-32.06],
+        'INSS':[-13098.46,-13196.77,-16579.21,-16107.28,-19157.02,-20075.53,-19349.30,-20493.13,-21990.83,-21171.76,-22456.63,-22348.04],
+        'INSS CPP MEI':[0,0,0,0,0,-287.00,-187.00,-69.00,-263.00,-239.00,-79.00,-158.00],
+        'MULTA RESCISORIA - FGTS':[-2005.82,-562.53,0,-679.13,-184.38,-424.11,0,-2225.52,0,0,-759.88,0],
+        'PREMIOS':[-56958.31,-26401.33,-27053.21,-29614.74,-36691.21,-63969.91,-26786.99,-32004.24,-44408.04,-45801.89,-43400.69,-38651.99],
+        'PROVISAO 13º SALARIO':[-4882.86,-4474.88,-5175.48,-5385.13,-5386.65,-6286.27,-6028.50,-12857.56,-7071.27,-6663.68,-7172.70,-32877.33],
+        'PROVISAO FERIAS':[12506.42,12889.05,11785.79,10600.22,10989.69,-68955.37,15080.20,6017.04,-10037.37,-9860.33,-10819.41,-71404.90],
+        'PROVISAO FGTS 13º SALARIO':[-386.97,-354.44,-414.01,-430.75,-430.94,-499.36,-478.66,-1039.00,-589.81,-557.96,-594.09,-1008.04],
+        'PROVISAO FGTS FERIAS':[1007.00,1031.10,942.90,848.06,879.19,-5511.69,1209.31,488.08,-799.17,-784.99,-857.00,-7346.12],
+        'PROVISAO INSS 13º SALARIO':[-1333.02,-1221.64,-1415.09,-1470.14,-1470.53,-1716.18,-1645.80,-3510.10,-1930.44,-1819.20,-1964.26,-562.73],
+        'PROVISAO INSS FERIAS':[4435.88,3864.75,3510.63,3245.46,3345.01,-18515.94,4455.00,2383.06,-2386.03,-2309.03,-2606.73,-27454.90],
+        'SALARIOS':[-30955.57,-26378.24,-33584.49,-33636.27,-33212.01,-33478.11,-35537.72,-38856.72,-37267.31,-38361.19,-41737.31,-45671.75]
+      },
+      gastosFunc: {
+        'ASSISTENCIA MEDICA E OCUPACIONAL - PCMSO':[-593.60,-335.80,-549.80,-359.80,-338.80,-374.30,0,-336.00,-929.53,0,0,-900.70],
+        'CONVENIOS':[-8656.63,-16919.36,-2591.85,-12031.04,-23388.39,-2681.74,-3299.62,-2976.52,-26785.26,-16185.62,3190.97,-9286.42],
+        'GASTOS DIVERSOS':[-2773.67,-250.00,0,0,-489.00,0,0,0,0,0,0,-800.00],
+        'LANCHES E REFEICOES':[-1226.00,-544.91,-987.69,-424.67,-731.36,-1050.49,-772.74,-859.99,-995.71,-817.23,-591.87,-932.77],
+        'TREINAMENTOS':[-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00,-1000.00],
+        'UNIFORMES':[-8347.46,-534.06,-515.81,-562.62,-1338.23,0,-2925.76,-13033.97,-170.61,0,-168.79,-457.83],
+        'VALE-TRANSPORTE':[-632.55,-160.59,-1022.87,-827.17,-1063.93,-1046.53,-917.73,-733.53,-633.40,-683.00,294.19,-971.75]
+      },
+      impostosVenda: {
+        'COFINS CUMULATIVA':[-836.70,-992.70,-611.70,-1100.10,-539.40,-814.80,-1133.70,-1747.77,-1305.00,-802.89,-630.30,-1242.90],
+        'COFINS NAO-CUMULATIVO':[-23098.87,-26614.06,-27230.83,-23223.00,-30026.49,-33851.30,-32276.58,-26846.80,-36534.37,56933.04,-19577.30,-39754.36],
+        'COFINS NAO-CUMULATIVO - OUTROS':[-5188.18,-5.94,-9043.58,-2887.28,-473.14,-268.53,-592.75,-106.22,-1044.42,-2079.07,-1187.48,-13949.00],
+        'ICMS':[-22595.47,-27035.16,-25325.93,-28800.57,-32376.63,-35882.28,-31527.20,-27195.38,-34272.60,-41932.43,-37813.80,-39765.22],
+        'ICMS PARTILHA':[-34955.87,-41234.95,-40454.93,-34402.92,-51403.57,-59874.06,-63613.40,-40389.53,-55499.14,-76490.10,-73452.28,-66355.00],
+        'ISSQN':[-2691.82,-2868.28,-3708.37,-2786.40,-3478.35,-3258.35,-4002.18,-3652.62,-4352.86,-5289.94,-4285.47,-4647.67],
+        'PIS CUMULATIVO':[-181.29,-215.09,-132.54,-238.38,-116.88,-176.55,-245.64,-378.69,-282.75,-173.96,-136.57,-269.31],
+        'PIS NAO-CUMULATIVO - OUTROS':[-1126.38,-1.29,-1963.41,-626.84,-102.72,-58.30,-128.69,-23.06,-226.74,-451.38,-257.80,-3028.41],
+        'PIS NÃO-CUMULATIVO':[-5015.74,-5779.00,-5912.28,-5041.68,-6518.45,-7348.89,-7006.27,-5828.31,-7931.12,5470.61,-8186.01,-8630.42]
+      },
+      irCsll: {
+        'PROVISAO CSLL S/ LUCRO LIQUIDO':[0,0,-49374.77,0,0,-53378.61,0,0,-92765.85,0,0,-105645.60],
+        'PROVISAO IRPJ S/ LUCRO LIQUIDO':[0,0,-131152.17,0,0,-142273.93,0,0,-251682.90,0,0,-287460.02]
+      },
+      manutencao: {
+        'MANUTENCAO DE EDIFICIOS E INSTALACOES':[-15354.87,-569.97,-3214.00,-8480.69,-9988.93,-6465.00,-1700.00,-3085.00,-1396.21,-3276.07,-7260.00,-2044.06],
+        'MANUTENCAO DE MAQUINAS E EQUIPAMENTOS':[-2728.87,-1474.57,-250.00,-3370.00,-250.00,-400.30,-240.75,-12836.85,-308.55,0,0,-1361.03],
+        'MANUTENCAO DE MOVEIS E UTENSILIOS':[0,0,0,0,0,0,-1200.00,-750.00,0,0,0,0],
+        'MANUTENCAO E CONSERVACAO DE VEICULOS':[-772.68,-746.07,-4300.00,0,-5150.00,-740.00,0,0,0,0,0,0]
+      },
+      oficina: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[131033.61,141116.99,136349.21,148920.75,160939.32,169971.69,150781.69,166757.72,189691.20,222777.18,178809.13,239499.82]
+      },
+      outrasDesp: {
+        'ASSOCIACAO E CONTRIBUICAO':[-871.23,-261.23,-1446.75,-707.45,-1882.25,-1493.37,-1207.45,-1944.41,-2668.09,-1597.69,-834.41,-2759.69],
+        'CARTORIO':[-9.57,0,-9.57,-22.29,-9.57,0,0,-9.57,-41.43,-29.74,0,-43.59],
+        'DESPESAS INTERNAS':[0,0,0,0,0,0,0,0,-500.00,0,-150.00,0],
+        'PROCESSOS JUDICIAIS':[0,-3193.85,0,0,0,0,0,0,0,-2607.61,0,0],
+        'SEGUROS DE VIDA':[-637.94,-637.94,-637.94,-602.66,-664.40,-516.43,-507.61,-708.50,-708.50,-1243.49,0,-4002.45],
+        'SEGUROS S/ PATRIMONIO':[0,0,0,0,0,0,0,-2140.22,0,-2140.22,0,0]
+      },
+      pecas: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[274349.49,330967.31,321702.27,284352.59,396590.54,461012.47,473671.69,315672.94,440345.84,588756.81,570126.62,508972.80]
+      },
+      rateioGrupo: {
+        'DESPESAS RATEADAS':[-45054.69,-48665.93,-52198.67,-50880.48,-61488.58,-56470.12,-67482.46,-64546.89,-58389.40,-62673.98,-54822.19,-57731.73]
+      },
+      recFin: {
+        'DESCONTOS OBTIDOS':[62471.98,61.82,102961.45,6640.38,169.37,277.34,42.66,1363.60,99.58,729.36,122.14,183530.80],
+        'JUROS ATIVOS':[425.68,7.51,600.01,20.00,4033.33,0,7733.33,2.40,20.01,9739.74,8.06,0.23],
+        'RENDIMENTOS S/ APLIC. FINANCEIRAS':[17.88,8.80,13.00,22.99,22.86,31.01,23.34,31.67,50.14,22.77,6.90,8.42]
+      },
+      receitasDiversas: {
+        'BONUS/COMISSOES':[5350.00,0,15420.00,31200.00,2000.00,3225.00,0,0,13572.58,16864.28,15487.56,0],
+        'RECEITAS DIVERSAS':[0,0,0,542.35,0,0,59558.51,761.40,0,86976.64,0,0]
+      },
+      receitasNaoOper: {
+        'AVISO PREVIO REAVIDO':[126.66,3064.36,0,0,0,0,0,30.00,0,3211.23,1099.99,554.87],
+        'RECEITA ALIENACAO DE BENS':[47000.00,0,0,0,34300.00,22500.00,0,0,0,21500.00,0,0]
+      },
+      servProf: {
+        'SERVICOS DE CONSULTORIA E ASSESSORIA -PJ':[-2754.52,-490.00,-350.00,-560.00,-490.00,-350.00,-350.00,-350.00,-350.00,0,0,0],
+        'SERVICOS DE LIMPEZA - PJ':[-4799.89,-4799.89,-4799.89,-4799.89,-5327.88,-5327.88,-5327.88,-5327.88,-4835.05,-4835.05,-4835.05,-4835.05],
+        'SERVICOS DE SEGURANCA E VIGILANCIA - PJ':[0,-1370.90,-685.45,-685.45,-685.45,-685.45,-685.45,-7368.45,-622.05,-622.05,-622.05,-665.59],
+        'SERVICOS DIVERSOS - PF':[-3454.07,-4042.47,0,-6913.00,-6913.00,-14024.00,-14894.00,-19618.00,-17480.00,-10974.00,-766.00,-1755.00],
+        'SERVICOS DIVERSOS - PJ':[0,-2808.93,0,0,-598.50,0,-600.00,-600.00,-4985.04,-600.00,-1117.62,-4674.13],
+        'SERVICOS JURIDICOS':[0,0,0,0,0,0,0,-2833.34,-3025.04,-21040.64,0,-6201.35],
+        'SERVICOS PJ POR CONTRATO FIXO':[-1777.50,-777.50,-750.00,-1905.00,-1877.50,-1377.50,-1377.50,-906.00,-3136.31,-1493.74,-907.49,-5138.26]
+      },
+      taxasImpostos: {
+        'ICMS - DIFERENCA DE ALIQUOTA':[-260.37,-42.17,-982.50,-1756.40,-2113.83,-607.72,-7949.85,-899.02,-159.34,-990.28,-422.89,-714.16],
+        'ICMS - OUTROS':[-340.75,0,-0.01,0,-450.70,-191.25,0,0.04,0,-129.00,0,0],
+        'IMPOSTO TERRITORIAL E PREDIAL - IPTU':[-1099.16,-1099.16,-1099.16,-1099.15,-1099.15,-1099.15,-1099.15,-1099.15,-1099.15,-1099.15,-1099.15,-1099.15],
+        'TAXAS DIVERSAS':[-785.43,-541.65,-193.22,-974.28,-10402.28,-903.10,-165.75,-418.11,-678.79,-2407.68,-1757.66,-1213.52]
+      },
+      vendaVN: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[1589594.72,1674313.90,1860150.00,1744890.00,2272041.23,2755970.43,2308760.00,2738371.90,2997402.00,2968890.00,3213910.00,2591670.00]
+      },
+      vendaVU: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[132590.00,199490.00,97990.00,228460.00,90980.00,184500.00,209780.00,296466.00,308490.00,210630.00,137390.00,240480.00]
+      }
+    }
+    }
+  };
+
+  //: Anos disponíveis no seletor, mais recente primeiro.
+  var ANOS_DISPONIVEIS = ['2026','2025'];
+
+  var MESES, DRE_DET, DRE_DET_ANT, BAL_DET, MOV, MOV_ANT, NAT, FC_CONT, SALDO_INI, DRE_DESC;
+  function aplicarAno(ano){
+    var d = DADOS_ANO[ano];
+    MESES = d.meses; DRE_DET = d.dreDet; DRE_DET_ANT = d.dreDetAnt; BAL_DET = d.balDet;
+    MOV = d.mov; MOV_ANT = d.movAnt; NAT = d.nat; FC_CONT = d.fcCont;
+    SALDO_INI = d.saldoIni; DRE_DESC = d.dreDesc;
+  }
+  function anoAtual(){ return state.ano; }
+  function anoAnterior(){ return String(Number(state.ano) - 1); }
+  function mesFinalRotulo(){ return MESES[MESES.length - 1]; }
+  function mesFinalNum(){ return (MESES.length < 10 ? '0' : '') + MESES.length; }
+  function periodoRef(){ return mesFinalNum() + '/' + anoAtual(); }
+  function periodoRefAnt(){ return mesFinalNum() + '/' + anoAnterior(); }
+  function janAte(ano){ return 'Jan\u2013' + mesFinalRotulo() + '/' + ano; }
+
+  var EMPRESAS = [
+    {id:'KOBE',          nome:'KOBE',          cor:'#C3002F'},
+    {id:'MIT',           nome:'MIT',           cor:'#4A5568'},
+    {id:'ROYAL',         nome:'ROYAL',         cor:'#8C6239'},
+    {id:'RENAULT',       nome:'RENAULT',       cor:'#E0A400'},
+    {id:'MEGA STORE',    nome:'MEGA STORE',    cor:'#2F6F4E'},
+    {id:'MULT BOATS',    nome:'MULT BOATS',    cor:'#1B4965'},
+    {id:'OMODA',         nome:'OMODA',         cor:'#6B4C9A'},
+    {id:'CORRETORA',     nome:'CORRETORA',     cor:'#737373'},
+    {id:'MULT SOLUÇÕES', nome:'MULT SOLUÇÕES', cor:'#A0A0A0'}
+  ];
+
+  // DRE por EMPRESA e mês, Jan–Jun/2026 (consulta DAX agrupando lancamentos[DRE] pelos mesmos
+  // blocos que a ferramenta oficial relatorio_dre usa). Ordem: [RL, Custos, Despesas, Outras,
+  // Deprec, RecFin, DespFin, IR/CSLL] — todos já com o sinal econômico de VALOR_AJUSTADO.
+  var Z8 = [0,0,0,0,0,0,0,0];
+
+  // DRE acumulada Jan–Jun/2025 por EMPRESA (mesma consulta, período 202501–202506).
+
+  // Balanço por EMPRESA (saldo acumulado até o período). Ordem:
+  // [Disponibilidades, Valores a Receber, Estoques, Ativo Não Circ., Floor Plan, Fornecedores Diversos,
+  //  Empréstimos CP, Outras Obrigações, Empréstimos LP, Outros Passivos Não Circ., Patrimônio Líquido]
+
+
+  // ---- DRE DETALHADA do ANO ANTERIOR (Jan-Jun/2025), por EMPRESA e conta ----
+  // Mesma estrutura de DRE_DET. Base das comparacoes periodo a periodo: com ela o
+  // painel compara T1/26 com T1/25, e nao so o acumulado do ano.
+
+  // ---- DRE DETALHADA por EMPRESA e conta (Jan-Jun/2026) ----
+  // Uma consulta DAX agrupando lancamentos[DRE] por EMPRESA x conta x mes (197 linhas, sem truncamento).
+  // Valores no sinal bruto de VALOR_AJUSTADO: receitas positivas, custos/despesas negativos.
+  // A exibicao inverte o sinal das linhas subtrativas, igual a ferramenta oficial relatorio_dre —
+  // por isso um custo que veio positivo (estorno) aparece negativo no relatorio, e vice-versa.
+
+  var CAMPOS_DRE = ['vendaVN','vendaVU','pecas','oficina','comissoes','comSeguros','comConsorcios',
+    'comIntermediacao','devolucoes','impostosVenda','custoVN','custoVU','custoPecas','custoOficina',
+    'custoTerceiros','folha','despComercial','despGerais','manutencao','servProf','taxasImpostos',
+    'despFuncionamento','alugueis','despGeraisFunc','outrasDesp','gastosFunc','rateioGrupo',
+    'receitasDiversas',
+    'receitasNaoOper','despNaoDedutiveis','despNaoOper','da','recFin','despFin','irCsll'];
+
+  // ---- Drill-down da DRE: DESCRICAO_CONTA por conta da coluna DRE — exclusivo deste
+  // painel (só ROYAL, só a página da DRE). Consulta DAX única: GROUPBY por
+  // TRIM(DRE) x TRIM(DESCRICAO_CONTA) x mês, EMPRESA=ROYAL, 01/2026-06/2026
+  // (linhas variam, sem truncamento). Chave = mesmo campo JS da conta pai em
+  // CAMPOS_DRE/dreEstrutura; valor = descrição -> 6 meses (sinal bruto de
+  // VALOR_AJUSTADO, igual às contas pai — a mesma inversão de exibição se aplica).
+  // Não regenerado por atualizar_dados.py: para atualizar, rode a consulta acima
+  // filtrada em EMPRESA="ROYAL" e reescreva este bloco.
+
+  // Monta os 7 meses da DRE detalhada para a selecao atual, somando as empresas escolhidas.
+  // `fonte` permite ler o mesmo recorte no ano anterior (DRE_DET_ANT), que e a base
+  // das comparacoes periodo a periodo.
+  function detalheMeses(brand, fonte){
+    var ids = empresasDe(brand);
+    var base = fonte || DRE_DET;
+    return MESES.map(function(rot, i){
+      var o = { m: rot };
+      CAMPOS_DRE.forEach(function(k){
+        var t = 0;
+        ids.forEach(function(id){ var a = base[id] && base[id][k]; if (a) t += a[i]; });
+        o[k] = t;
+      });
+      o.rl = o.vendaVN+o.vendaVU+o.pecas+o.oficina+o.comissoes+o.comSeguros+o.comConsorcios+
+             o.comIntermediacao+o.devolucoes+o.impostosVenda;
+      o.custoTotal = o.custoVN+o.custoVU+o.custoPecas+o.custoOficina+o.custoTerceiros;
+      o.lucroBruto = o.rl + o.custoTotal;
+      o.despTotal = o.folha+o.despComercial+o.despGerais+o.manutencao+o.servProf+o.taxasImpostos+
+             o.despFuncionamento+o.alugueis+o.despGeraisFunc+o.outrasDesp+o.gastosFunc+
+             o.rateioGrupo;
+      o.outrasTotal = o.receitasDiversas+o.receitasNaoOper+o.despNaoDedutiveis+o.despNaoOper;
+      o.ebitda = o.lucroBruto + o.despTotal + o.outrasTotal;
+      o.ebit = o.ebitda + o.da;
+      o.lair = o.ebit + o.recFin + o.despFin;
+      o.lucro = o.lair + o.irCsll;
+      o.margemBruta = o.rl ? o.lucroBruto/o.rl : 0;
+      o.margemEbitda = o.rl ? o.ebitda/o.rl : 0;
+      o.margemLiq = o.rl ? o.lucro/o.rl : 0;
+      return o;
+    });
+  }
+
+
+  // ---- BALANCO DETALHADO por EMPRESA e conta ----
+  // Consulta DAX unica: saldo acumulado ate 06/2026 e ate 06/2025, por EMPRESA x conta (249 linhas).
+  // Cada valor e um par [jul/2026, jul/2025]. Sinal bruto de VALOR_AJUSTADO.
+
+  var CAMPOS_BAL = ['caixaBancos','aplicacoesFinanceiras','contasReceber','cartoesReceber',
+    'financiamentosReceber','adiantForn','outrosAdiant','outrosCreditos','impostosRecuperar',
+    'estVN','estVU','estPecas','realizavelLP','invLP','invPermanentes','terrenos','edificios',
+    'instalacoes','veiculos','maquinas','computadores','moveis','construcoes','benfeitorias',
+    'consorcios','aeronaves','deprecAcum','direitosConcessao','amortAcum','floorVN','floorVU',
+    'floorPecas','fornecDiv','emprestBancarios','emprestTerceiros','contaGarantida','financiamentos',
+    'notasComerciais','obrigSociais','obrigTrib','adiantCliente','provisoes','outrasContas',
+    'lucrosPagar','emprestFinancLP','outrosCredores','parcelamentosLP','adiantFuturaIntegr',
+    'capitalSocial','reservasCapital','reservasLucros','reservasIncentivos','prejuizosAcum',
+    'ajustesExercAnt'];
+
+  // Monta o Balanco da selecao atual (idx 0 = jul/2026, idx 1 = jul/2025), somando as empresas.
+  function balancoDe(brand, idx){
+    var ids = empresasDe(brand), o = {};
+    CAMPOS_BAL.forEach(function(k){
+      var t = 0;
+      ids.forEach(function(id){ var a = BAL_DET[id] && BAL_DET[id][k]; if (a) t += a[idx]; });
+      o[k] = t;
+    });
+    return subtotaisBal(o);
+  }
+
+  // Posição patrimonial no fim de um mês de 2026 (0=Jan … 5=Jun), reconstruída a
+  // partir do saldo de jun/26 descontando o movimento dos meses seguintes. O
+  // Balanço é uma foto: no modo trimestral cada coluna é o fechamento do trimestre.
+  // `ano`: 0 = corrente (parte de jun/26, desconta MOV), 1 = anterior (jun/25, MOV_ANT).
+  function balancoNoMes(brand, mesIdx, ano){
+    var ids = empresasDe(brand), o = {};
+    var idx = ano || 0;
+    var movimento = idx === 1 ? MOV_ANT : MOV;
+    CAMPOS_BAL.forEach(function(k){
+      var t = 0;
+      ids.forEach(function(id){
+        var a = BAL_DET[id] && BAL_DET[id][k];
+        if (a) t += a[idx];                     // saldo em jul do ano escolhido
+        var mv = movimento[id] && movimento[id][k];
+        if (mv) for (var j = mesIdx + 1; j < MESES.length; j++) t -= (mv[j] || 0);
+      });
+      o[k] = t;
+    });
+    return subtotaisBal(o);
+  }
+
+  function subtotaisBal(o){
+    o.disponibilidades = o.caixaBancos + o.aplicacoesFinanceiras;
+    o.valoresReceber = o.contasReceber + o.cartoesReceber + o.financiamentosReceber +
+      o.adiantForn + o.outrosAdiant + o.outrosCreditos + o.impostosRecuperar;
+    o.estoques = o.estVN + o.estVU + o.estPecas;
+    o.totalAtivoCirc = o.disponibilidades + o.valoresReceber + o.estoques;
+    o.investimentos = o.invLP + o.invPermanentes;
+    o.imobilizado = o.terrenos + o.edificios + o.instalacoes + o.veiculos + o.maquinas +
+      o.computadores + o.moveis + o.construcoes + o.benfeitorias + o.consorcios + o.aeronaves + o.deprecAcum;
+    o.intangivel = o.direitosConcessao + o.amortAcum;
+    o.totalAtivoNaoCirc = o.realizavelLP + o.investimentos + o.imobilizado + o.intangivel;
+    o.ativoNaoCirc = o.totalAtivoNaoCirc;
+    o.totalAtivo = o.totalAtivoCirc + o.totalAtivoNaoCirc;
+    o.floorPlan = o.floorVN + o.floorVU + o.floorPecas;
+    o.fornecedores = o.floorPlan + o.fornecDiv;
+    o.fornecDiversos = o.fornecDiv;
+    o.emprestFinanc = o.emprestBancarios + o.emprestTerceiros + o.contaGarantida +
+      o.financiamentos + o.notasComerciais;
+    o.outrasObrig = o.obrigSociais + o.obrigTrib + o.adiantCliente + o.provisoes +
+      o.outrasContas + o.lucrosPagar;
+    o.totalPassivoCirc = o.fornecedores + o.emprestFinanc + o.outrasObrig;
+    o.outrosPNC = o.outrosCredores + o.parcelamentosLP + o.adiantFuturaIntegr;
+    o.totalPassivoNaoCirc = o.emprestFinancLP + o.outrosPNC;
+    o.totalPL = o.capitalSocial + o.reservasCapital + o.reservasLucros +
+      o.reservasIncentivos + o.prejuizosAcum + o.ajustesExercAnt;
+    o.totalPassivo = o.totalPassivoCirc + o.totalPassivoNaoCirc;
+    o.totalPassivoPL = o.totalPassivo + o.totalPL;
+    o.check = o.totalAtivo - o.totalPassivoPL;
+    return o;
+  }
+
+
+  // ---- MOVIMENTO MENSAL do Balanco no ANO ANTERIOR (Jan-Jun/2025) ----
+  // Serve para reconstruir a posicao patrimonial no fim de cada trimestre de 2025,
+  // partindo do saldo de jul/25 e descontando os meses seguintes — o mesmo metodo
+  // usado em 2026. Sem isso o Balanco so compararia jul/26 com jul/25.
+
+  // ---- MOVIMENTO MENSAL do Balanco por EMPRESA e conta (Jan-Jun/2026) ----
+  // Consulta DAX unica (209 linhas): soma de VALOR_AJUSTADO dentro de cada mes.
+  // E a variacao do saldo no mes, que e o insumo do Fluxo de Caixa indireto.
+
+  // Separacao por NATUREZA (D/C), que a formula oficial usa para distinguir
+  // venda de ativos de aquisicoes, e para o add-back da depreciacao.
+
+  // ---- RESULTADO CONTABIL por EMPRESA e mes (insumo exclusivo do Fluxo de Caixa) ----
+  // Lucro Liquido e depreciacao (NATUREZA=D) apurados so com TIPO_LANCAMENTO=CONTABIL.
+  // A DRE do painel continua gerencial (todos os lancamentos); este bloco existe porque
+  // o Fluxo de Caixa precisa do resultado contabil para conciliar com o Balanco.
+
+  // Saldo de caixa em 31/12/2025 (acumulado desde 01/2024), ponto de partida do fluxo.
+
+  // Reproduz o Fluxo de Caixa indireto oficial (relatorio_fluxo_caixa) para a selecao atual.
+  // Ativos aumentam -> consomem caixa (sinal invertido); passivos aumentam -> geram caixa.
+  //
+  // Lucro Liquido e Depreciacao saem de FC_CONT: so lancamentos TIPO_LANCAMENTO=CONTABIL,
+  // igual a ferramenta oficial. Nenhum lancamento EXTRA tem classificacao de Balanco, entao
+  // incluir os extras no resultado faria o fluxo explicar um caixa que nao se moveu — e o
+  // CHECK descolaria. As variacoes patrimoniais seguem com todos os lancamentos.
+  // Vale so aqui: a DRE e o Balanco do painel nao tem esse recorte.
+  function fluxoDe(brand){
+    var ids = empresasDe(brand);
+    var det = detalheMeses(brand);
+    function mov(k, i){ var t=0; ids.forEach(function(id){ var a=MOV[id] && MOV[id][k]; if(a) t+=a[i]; }); return t; }
+    function nat(k, i){ var t=0; ids.forEach(function(id){ var a=NAT[id] && NAT[id][k]; if(a) t+=a[i]; }); return t; }
+    function cont(k, i){ var t=0; ids.forEach(function(id){ var a=FC_CONT[id] && FC_CONT[id][k]; if(a) t+=a[i]; }); return t; }
+    var dispAcum = 0; ids.forEach(function(id){ dispAcum += (SALDO_INI[id]||0); });
+    return MESES.map(function(rot, i){
+      var o = { m: rot };
+      o.lucroExercicio = cont('lucro', i);
+      o.da = -cont('depD', i);
+      o.varContasReceber = -mov('contasReceber', i);
+      o.varCartoes = -mov('cartoesReceber', i);
+      o.varFinanciamentos = -mov('financiamentosReceber', i);
+      o.varAdiantForn = -mov('adiantForn', i);
+      o.varOutrosAdiant = -mov('outrosAdiant', i);
+      o.varOutrosCreditos = -mov('outrosCreditos', i);
+      o.varImpostosRecuperar = -mov('impostosRecuperar', i);
+      o.valoresReceber = o.varContasReceber + o.varCartoes + o.varFinanciamentos +
+        o.varAdiantForn + o.varOutrosAdiant + o.varOutrosCreditos + o.varImpostosRecuperar;
+      o.varEstVN = -mov('estVN', i); o.varEstVU = -mov('estVU', i); o.varEstPecas = -mov('estPecas', i);
+      o.estoque = o.varEstVN + o.varEstVU + o.varEstPecas;
+      o.varFornecDiv = mov('fornecDiv', i);
+      o.varObrigSociais = mov('obrigSociais', i);
+      o.varObrigTrib = mov('obrigTrib', i);
+      o.varAdiantCliente = mov('adiantCliente', i);
+      o.varProvisoes = mov('provisoes', i);
+      o.varOutrasContas = mov('outrasContas', i);
+      o.varLucrosPagar = mov('lucrosPagar', i);
+      o.valoresPagar = o.varFornecDiv + o.varObrigSociais + o.varObrigTrib + o.varAdiantCliente +
+        o.varProvisoes + o.varOutrasContas + o.varLucrosPagar +
+        mov('outrosCredores', i) + mov('parcelamentosLP', i);
+      o.caixaOperacional = o.lucroExercicio + o.da + mov('ajustesExercAnt', i) +
+        o.valoresReceber + o.estoque + o.valoresPagar;
+
+      o.invLP = -(mov('realizavelLP', i) + mov('invLP', i) + mov('invPermanentes', i));
+      o.vendaAtivos = -nat('imobC', i) - nat('acumD', i);
+      o.adicoesAtivo = -nat('imobD', i);
+      o.caixaInvestimento = o.invLP + o.vendaAtivos + o.adicoesAtivo;
+
+      o.varEmprestimos = mov('emprestBancarios', i) + mov('emprestTerceiros', i) +
+        mov('contaGarantida', i) + mov('financiamentos', i) + mov('notasComerciais', i) +
+        mov('emprestFinancLP', i);
+      o.varFPNovos = mov('floorVN', i); o.varFPUsados = mov('floorVU', i); o.varFPPecas = mov('floorPecas', i);
+      o.varCapital = mov('capitalSocial', i) + mov('reservasCapital', i);
+      o.caixaFinanciamento = o.varEmprestimos + o.varFPNovos + o.varFPUsados + o.varFPPecas +
+        o.varCapital + mov('adiantFuturaIntegr', i);
+
+      o.variacaoLiquida = o.caixaOperacional + o.caixaInvestimento + o.caixaFinanciamento;
+      // Igual a ferramenta oficial: o saldo inicial de cada mes vem do Balanco acumulado ate o mes
+      // anterior — nao do saldo final calculado. Assim o CHECK de um mes nao contamina o seguinte.
+      o.saldoInicial = dispAcum;
+      o.saldoFinal = o.saldoInicial + o.variacaoLiquida;
+      dispAcum += mov('caixaBancos', i) + mov('aplicacoesFinanceiras', i);
+      o.dispReferencia = dispAcum;
+      o.check = o.saldoFinal - dispAcum;
+      return o;
+    });
+  }
+
+  // ---- Agrupamento por período (Mensal / Trimestral / Anual) ----
+  // Os dados-fonte são sempre mensais, Jan até o último mês carregado do ano
+  // selecionado (aplicarAno define MESES). Trimestral e Anual agregam esses meses;
+  // nada é reconsultado. O "*" marca grupo/ano ainda incompleto — com 12 meses
+  // (ano fechado) ele não aparece; com 6 (ano em curso) aparece no rótulo anual.
+  function gruposDoPeriodo(){
+    var n = MESES.length;
+    if (state.period === 'anual'){
+      var anoCompleto = (n === 12);
+      return [{ label: anoAtual() + (anoCompleto ? '' : '*'), idx: MESES.map(function(_,i){ return i; }),
+                titulo:'Jan–'+MESES[n-1]+'/'+anoAtual() }];
+    }
+    if (state.period === 'trimestral'){
+      var out = [], t = 1;
+      for (var i = 0; i < n; i += 3){
+        var idx = [];
+        for (var j = i; j < Math.min(i+3, n); j++) idx.push(j);
+        var completo = idx.length === 3;
+        out.push({ label:'T'+t+'/'+anoAtual().slice(2) + (completo ? '' : '*'), idx: idx,
+                   titulo: MESES[idx[0]]+'–'+MESES[idx[idx.length-1]]+'/'+anoAtual() });
+        t++;
+      }
+      return out;
+    }
+    return MESES.map(function(rot, i){
+      return { label: rot+'/'+anoAtual().slice(2), idx:[i], titulo: rot+'/'+anoAtual() };
+    });
+  }
+
+  // Rótulo curto do modo, usado nos títulos das seções.
+  function rotuloPeriodo(){
+    return state.period === 'anual' ? 'anual'
+         : state.period === 'trimestral' ? 'trimestral' : 'mensal';
+  }
+
+  // Soma os meses de cada grupo. `campos` são somados; as margens são recalculadas
+  // sobre os totais do grupo (média de margens não é margem do período).
+  function agruparDre(meses){
+    var campos = CAMPOS_DRE.concat(['rl','custoTotal','lucroBruto','despTotal',
+      'outrasTotal','ebitda','ebit','lair','lucro']);
+    return gruposDoPeriodo().map(function(g){
+      var o = { m: g.label, _titulo: g.titulo };
+      campos.forEach(function(k){
+        o[k] = g.idx.reduce(function(t,i){ return t + (meses[i][k] || 0); }, 0);
+      });
+      o.margemBruta  = o.rl ? o.lucroBruto/o.rl : 0;
+      o.margemEbitda = o.rl ? o.ebitda/o.rl : 0;
+      o.margemLiq    = o.rl ? o.lucro/o.rl : 0;
+      return o;
+    });
+  }
+
+  // Mesmo agrupamento por período de agruparDre + comAcumulado, mas para um único
+  // vetor mensal de DESCRICAO_CONTA (drill-down da DRE — ver DRE_DESC). O resultado
+  // tem o mesmo comprimento de `atuais` em renderDrePage, célula a célula.
+  function agruparDesc(descArr){
+    var porGrupo = gruposDoPeriodo().map(function(g){
+      return g.idx.reduce(function(t,i){ return t + (descArr[i] || 0); }, 0);
+    });
+    if (porGrupo.length > 1) {
+      porGrupo.push(descArr.reduce(function(t,v){ return t + (v || 0); }, 0));
+    }
+    return porGrupo;
+  }
+
+  // Fluxo de caixa: as variações são somadas, mas os saldos não — o saldo inicial do
+  // grupo é o do primeiro mês e a referência do Balanço é a do último. O CHECK é
+  // recalculado sobre o grupo, mantendo a divergência à mostra.
+  function agruparFluxo(fluxos){
+    var somaveis = Object.keys(fluxos[0]).filter(function(k){
+      return k !== 'm' && k !== 'saldoInicial' && k !== 'saldoFinal' &&
+             k !== 'dispReferencia' && k !== 'check';
+    });
+    return gruposDoPeriodo().map(function(g){
+      var o = { m: g.label, _titulo: g.titulo };
+      somaveis.forEach(function(k){
+        o[k] = g.idx.reduce(function(t,i){ return t + (fluxos[i][k] || 0); }, 0);
+      });
+      var primeiro = fluxos[g.idx[0]], ultimo = fluxos[g.idx[g.idx.length-1]];
+      o.saldoInicial = primeiro.saldoInicial;
+      o.saldoFinal = o.saldoInicial + o.variacaoLiquida;
+      o.dispReferencia = ultimo.dispReferencia;
+      o.check = o.saldoFinal - o.dispReferencia;
+      return o;
+    });
+  }
+
+  function sum(list, key){ return list.reduce(function(s,o){return s+o[key];}, 0); }
+  function somaArrays(arrs){
+    var n = arrs[0].length, out = [];
+    for (var i=0;i<n;i++){ var t=0; for (var j=0;j<arrs.length;j++) t += arrs[j][i]; out.push(t); }
+    return out;
+  }
+  function empresasDe(brand){ return brand === 'all' ? EMPRESAS.map(function(e){return e.id;}) : [brand]; }
+
+  // Reconstrói os subtotais da DRE a partir dos 8 blocos, na mesma ordem da ferramenta oficial.
+  function dreCalc(a, label){
+    var lucroBruto = a[0] + a[1];
+    var ebitda = lucroBruto + a[2] + a[3];
+    var ebit = ebitda + a[4];
+    var lair = ebit + a[5] + a[6];
+    return { label:label, rl:a[0], custos:a[1], despesas:a[2], outras:a[3], deprec:a[4],
+      recFin:a[5], despFin:a[6], irCsll:a[7],
+      lucroBruto:lucroBruto, ebitda:ebitda, ebit:ebit, lair:lair, lucro:lair + a[7],
+      margemBruta: a[0] ? lucroBruto/a[0] : 0, margemEbitda: a[0] ? ebitda/a[0] : 0,
+      margemLiq: a[0] ? (lair + a[7])/a[0] : 0 };
+  }
+  function balCalc(a){
+    var ativoCirc = a[0] + a[1] + a[2];
+    var ativoTotal = ativoCirc + a[3];
+    var passivoCirc = a[4] + a[5] + a[6] + a[7];
+    var passivoNaoCirc = a[8] + a[9];
+    return { disponibilidades:a[0], valoresReceber:a[1], estoques:a[2], ativoNaoCirc:a[3],
+      floorPlan:a[4], fornecDiversos:a[5], emprestFinanc:a[6], outrasObrig:a[7],
+      emprestFinancLP:a[8], outrosPNC:a[9], totalPL:a[10],
+      totalAtivoCirc:ativoCirc, totalAtivo:ativoTotal,
+      totalPassivoCirc:passivoCirc, totalPassivoNaoCirc:passivoNaoCirc,
+      totalPassivo:passivoCirc + passivoNaoCirc,
+      totalPassivoPL:passivoCirc + passivoNaoCirc + a[10],
+      check: ativoTotal - (passivoCirc + passivoNaoCirc + a[10]) };
+  }
+
+  // ---- Contexto recalculado a cada troca de empresa ----
+  var dreMeses, curYtd, priorYtd, bal, balP;
+  var margemEbitdaCur, margemEbitdaPrior, margemLiqCur, margemLiqPrior;
+  var roeCur, roePrior, dividaEbitdaCur, dividaEbitdaPrior, kpiCards;
+
+  function recomputar(brand){
+    var ids = empresasDe(brand);
+    // Fonte unica da DRE: DRE_DET (detalhe conta a conta). Os 8 blocos usados nos KPIs sao
+    // derivados dela, para que tabela e indicadores nunca divirjam.
+    function blocos(o){ return [o.rl,o.custoTotal,o.despTotal,o.outrasTotal,o.da,o.recFin,o.despFin,o.irCsll]; }
+    var _det = detalheMeses(brand);
+    dreMeses = _det.map(function(o){ return dreCalc(blocos(o), o.m); });
+    curYtd = dreCalc(somaArrays(_det.map(blocos)), 'Acumulado');
+    // Ano anterior: mesmos meses de DRE_DET_ANT (ver aplicarAno) — Jan..mesFinalRotulo()
+    // do ano anterior ao selecionado, nunca o acumulado inteiro daquele ano.
+    var _detAnt = detalheMeses(brand, DRE_DET_ANT);
+    priorYtd = dreCalc(somaArrays(_detAnt.map(blocos)), 'Acumulado ' + anoAnterior());
+    bal  = balancoDe(brand, 0);
+    balP = balancoDe(brand, 1);
+
+    margemEbitdaCur = curYtd.margemEbitda;   margemEbitdaPrior = priorYtd.margemEbitda;
+    margemLiqCur    = curYtd.margemLiq;      margemLiqPrior    = priorYtd.margemLiq;
+    roeCur   = bal.totalPL  ? curYtd.lucro   / bal.totalPL  : 0;
+    roePrior = balP.totalPL ? priorYtd.lucro / balP.totalPL : 0;
+
+    var divLiqCur   = (bal.emprestFinanc  + bal.emprestFinancLP)  - bal.disponibilidades;
+    var divLiqPrior = (balP.emprestFinanc + balP.emprestFinancLP) - balP.disponibilidades;
+    dividaEbitdaCur   = curYtd.ebitda   ? divLiqCur   / curYtd.ebitda   : 0;
+    dividaEbitdaPrior = priorYtd.ebitda ? divLiqPrior / priorYtd.ebitda : 0;
+
+    kpiCards = [
+      { label:'Receita Líquida', value: fmtBRL(curYtd.rl), sub:janAte(anoAtual())+' (acumulado no ano)',
+        delta: fmtChangePct(curYtd.rl, priorYtd.rl), positive: curYtd.rl >= priorYtd.rl },
+      { label:'EBITDA', value: fmtBRL(curYtd.ebitda), sub:'Margem '+fmtPct(margemEbitdaCur),
+        delta: fmtChangePct(curYtd.ebitda, priorYtd.ebitda), positive: curYtd.ebitda >= priorYtd.ebitda },
+      { label:'Lucro Líquido', value: fmtBRL(curYtd.lucro), sub:'Margem '+fmtPct(margemLiqCur),
+        delta: 'ante '+fmtBRL(priorYtd.lucro)+' em '+anoAnterior(), positive: curYtd.lucro >= priorYtd.lucro },
+      { label:'Caixa (Disponibilidades)', value: fmtBRL(bal.disponibilidades), sub:'Posição em '+periodoRef(),
+        delta: 'ante '+fmtBRL(balP.disponibilidades)+' em '+mesFinalRotulo().toLowerCase()+'/'+anoAnterior().slice(2), positive: bal.disponibilidades >= balP.disponibilidades },
+      { label:'ROE (Retorno sobre o Patrimônio Líquido)', value: fmtPct(roeCur), sub:'Lucro líq. acumulado / PL atual',
+        delta: fmtPP(roeCur, roePrior), positive: roeCur >= roePrior },
+      { label:'Dívida Líquida / EBITDA', value: fmtRatioPrecise(dividaEbitdaCur), sub:'Sem floor plan · EBITDA acumulado no ano',
+        delta: fmtChangePct(dividaEbitdaCur, dividaEbitdaPrior), positive: dividaEbitdaCur <= dividaEbitdaPrior }
+    ];
+  }
+
+  // DRE mensal DETALHADA consolidada, jan–jul/2026 (query: relatorio_dre, modo=mensal, todas as contas)
+  // Convenção oficial (igual à ferramenta relatorio_dre): custos/despesas/deduções aparecem como
+  // número POSITIVO nas linhas de detalhe (o "(-)" no rótulo já indica o sentido); só os subtotais
+  // carregam o sinal econômico real.
+
+
+  // Fluxo de Caixa mensal (método indireto), consolidado, jan–jul/2026
+  // (query: relatorio_fluxo_caixa, modo=mensal). "Ajustes de Exercícios Anteriores", "Outros Ajustes",
+  // "Outros Credores" e "Parcelamentos LP" foram omitidos da tabela por ficarem zerados o período inteiro.
+  // O "Lucro Líquido do Exercício" usado aqui é o que a própria ferramenta de fluxo de caixa recalcula —
+  // em alguns meses ele diverge um pouco do valor da DRE, porque a base apura o resultado por trimestre
+  // (ver aviso mais abaixo). Não escondemos essa diferença.
+
+  var cfRowDefs = [
+    {label:'Lucro Líquido do Exercício', kind:'normal', indent:1, get:function(m){return m.lucroExercicio;}},
+    {label:'(+) Depreciação e Amortização', kind:'normal', indent:1, get:function(m){return m.da;}, isRevenue:true},
+    {label:'(+/-) Variação em Contas a Receber', kind:'normal', indent:1, get:function(m){return m.varContasReceber;}},
+    {label:'(+/-) Variação em Cartões de Crédito a Receber', kind:'normal', indent:1, get:function(m){return m.varCartoes;}},
+    {label:'(+/-) Variação em Financiamentos a Receber', kind:'normal', indent:1, get:function(m){return m.varFinanciamentos;}},
+    {label:'(+/-) Variação em Adiantamentos a Fornecedores', kind:'normal', indent:1, get:function(m){return m.varAdiantForn;}},
+    {label:'(+/-) Variação em Outros Adiantamentos', kind:'normal', indent:1, get:function(m){return m.varOutrosAdiant;}},
+    {label:'(+/-) Variação em Outros Créditos a Receber', kind:'normal', indent:1, get:function(m){return m.varOutrosCreditos;}},
+    {label:'(+/-) Variação em Impostos a Recuperar', kind:'normal', indent:1, get:function(m){return m.varImpostosRecuperar;}},
+    {label:'= Valores a Receber', kind:'subtotal', indent:0, get:function(m){return m.valoresReceber;}},
+    {label:'(+/-) Variação em Estoque de Veículos Novos', kind:'normal', indent:1, get:function(m){return m.varEstVN;}},
+    {label:'(+/-) Variação em Estoque de Veículos Usados', kind:'normal', indent:1, get:function(m){return m.varEstVU;}},
+    {label:'(+/-) Variação em Estoque de Peças', kind:'normal', indent:1, get:function(m){return m.varEstPecas;}},
+    {label:'= Estoque', kind:'subtotal', indent:0, get:function(m){return m.estoque;}},
+    {label:'(+/-) Variação em Fornecedores Diversos', kind:'normal', indent:1, get:function(m){return m.varFornecDiv;}},
+    {label:'(+/-) Variação em Obrigações Sociais e Trabalhistas', kind:'normal', indent:1, get:function(m){return m.varObrigSociais;}},
+    {label:'(+/-) Variação em Obrigações Tributárias e Diversas', kind:'normal', indent:1, get:function(m){return m.varObrigTrib;}},
+    {label:'(+/-) Variação em Adiantamento de Clientes', kind:'normal', indent:1, get:function(m){return m.varAdiantCliente;}},
+    {label:'(+/-) Variação em Provisões', kind:'normal', indent:1, get:function(m){return m.varProvisoes;}},
+    {label:'(+/-) Variação em Outras Contas a Pagar', kind:'normal', indent:1, get:function(m){return m.varOutrasContas;}},
+    {label:'(+/-) Variação em Lucros a Pagar', kind:'normal', indent:1, get:function(m){return m.varLucrosPagar;}},
+    {label:'= Valores a Pagar', kind:'subtotal', indent:0, get:function(m){return m.valoresPagar;}},
+    {label:'= Caixa Gerado nas Atividades Operacionais', kind:'total', indent:0, get:function(m){return m.caixaOperacional;}},
+    {label:'(+/-) Investimentos a Longo Prazo', kind:'normal', indent:1, get:function(m){return m.invLP;}},
+    {label:'(+) Venda de Ativos Imobilizados', kind:'normal', indent:1, get:function(m){return m.vendaAtivos;}, isRevenue:true},
+    {label:'(-) Adições ao Ativo Imobilizado (Capex)', kind:'normal', indent:1, get:function(m){return m.adicoesAtivo;}},
+    {label:'= Caixa das Atividades de Investimento', kind:'total', indent:0, get:function(m){return m.caixaInvestimento;}},
+    {label:'(+/-) Empréstimos e Financiamentos', kind:'normal', indent:1, get:function(m){return m.varEmprestimos;}},
+    {label:'(+/-) Variação em Floor Plan de Veículos Novos', kind:'normal', indent:1, get:function(m){return m.varFPNovos;}},
+    {label:'(+/-) Variação em Floor Plan de Veículos Usados', kind:'normal', indent:1, get:function(m){return m.varFPUsados;}},
+    {label:'(+/-) Variação em Floor Plan de Peças', kind:'normal', indent:1, get:function(m){return m.varFPPecas;}},
+    {label:'(+/-) Variação de Capital', kind:'normal', indent:1, get:function(m){return m.varCapital;}},
+    {label:'= Caixa das Atividades de Financiamento', kind:'total', indent:0, get:function(m){return m.caixaFinanciamento;}},
+    {label:'= Variação Líquida de Caixa no Período', kind:'total', indent:0, get:function(m){return m.variacaoLiquida;}},
+    {label:'(+) Saldo de Caixa Inicial do Período', kind:'normal', indent:1, get:function(m){return m.saldoInicial;}, isRevenue:true},
+    {label:'(=) Saldo de Caixa Final do Período', kind:'total', indent:0, get:function(m){return m.saldoFinal;}},
+    {label:'CHECK: Saldo Final − Disponibilidades do Balanço', kind:'check', indent:0, get:function(m){return m.check;}}
+  ];
+
+  // Balanço Patrimonial consolidado (query: relatorio_balanco) — posição acumulada desde 01/2024 até o período.
+  // "cur" = 06/2026, "prior" = 06/2025 (mesmo mês do ano anterior, para comparar posições equivalentes no ciclo).
+
+  var ativoRowDefs = [
+    {label:'Caixa e Bancos', kind:'normal', indent:1, get:function(b){return b.caixaBancos;}},
+    {label:'Aplicações Financeiras', kind:'normal', indent:1, get:function(b){return b.aplicacoesFinanceiras;}},
+    {label:'= Disponibilidades', kind:'subtotal', indent:0, get:function(b){return b.disponibilidades;}},
+    {label:'Contas a Receber', kind:'normal', indent:1, get:function(b){return b.contasReceber;}},
+    {label:'Cartões de Crédito a Receber', kind:'normal', indent:1, get:function(b){return b.cartoesReceber;}},
+    {label:'Financiamentos a Receber', kind:'normal', indent:1, get:function(b){return b.financiamentosReceber;}},
+    {label:'Adiantamentos a Fornecedores', kind:'normal', indent:1, get:function(b){return b.adiantForn;}},
+    {label:'Outros Adiantamentos', kind:'normal', indent:1, get:function(b){return b.outrosAdiant;}},
+    {label:'Outros Créditos a Receber', kind:'normal', indent:1, get:function(b){return b.outrosCreditos;}},
+    {label:'Impostos a Recuperar', kind:'normal', indent:1, get:function(b){return b.impostosRecuperar;}},
+    {label:'= Valores a Receber', kind:'subtotal', indent:0, get:function(b){return b.valoresReceber;}},
+    {label:'Estoque de Veículos Novos', kind:'normal', indent:1, get:function(b){return b.estVN;}},
+    {label:'Estoque de Veículos Usados', kind:'normal', indent:1, get:function(b){return b.estVU;}},
+    {label:'Estoque de Peças', kind:'normal', indent:1, get:function(b){return b.estPecas;}},
+    {label:'= Estoques', kind:'subtotal', indent:0, get:function(b){return b.estoques;}},
+    {label:'= Total do Ativo Circulante', kind:'total', indent:0, get:function(b){return b.totalAtivoCirc;}},
+    {label:'Realizável a Longo Prazo (Invest. LP - FVN)', kind:'normal', indent:1, get:function(b){return b.realizavelLP;}},
+    {label:'Investimentos a Longo Prazo', kind:'normal', indent:1, get:function(b){return b.invLP;}},
+    {label:'Investimentos Permanentes', kind:'normal', indent:1, get:function(b){return b.invPermanentes;}},
+    {label:'= Investimentos', kind:'subtotal', indent:0, get:function(b){return b.investimentos;}},
+    {label:'Terrenos', kind:'normal', indent:1, get:function(b){return b.terrenos;}},
+    {label:'Edifícios', kind:'normal', indent:1, get:function(b){return b.edificios;}},
+    {label:'Instalações', kind:'normal', indent:1, get:function(b){return b.instalacoes;}},
+    {label:'Veículos', kind:'normal', indent:1, get:function(b){return b.veiculos;}},
+    {label:'Máquinas e Equipamentos', kind:'normal', indent:1, get:function(b){return b.maquinas;}},
+    {label:'Computadores e Periféricos', kind:'normal', indent:1, get:function(b){return b.computadores;}},
+    {label:'Móveis e Utensílios', kind:'normal', indent:1, get:function(b){return b.moveis;}},
+    {label:'Construções em Andamento', kind:'normal', indent:1, get:function(b){return b.construcoes;}},
+    {label:'Benfeitorias em Bens de Terceiros', kind:'normal', indent:1, get:function(b){return b.benfeitorias;}},
+    {label:'Consórcios', kind:'normal', indent:1, get:function(b){return b.consorcios;}},
+    {label:'Aeronaves', kind:'normal', indent:1, get:function(b){return b.aeronaves;}},
+    {label:'(-) Depreciação Acumulada', kind:'normal', indent:1, get:function(b){return b.deprecAcum;}},
+    {label:'= Imobilizado de Uso', kind:'subtotal', indent:0, get:function(b){return b.imobilizado;}},
+    {label:'Direitos de Concessão', kind:'normal', indent:1, get:function(b){return b.direitosConcessao;}},
+    {label:'(-) Amortização Acumulada', kind:'normal', indent:1, get:function(b){return b.amortAcum;}},
+    {label:'= Intangível', kind:'subtotal', indent:0, get:function(b){return b.intangivel;}},
+    {label:'= Total do Ativo Não Circulante', kind:'total', indent:0, get:function(b){return b.totalAtivoNaoCirc;}},
+    {label:'= TOTAL DO ATIVO', kind:'total', indent:0, get:function(b){return b.totalAtivo;}}
+  ];
+
+  var passivoRowDefs = [
+    {label:'Floor Plan Veículos Novos', kind:'normal', indent:1, get:function(b){return b.floorVN;}},
+    {label:'Floor Plan Veículos Usados', kind:'normal', indent:1, get:function(b){return b.floorVU;}},
+    {label:'Floor Plan Peças e Acessórios', kind:'normal', indent:1, get:function(b){return b.floorPecas;}},
+    {label:'Fornecedores Diversos', kind:'normal', indent:1, get:function(b){return b.fornecDiv;}},
+    {label:'= Fornecedores', kind:'subtotal', indent:0, get:function(b){return b.fornecedores;}},
+    {label:'Empréstimos Bancários', kind:'normal', indent:1, get:function(b){return b.emprestBancarios;}},
+    {label:'Empréstimos de Terceiros', kind:'normal', indent:1, get:function(b){return b.emprestTerceiros;}},
+    {label:'Conta Garantida', kind:'normal', indent:1, get:function(b){return b.contaGarantida;}},
+    {label:'Financiamentos', kind:'normal', indent:1, get:function(b){return b.financiamentos;}},
+    {label:'Notas Comerciais', kind:'normal', indent:1, get:function(b){return b.notasComerciais;}},
+    {label:'= Empréstimos e Financiamentos', kind:'subtotal', indent:0, get:function(b){return b.emprestFinanc;}},
+    {label:'Obrigações Sociais e Trabalhistas', kind:'normal', indent:1, get:function(b){return b.obrigSociais;}},
+    {label:'Obrigações Tributárias e Diversas', kind:'normal', indent:1, get:function(b){return b.obrigTrib;}},
+    {label:'Adiantamento de Clientes', kind:'normal', indent:1, get:function(b){return b.adiantCliente;}},
+    {label:'Provisões', kind:'normal', indent:1, get:function(b){return b.provisoes;}},
+    {label:'Outras Contas a Pagar', kind:'normal', indent:1, get:function(b){return b.outrasContas;}},
+    {label:'Lucros a Pagar', kind:'normal', indent:1, get:function(b){return b.lucrosPagar;}},
+    {label:'= Outras Obrigações', kind:'subtotal', indent:0, get:function(b){return b.outrasObrig;}},
+    {label:'= Total do Passivo Circulante', kind:'total', indent:0, get:function(b){return b.totalPassivoCirc;}},
+    {label:'Empréstimos e Financiamentos LP', kind:'normal', indent:1, get:function(b){return b.emprestFinancLP;}},
+    {label:'Outros Credores', kind:'normal', indent:1, get:function(b){return b.outrosCredores;}},
+    {label:'Adiantamento p/ Futura Integralização', kind:'normal', indent:1, get:function(b){return b.adiantFuturaIntegr;}},
+    {label:'= Total do Passivo Não Circulante', kind:'total', indent:0, get:function(b){return b.totalPassivoNaoCirc;}},
+    {label:'Capital Social Integralizado', kind:'normal', indent:1, get:function(b){return b.capitalSocial;}},
+    {label:'Reservas de Lucros', kind:'normal', indent:1, get:function(b){return b.reservasLucros;}},
+    {label:'Reservas de Incentivos Fiscais', kind:'normal', indent:1, get:function(b){return b.reservasIncentivos;}},
+    {label:'Prejuízos Acumulados', kind:'normal', indent:1, get:function(b){return b.prejuizosAcum;}},
+    {label:'Ajustes de Exercícios Anteriores', kind:'normal', indent:1, get:function(b){return b.ajustesExercAnt;}},
+    {label:'= Total do Patrimônio Líquido', kind:'total', indent:0, get:function(b){return b.totalPL;}},
+    {label:'= TOTAL DO PASSIVO + PL', kind:'total', indent:0, get:function(b){return b.totalPassivoPL;}},
+    {label:'CHECK: Ativo − (Passivo + PL)', kind:'check', indent:0, get:function(b){return b.check;}}
+  ];
+
+  // ---------- Formatting helpers (tudo em número inteiro, sem casas decimais) ----------
+  function noNegZero(n){ return n === 0 ? 0 : n; }
+  function fmtBRL(v){
+    var sign = v < 0 ? '-' : '';
+    var abs = Math.abs(v);
+    return sign + 'R$ ' + Math.round(abs).toLocaleString('pt-BR');
+  }
+  function fmtPct(v){ return noNegZero(Math.round(v*100)).toLocaleString('pt-BR') + '%'; }
+  // Variação ano a ano: 1 casa decimal. Arredondar para inteiro esconderia meio
+  // ponto de diferença numa coluna que existe justamente para medir a variação.
+  function fmtDeltaPct(v){
+    var p = noNegZero(v*100);
+    return (p >= 0 ? '+' : '') + p.toLocaleString('pt-BR',
+      {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+  }
+  function fmtRatio(v){ return Math.round(v) + 'x'; }
+  // Índices de liquidez ficam quase todos entre 0 e 2 — arredondar para inteiro (0x/1x) apagaria a informação
+  // (ex.: 0,38x viraria "0x", parecendo iliquidez total). Por isso, só aqui, mantemos 2 casas decimais.
+  function fmtRatioPrecise(v){ return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + 'x'; }
+  function fmtChangePct(cur,prior){ var d=(cur-prior)/Math.abs(prior||1); var r=noNegZero(Math.round(d*100)); var s=r>=0?'+':''; return s+r.toLocaleString('pt-BR')+'%'; }
+  function fmtPP(curFrac,priorFrac){ var d=(curFrac-priorFrac)*100; var r=noNegZero(Math.round(d)); var s=r>=0?'+':''; return s+r.toLocaleString('pt-BR')+' p.p.'; }
+  function fmtDays(v){ return Math.round(v) + ' dias'; }
+  function fmtDiffDays(cur,prior){ var d=Math.round(cur-prior); var s=d>=0?'+':''; return s+d+' dias'; }
+
+  // Indicadores de Eficiência oficiais (query: relatorio_indicadores, modo=mensal — os indicadores em dias
+  // usam a convenção fixa do próprio modelo: saldo final do Balanço + 30 dias/mês sobre o fluxo do mês).
+  // Por isso o período de referência aqui é o MÊS de junho (não o acumulado Jan-Jun usado nas outras partes).
+  // Eficiência é sempre calculada ao vivo por eficienciaDe() a partir de DRE_DET/BAL_DET
+  // (dados reais da ROYAL); não há comparativo do ano anterior neste painel de marca única
+  // (esse comparativo só existe no Consolidado — ver `p` em renderEficienciaPage).
+
+  // ---------- Nav / brand / period model ----------
+  var navVisao = [{id:0,label:'Visão Geral'}];
+  var navRelatorios = [{id:1,label:'DRE'},{id:2,label:'Fluxo de Caixa'},{id:3,label:'Balanço Patrimonial'}];
+  var navIndicadores = [{id:4,label:'Rentabilidade e Liquidez'},{id:5,label:'Endividamento e Alavancagem'},{id:6,label:'Eficiência Operacional'}];
+  var pageDescs = {
+    0:'Indicadores consolidados de resultado — real, Jan–Jun/2026 (acumulado no ano) contra Jan–Jun/2025.',
+    1:'Demonstrativo do Resultado do Exercício.', 2:'Movimentação de caixa por atividade.',
+    3:'Posição patrimonial em relação ao ano anterior.', 4:'Retorno sobre vendas e capital, e liquidez de curto prazo.',
+    5:'Nível de dívida e capacidade de pagamento frente à geração de caixa.', 6:'Ciclo operacional, prazos médios e produtividade.'
+  };
+
+  // Painel travado na ROYAL: brand fixo, sem seletor de empresa na sidebar.
+  // dreExpandido: quais contas da DRE estão com o drill-down de DESCRICAO_CONTA aberto.
+  var state = { page: 0, brand: 'ROYAL', period: 'mensal', ano: '2026', dreExpandido: {} };
+
+  function renderNavGroup(container, items){
+    container.innerHTML = '';
+    items.forEach(function(item){
+      var btn = document.createElement('button');
+      btn.className = 'nav-item' + (state.page === item.id ? ' active' : '');
+      btn.innerHTML = '<span class="dot"></span><span>'+item.label+'</span>';
+      btn.onclick = function(){ state.page = item.id; render(); };
+      container.appendChild(btn);
+    });
+  }
+
+  function renderAnoToggle(){
+    var container = document.getElementById('ano-toggle');
+    container.innerHTML = '';
+    ANOS_DISPONIVEIS.forEach(function(ano){
+      var btn = document.createElement('button');
+      btn.className = 'period-item' + (state.ano === ano ? ' active' : '');
+      btn.textContent = ano;
+      btn.onclick = function(){
+        if (state.ano === ano) return;
+        state.ano = ano;
+        aplicarAno(ano);
+        // Contas de drill-down mudam pouco de ano para ano, mas os valores por
+        // trás mudam sempre — fecha tudo para não mostrar número do ano errado.
+        state.dreExpandido = {};
+        render();
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function renderPeriodToggle(){
+    var container = document.getElementById('period-toggle');
+    container.innerHTML = '';
+    [{id:'mensal',label:'Mensal'},{id:'trimestral',label:'Trimestral'},{id:'anual',label:'Anual'}].forEach(function(p){
+      var btn = document.createElement('button');
+      btn.className = 'period-item' + (state.period === p.id ? ' active' : '');
+      btn.textContent = p.label;
+      btn.onclick = function(){
+        state.period = p.id;
+        // Rentabilidade, Endividamento e Eficiência ainda leem só o acumulado no ano.
+        if (p.id !== 'mensal' && state.page >= 4){
+          showToast('Os indicadores ainda são calculados sobre o acumulado no ano — a visão '+p.label.toLowerCase()+' vale para DRE, Fluxo de Caixa e Balanço.');
+        }
+        render();
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  var toastTimer = null;
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 4000);
+  }
+
+  function el(html){ var d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
+
+  function isAll(){ return state.brand === 'all'; }
+
+  // Aviso padrão para os blocos que só existem no consolidado (o detalhamento equivalente por
+  // empresa exigiria uma consulta oficial separada por empresa e por mês — não foi extraído).
+  function avisoConsolidado(oQue){
+    return el('<div class="callout"><b>' + oQue + ' só está disponível no Consolidado.</b> ' +
+      'Os valores por empresa desta seção viriam de consultas oficiais separadas (uma por empresa e por mês), ' +
+      'que não foram extraídas. Volte em <b>Consolidado</b> na barra lateral para ver esta seção.</div>');
+  }
+
+  function renderKpiGrid(cards){
+    var grid = document.createElement('div');
+    grid.className = 'kpi-grid';
+    cards.forEach(function(c){
+      var card = document.createElement('div');
+      card.className = 'kpi-card';
+      card.innerHTML =
+        '<div class="kpi-label">'+c.label+'</div>' +
+        '<div class="kpi-value">'+c.value+'</div>' +
+        '<div class="kpi-sub">'+c.sub+'</div>' +
+        '<div class="kpi-delta '+(c.positive?'pos':'neg')+'">'+(c.positive?'▲ ':'▼ ')+c.delta+'</div>';
+      grid.appendChild(card);
+    });
+    return grid;
+  }
+
+  // Glossário padronizado dos indicadores: nome + explicação simples + fórmula +
+  // expectativa do resultado (quanto maior/menor é melhor, ou o que significa >1).
+  // `itens` é uma lista de {nome, explicacao, formula, expectativa}.
+  function renderGlossario(titulo, itens){
+    var wrap = document.createElement('div');
+    wrap.appendChild(el('<div class="section-label">'+titulo+'</div>'));
+    var grid = document.createElement('div'); grid.className = 'glossario';
+    itens.forEach(function(it){
+      var card = document.createElement('div'); card.className = 'glossario-item';
+      card.innerHTML =
+        '<span class="g-nome">'+it.nome+'</span>' +
+        '<div class="g-explicacao">'+it.explicacao+'</div>' +
+        '<code class="g-formula">'+it.formula+'</code>' +
+        '<div class="g-expectativa">'+it.expectativa+'</div>';
+      grid.appendChild(card);
+    });
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function renderTrendChart(){
+    var wrap = document.createElement('div');
+    var maxRl = Math.max.apply(null, dreMeses.map(function(m){return m.rl;}));
+
+    wrap.appendChild(el('<div class="section-label">Evolução mensal — Receita Líquida e EBITDA (real)</div>'));
+    var panel = document.createElement('div'); panel.className = 'panel';
+    var chart = document.createElement('div'); chart.className = 'trend-chart';
+
+    dreMeses.forEach(function(m){
+      var rlPct = Math.max(m.rl/maxRl*100, 2);
+      var ebitdaPct = Math.max(Math.abs(m.ebitda)/maxRl*100, 2);
+      var col = document.createElement('div'); col.className = 'trend-col';
+      var bars = document.createElement('div'); bars.className = 'trend-bars';
+      var rlBar = document.createElement('div'); rlBar.className='trend-bar rl'; rlBar.style.height=rlPct+'%';
+      rlBar.title = 'Receita Líquida '+m.label+'/'+anoAtual()+': '+fmtBRL(m.rl);
+      var ebBar = document.createElement('div'); ebBar.className='trend-bar ebitda'+(m.ebitda<0?' negative':''); ebBar.style.height=ebitdaPct+'%';
+      ebBar.title = 'EBITDA '+m.label+'/'+anoAtual()+': '+fmtBRL(m.ebitda);
+      bars.appendChild(rlBar); bars.appendChild(ebBar);
+      col.appendChild(bars);
+      col.appendChild(el('<div class="trend-month">'+m.label+'</div>'));
+      chart.appendChild(col);
+    });
+    panel.appendChild(chart);
+    var legend = el('<div class="legend"></div>');
+    legend.appendChild(el('<div class="legend-item"><div class="legend-swatch" style="background:#D6D6D6"></div>Receita Líquida</div>'));
+    legend.appendChild(el('<div class="legend-item"><div class="legend-swatch" style="background:#C3002F"></div>EBITDA (hachurado = negativo)</div>'));
+    panel.appendChild(legend);
+    wrap.appendChild(panel);
+    wrap.appendChild(el('<div class="footnote">Fonte: Lançamentos Contábeis e Gerenciais.</div>'));
+    return wrap;
+  }
+
+  function renderOverviewPage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+    body.appendChild(renderKpiGrid(kpiCards));
+    body.appendChild(renderTrendChart());
+    // Sem o gráfico "por Empresa": este painel é exclusivo da ROYAL, não
+    // faz sentido comparar/expor a receita das outras empresas do grupo aqui.
+  }
+
+  // Estrutura oficial da DRE: 7 grupos com seus subgrupos (ver estrutura_financeira_completa.md).
+  // Regra de adaptacao por ramo: as contas que nao existem naquele negocio nao sao exibidas.
+  //  - Concessionarias (caso da ROYAL): linhas 1-5, 9, 10 (sem as comissoes de corretagem 6-8); custos detalhados.
+  //  - Consolidado: todas as 10 linhas; custos detalhados.
+  // Nenhum subtotal muda por causa disso — conta sem lancamento somaria zero de qualquer forma.
+  function dreEstrutura(brand){
+    // Painel travado na ROYAL: é sempre concessionária (vende motos/peças/oficina),
+    // nunca cai no ramo de corretagem — diferente do painel exclusivo da CORRETORA.
+    var corretora = false;
+    var todas = (brand === 'all');
+    function det(label, k, receita){ return {label:label, kind:'normal', k:k, receita:!!receita}; }
+    var L = [];
+
+    L.push({label:'1. RECEITA BRUTA DE VENDAS E SERVIÇOS', kind:'group'});
+    if (!corretora) {
+      L.push(det('Venda de Veículos Novos','vendaVN',true));
+      L.push(det('Venda de Veículos Usados','vendaVU',true));
+      L.push(det('Peças e Acessórios','pecas',true));
+      L.push(det('Serviços Oficina','oficina',true));
+      L.push(det('Comissões Diversas','comissoes',true));
+    }
+    if (todas || corretora) {
+      L.push(det('Comissão sobre Seguros','comSeguros',true));
+      L.push(det('Comissão sobre Consórcios','comConsorcios',true));
+      L.push(det('Comissão sobre Intermediação','comIntermediacao',true));
+    }
+    L.push(det('(-) Devoluções','devolucoes'));
+    L.push(det('(-) Impostos sobre a Venda','impostosVenda'));
+    L.push({label:'= RECEITA LÍQUIDA', kind:'subtotal', k:'rl'});
+
+    L.push({label:'2. CUSTOS DAS MERCADORIAS E SERVIÇOS', kind:'group'});
+    if (corretora) {
+      L.push(det('Custo de Mercado e Serviço','custoTotal'));
+    } else {
+      L.push(det('Custo de Veículos Novos','custoVN'));
+      L.push(det('Custo de Veículos Usados','custoVU'));
+      L.push(det('Custo de Peças e Acessórios','custoPecas'));
+      L.push(det('Custo de Serviços Oficina','custoOficina'));
+      L.push(det('Custo de Serviço de Terceiros','custoTerceiros'));
+    }
+    L.push({label:'= LUCRO BRUTO', kind:'subtotal', k:'lucroBruto'});
+    L.push({label:'% Margem Bruta', kind:'pct', k:'margemBruta'});
+
+    L.push({label:'3. DESPESAS OPERACIONAIS', kind:'group', k:'despTotal'});
+    L.push(det('Folha de Pagamento','folha'));
+    L.push(det('Despesas Comerciais','despComercial'));
+    L.push(det('Despesas Gerais','despGerais'));
+    L.push(det('Manutenção de Bens','manutencao'));
+    L.push(det('Serviços Profissionais','servProf'));
+    L.push(det('Taxas e Impostos Diversos','taxasImpostos'));
+    L.push(det('Despesas de Funcionamento','despFuncionamento'));
+    L.push(det('Alugueis e Condomínios','alugueis'));
+    L.push(det('Despesas Gerais de Funcionamento','despGeraisFunc'));
+    L.push(det('Outras Despesas Operacionais','outrasDesp'));
+    L.push(det('Gastos Diversos com Funcionários','gastosFunc'));
+    L.push(det('Rateio do Grupo','rateioGrupo'));
+
+    L.push({label:'4. OUTRAS RECEITAS/DESPESAS', kind:'group', k:'outrasTotalNeg'});
+    L.push(det('(+) Receitas Diversas','receitasDiversas',true));
+    L.push(det('(+) Receitas Não Operacionais','receitasNaoOper',true));
+    L.push(det('(-) Despesas Não Dedutíveis','despNaoDedutiveis'));
+    L.push(det('(-) Despesas Não Operacionais','despNaoOper'));
+    L.push({label:'= EBITDA', kind:'subtotal', k:'ebitda'});
+    L.push({label:'% EBITDA/RL', kind:'pct', k:'margemEbitda'});
+
+    L.push({label:'5. DEPRECIAÇÃO E AMORTIZAÇÃO', kind:'group'});
+    L.push(det('Depreciação e Amortização de Ativos','da'));
+    L.push({label:'= EBIT (Resultado Operacional)', kind:'subtotal', k:'ebit'});
+
+    L.push({label:'6. RESULTADO FINANCEIRO', kind:'group', k:'resFinNeg'});
+    L.push(det('(+) Receitas Financeiras','recFin',true));
+    L.push(det('(-) Despesas Financeiras','despFin'));
+    L.push({label:'= LAIR (Resultado antes do IR)', kind:'subtotal', k:'lair'});
+
+    L.push({label:'7. IMPOSTOS SOBRE O LUCRO', kind:'group'});
+    L.push(det('(-) IR e CSLL','irCsll'));
+    L.push({label:'= LUCRO LÍQUIDO DO EXERCÍCIO', kind:'total', k:'lucro'});
+    L.push({label:'% Margem Líquida', kind:'pct', k:'margemLiq'});
+    return L;
+  }
+
+  function renderDrePage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    var kpi1 = [
+      { label:'Receita Líquida (acum. no ano)', value: fmtBRL(curYtd.rl), sub:'ante '+janAte(anoAnterior()),
+        delta: fmtChangePct(curYtd.rl, priorYtd.rl), positive: curYtd.rl >= priorYtd.rl },
+      { label:'EBITDA (acum. no ano)', value: fmtBRL(curYtd.ebitda), sub:'ante '+janAte(anoAnterior()),
+        delta: fmtChangePct(curYtd.ebitda, priorYtd.ebitda), positive: curYtd.ebitda >= priorYtd.ebitda },
+      { label:'Lucro Líquido (acum. no ano)', value: fmtBRL(curYtd.lucro), sub:'ante '+janAte(anoAnterior()),
+        delta: 'ante '+fmtBRL(priorYtd.lucro)+' em '+anoAnterior(), positive: curYtd.lucro >= priorYtd.lucro }
+    ];
+    body.appendChild(renderKpiGrid(kpi1));
+
+    // Cada período do ano corrente vem seguido do mesmo período do ano anterior — a
+    // comparação é sempre contra o período equivalente, nunca contra o anterior.
+    function comAcumulado(lista){
+      if (lista.length <= 1) return lista;      // no anual a soma repetiria a coluna
+      var a = { m:'Acum.' };
+      CAMPOS_DRE.concat(['rl','custoTotal','lucroBruto','despTotal','outrasTotal',
+        'ebitda','ebit','lair','lucro']).forEach(function(k){
+        a[k] = lista.reduce(function(t,m){ return t + m[k]; }, 0);
+      });
+      a.margemBruta  = a.rl ? a.lucroBruto/a.rl : 0;
+      a.margemEbitda = a.rl ? a.ebitda/a.rl : 0;
+      a.margemLiq    = a.rl ? a.lucro/a.rl : 0;
+      return lista.concat([a]);
+    }
+
+    var atuais     = comAcumulado(agruparDre(detalheMeses(state.brand)));
+    var anteriores = comAcumulado(agruparDre(detalheMeses(state.brand, DRE_DET_ANT)));
+
+    // Os períodos do ano corrente ficam limpos, um por coluna. A comparação com
+    // o ano anterior entra só no fim: total do ano anterior e a diferença percentual.
+    var totalAtual = atuais[atuais.length - 1];
+    var totalAnt   = anteriores[anteriores.length - 1];
+
+    var cols = [], anoAnt = [];
+    atuais.forEach(function(m){
+      m.outrasTotalNeg = -m.outrasTotal;      // cabeçalho do bloco 4, na convenção de exibição
+      m.resFinNeg = -(m.recFin + m.despFin);  // cabeçalho do bloco 6
+      cols.push(m); anoAnt.push(false);
+    });
+    totalAnt.outrasTotalNeg = -totalAnt.outrasTotal;
+    totalAnt.resFinNeg = -(totalAnt.recFin + totalAnt.despFin);
+    cols.push(totalAnt); anoAnt.push(true);
+    // Última coluna: variação % do acumulado do ano atual contra o mesmo período do ano anterior.
+    var colDelta = cols.length;
+
+    var quem = isAll() ? 'Consolidado' : state.brand;
+    var titulo = 'Demonstrativo de Resultado — ' + quem + ', ' + rotuloPeriodo() +
+                 ' (' + janAte(anoAtual()) + ' vs ' + anoAnterior() + ')';
+    body.appendChild(el('<div class="section-label">'+titulo+'</div>'));
+
+    // Rótulo do acumulado do ano anterior: 'Acum./25' quando há vários períodos,
+    // '2025' no modo anual (onde a única coluna já é o próprio acumulado).
+    var anoAntSufixo = anoAnterior().slice(2), anoAtualSufixo = anoAtual().slice(2);
+    var rotAnt = (atuais.length > 1) ? ('Acum./'+anoAntSufixo) : anoAnterior();
+
+    var tableWrap = document.createElement('div'); tableWrap.className = 'table-wrap';
+    var table = document.createElement('table'); table.className = 'fin';
+    table.innerHTML = '<thead><tr><th>Conta</th>' +
+      atuais.map(function(m){
+        return '<th>'+(m.m === 'Acum.' ? ('Acum./'+anoAtualSufixo) : m.m)+'</th>';
+      }).join('') +
+      '<th class="ano-ant">'+rotAnt+'</th><th class="ano-ant">Dif. %</th></tr></thead>';
+
+    var tbody = document.createElement('tbody');
+    dreEstrutura(state.brand).forEach(function(row){
+      var tr = document.createElement('tr');
+      tr.className = row.kind;
+      var cells;
+      var cls = function(i){ return anoAnt[i] ? ' class="ano-ant"' : ''; };
+      // Variação do acumulado do ano atual contra o mesmo período do ano anterior.
+      // Em % sobre a base do ano anterior; sem base (zerado) não há percentual a mostrar.
+      // `invert` espelha o sinal invertido do valor exibido (linhas de custo/despesa e
+      // os cabeçalhos de bloco) — senão a % sai com o sinal econômico bruto, que anda
+      // ao contrário do número mostrado (ex.: despesa que cresceu de R$15M pra R$18M
+      // mostrando "-23,5%" porque o valor bruto ficou mais negativo).
+      function celDelta(k, invert){
+        if (!k) return '<td class="ano-ant"></td>';
+        var a = totalAtual[k], b = totalAnt[k];
+        if (invert) { a = -a; b = -b; }
+        if (!b) return '<td class="ano-ant">–</td>';
+        return '<td class="ano-ant">'+fmtDeltaPct((a - b) / Math.abs(b))+'</td>';
+      }
+      if (row.kind === 'group') {
+        // O cabeçalho do bloco pode carregar um subtotal só de exibição (blocos 3, 4 e 6).
+        cells = '<td>'+row.label+'</td>';
+        cols.forEach(function(m, i){
+          cells += '<td'+cls(i)+'>' + (row.k ? fmtBRL(-m[row.k]) : '') + '</td>';
+        });
+        cells += celDelta(row.k, true);
+      } else if (row.kind === 'pct') {
+        // Margens: a diferença é em pontos percentuais, não variação relativa.
+        cells = '<td style="padding-left:34px">'+row.label+'</td>';
+        cols.forEach(function(m, i){ cells += '<td'+cls(i)+'>'+fmtPct(m[row.k])+'</td>'; });
+        var pp = (totalAtual[row.k] - totalAnt[row.k]) * 100;
+        cells += '<td class="ano-ant">'+(pp >= 0 ? '+' : '')+pp.toFixed(1).replace('.',',')+' p.p.</td>';
+      } else {
+        var recuo = (row.kind === 'normal') ? 34 : 16;
+        var desc = row.kind === 'normal' ? DRE_DESC[row.k] : null;
+        var aberto = !!(desc && state.dreExpandido[row.k]);
+        var rotulo = desc
+          ? '<span class="dre-chevron">'+(aberto ? '▾' : '▸')+'</span>'+row.label
+          : row.label;
+        if (desc) tr.className += ' expandivel';
+        cells = '<td style="padding-left:'+recuo+'px">'+rotulo+'</td>';
+        cols.forEach(function(m, i){
+          var v = m[row.k];
+          // Linhas subtrativas aparecem com o sinal invertido, igual ao relatório oficial:
+          // um custo (negativo na base) sai positivo; um estorno sai negativo.
+          var mostrado = (row.kind === 'normal' && !row.receita) ? -v : v;
+          cells += '<td'+cls(i)+'>'+fmtBRL(mostrado)+'</td>';
+        });
+        cells += celDelta(row.k, row.kind === 'normal' && !row.receita);
+      }
+      tr.innerHTML = cells;
+      if (row.kind === 'normal' && DRE_DESC[row.k]) {
+        tr.querySelector('td:first-child').onclick = function(){
+          state.dreExpandido[row.k] = !state.dreExpandido[row.k];
+          render();
+        };
+      }
+      tbody.appendChild(tr);
+
+      // Drill-down: DESCRICAO_CONTA por trás desta conta (só ROYAL, ver DRE_DESC).
+      if (row.kind === 'normal' && DRE_DESC[row.k] && state.dreExpandido[row.k]) {
+        var recuoSub = 34 + 18;
+        Object.keys(DRE_DESC[row.k]).sort().forEach(function(descLabel){
+          var subVals = agruparDesc(DRE_DESC[row.k][descLabel]).concat([null]);
+          var subTr = document.createElement('tr');
+          subTr.className = 'detalhe-sub';
+          var subCells = '<td style="padding-left:'+recuoSub+'px">'+descLabel+'</td>';
+          cols.forEach(function(m, i){
+            if (anoAnt[i] || subVals[i] === null) { subCells += '<td class="ano-ant">–</td>'; return; }
+            var mostrado = row.receita ? subVals[i] : -subVals[i];
+            subCells += '<td>'+fmtBRL(mostrado)+'</td>';
+          });
+          subCells += '<td class="ano-ant">–</td>';
+          subTr.innerHTML = subCells;
+          tbody.appendChild(subTr);
+        });
+      }
+    });
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    body.appendChild(tableWrap);
+
+  }
+
+  function renderFluxoCaixaPage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    // O Fluxo de Caixa é sempre mensal: o filtro de período vale só para DRE e Balanço.
+    var cfDetail2026 = fluxoDe(state.brand);
+
+    var cfOperacional = sum(cfDetail2026,'caixaOperacional');
+    var cfInvestimento = sum(cfDetail2026,'caixaInvestimento');
+    var cfFinanciamento = sum(cfDetail2026,'caixaFinanciamento');
+    var cfVariacaoLiquida = sum(cfDetail2026,'variacaoLiquida');
+
+    var kpi2 = [
+      { label:'Caixa Operacional (acum.)', value: fmtBRL(cfOperacional), sub:'Geração no período', delta:'', positive: cfOperacional >= 0 },
+      { label:'Caixa de Investimento (acum.)', value: fmtBRL(cfInvestimento), sub:'Capex e imobilizado', delta:'', positive: cfInvestimento >= 0 },
+      { label:'Caixa de Financiamento (acum.)', value: fmtBRL(cfFinanciamento), sub:'Dívida e floor plan', delta:'', positive: cfFinanciamento >= 0 },
+      { label:'Variação Líquida de Caixa (acum.)', value: fmtBRL(cfVariacaoLiquida), sub:'No período', delta:'', positive: cfVariacaoLiquida >= 0 },
+      { label:'Caixa Final', value: fmtBRL(bal.disponibilidades), sub:'Posição em '+periodoRef()+' (Balanço)', delta:'', positive: bal.disponibilidades >= 0 }
+    ];
+    var kpiGrid = renderKpiGrid(kpi2);
+    Array.prototype.forEach.call(kpiGrid.children, function(card, i){
+      if (!kpi2[i].delta) { var d = card.querySelector('.kpi-delta'); if (d) d.remove(); }
+    });
+    body.appendChild(kpiGrid);
+
+    // O CHECK não é forçado a zero em lugar nenhum — o texto abaixo é montado a partir
+    // do que os meses realmente mostram, mês a mês, não de uma frase fixa por ano.
+    var ultimoFluxo = cfDetail2026[cfDetail2026.length - 1];
+    var mesesForaDoCheck = cfDetail2026.filter(function(m){ return Math.abs(m.check) > 5; })
+      .map(function(m){ return m.m.toLowerCase()+'/'+anoAtual().slice(2); });
+    var calloutFluxo = mesesForaDoCheck.length
+      ? ('A base apura o resultado contábil por trimestre — por isso, em meses fora do fechamento trimestral ('
+         + mesesForaDoCheck.join(', ') + ') o CHECK do fluxo de caixa não fecha em zero, e o saldo acumulado por '
+         + 'este método indireto (R$ '+Math.round(ultimoFluxo.saldoFinal).toLocaleString('pt-BR')+') diverge do '
+         + 'saldo real do Balanço em '+periodoRef()+' (R$ '+Math.round(bal.disponibilidades).toLocaleString('pt-BR')
+         + '). O KPI "Caixa Final" acima usa sempre o valor do Balanço, que é o oficial. Reportamos a diferença, não a escondemos.')
+      : ('O CHECK do fluxo de caixa fecha em zero em todos os meses de '+anoAtual()+': o saldo acumulado por este '
+         + 'método indireto bate com o saldo real do Balanço em '+periodoRef()+' (R$ '
+         + Math.round(bal.disponibilidades).toLocaleString('pt-BR')+').');
+    body.appendChild(el('<div class="callout">'+calloutFluxo+'</div>'));
+
+    body.appendChild(el('<div class="section-label">Composição do Caixa — '+janAte(anoAtual())+' (acumulado no ano)</div>'));
+    var compPanel = document.createElement('div'); compPanel.className = 'panel';
+    var compBars = document.createElement('div'); compBars.className = 'hbars';
+    var compData = [
+      {label:'Atividades Operacionais', value:cfOperacional},
+      {label:'Atividades de Investimento', value:cfInvestimento},
+      {label:'Atividades de Financiamento', value:cfFinanciamento}
+    ];
+    var maxAbs = Math.max.apply(null, compData.map(function(d){return Math.abs(d.value);}));
+    compData.forEach(function(d){
+      var pct = Math.max(Math.abs(d.value)/maxAbs*100, 2);
+      var row = document.createElement('div'); row.className = 'hbar-row';
+      row.innerHTML =
+        '<div class="hbar-label">'+d.label+'</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%;background:'+(d.value>=0?'#5B7553':'#B23B3B')+'"></div></div>' +
+        '<div class="hbar-value">'+fmtBRL(d.value)+'</div>';
+      compBars.appendChild(row);
+    });
+    compPanel.appendChild(compBars);
+    body.appendChild(compPanel);
+
+    body.appendChild(el('<div class="section-label">Demonstrativo do Fluxo de Caixa — mensal, real ('+janAte(anoAtual())+', método indireto)</div>'));
+    var tableWrap = document.createElement('div'); tableWrap.className = 'table-wrap';
+    var table = document.createElement('table'); table.className = 'fin';
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    headRow.innerHTML = '<th>Conta</th>' + cfDetail2026.map(function(m){ return '<th>'+m.m+'/'+anoAtual().slice(2)+'</th>'; }).join('');
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    cfRowDefs.forEach(function(row){
+      var tr = document.createElement('tr');
+      tr.className = row.kind;
+      var indentPx = 16 + row.indent*18;
+      var cells = '<td style="padding-left:'+indentPx+'px">'+row.label+'</td>';
+      cfDetail2026.forEach(function(m){
+        cells += '<td>'+fmtBRL(row.get(m))+'</td>';
+      });
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    body.appendChild(tableWrap);
+  }
+
+  function renderBalancoPage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    var workingCapitalCur = bal.totalAtivoCirc - bal.totalPassivoCirc;
+    var workingCapitalPrior = balP.totalAtivoCirc - balP.totalPassivoCirc;
+    var dividaFinCur = bal.emprestFinanc + bal.emprestFinancLP;
+    var dividaFinPrior = balP.emprestFinanc + balP.emprestFinancLP;
+
+    var kpi3 = [
+      { label:'Ativo Total', value: fmtBRL(bal.totalAtivo), sub:'ante '+periodoRefAnt(),
+        delta: fmtChangePct(bal.totalAtivo, balP.totalAtivo), positive: bal.totalAtivo >= balP.totalAtivo },
+      { label:'Patrimônio Líquido', value: fmtBRL(bal.totalPL), sub:'ante '+periodoRefAnt(),
+        delta: fmtChangePct(bal.totalPL, balP.totalPL), positive: bal.totalPL >= balP.totalPL },
+      { label:'Dívida Financeira (sem Floor Plan)', value: fmtBRL(dividaFinCur), sub:'Empréstimos e financiamentos, CP+LP',
+        delta: fmtChangePct(dividaFinCur, dividaFinPrior), positive: dividaFinCur <= dividaFinPrior },
+      { label:'Capital de Giro', value: fmtBRL(workingCapitalCur), sub:'Ativo Circ. − Passivo Circ.',
+        delta: 'ante '+fmtBRL(workingCapitalPrior)+' em '+mesFinalRotulo().toLowerCase()+'/'+anoAnterior().slice(2), positive: workingCapitalCur >= workingCapitalPrior }
+    ];
+    body.appendChild(renderKpiGrid(kpi3));
+
+    // O CHECK não é forçado a zero: o texto é montado a partir do valor real do
+    // período selecionado, não de uma frase fixa por ano.
+    var checkBalFecha = Math.abs(bal.check) <= 5;
+    var calloutBal = checkBalFecha
+      ? ('CHECK do Balanço (Ativo − Passivo − PL) fecha em '+periodoRef()+': '+fmtBRL(bal.check)+'.')
+      : ('<b>CHECK do Balanço (Ativo − Passivo − PL) não fecha em '+periodoRef()+'</b>: '+fmtBRL(bal.check)+
+         '. Isso foge do padrão de fechamento trimestral, que normalmente zera (ex.: '+periodoRefAnt()+': '+fmtBRL(balP.check)+
+         '). Reportamos o valor tal como veio, sem forçar o fechamento; vale investigar a causa no Power BI.');
+    body.appendChild(el('<div class="callout">'+calloutBal+'</div>'));
+
+    var cols = document.createElement('div'); cols.className = 'two-col';
+
+    // O Balanço é posição, não fluxo: cada coluna é uma data de fechamento.
+    // Trimestral mostra a evolução dentro do ano selecionado; mensal e anual
+    // comparam com o mesmo período do ano anterior.
+    // Posições do período + a do ano anterior, e a diferença % entre a última
+    // posição do ano atual e a do ano anterior (mesma data, um ano atrás).
+    var colunasBal;
+    if (state.period === 'trimestral'){
+      // Meses de fechamento de trimestre dentro do ano selecionado: idx 2,5,8,11
+      // (mar/jun/set/dez) — quantos couberem em MESES.length (2 no ano em curso,
+      // 4 num ano fechado). O último sempre é o próprio `bal`, sem reconstrução.
+      var idxTrimestres = [];
+      for (var _qi = 2; _qi < MESES.length; _qi += 3) idxTrimestres.push(_qi);
+      colunasBal = idxTrimestres.map(function(qi, ti){
+        var mesNum = (qi+1 < 10 ? '0' : '') + (qi+1);
+        var ehUltimo = (qi === MESES.length - 1);
+        return { titulo: 'T'+(ti+1)+' ('+mesNum+'/'+anoAtual().slice(2)+')',
+                  dados: ehUltimo ? bal : balancoNoMes(state.brand, qi, 0) };
+      });
+      colunasBal.push({ titulo:'Ano Anterior ('+periodoRefAnt()+')', dados: balP, ant:true });
+    } else if (state.period === 'mensal'){
+      colunasBal = [
+        { titulo:'Atual ('+periodoRef()+')', dados: bal },
+        { titulo:'Ano Anterior ('+periodoRefAnt()+')', dados: balP, ant:true }
+      ];
+    } else {                                    // anual: fecha o acumulado do exercício
+      colunasBal = [
+        { titulo: anoAtual()+(mesFinalNum()!=='12'?'*':'')+' ('+periodoRef()+')', dados: bal },
+        { titulo: anoAnterior()+' ('+periodoRefAnt()+')', dados: balP, ant:true }
+      ];
+    }
+
+    function buildSide(title, rowDefs){
+      var side = document.createElement('div');
+      side.appendChild(el('<div class="section-label">'+title+'</div>'));
+      var tableWrap = document.createElement('div'); tableWrap.className = 'table-wrap';
+      var table = document.createElement('table'); table.className = 'fin';
+      var thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Conta</th>' +
+        colunasBal.map(function(c){
+          return '<th'+(c.ant?' class="ano-ant"':'')+'>'+c.titulo+'</th>';
+        }).join('') + '<th class="ano-ant">Dif. %</th></tr>';
+      table.appendChild(thead);
+      // Compara a última posição de 2026 com a do ano anterior.
+      var atualBal = colunasBal[colunasBal.length - 2].dados;
+      var antBal   = colunasBal[colunasBal.length - 1].dados;
+      var tbody = document.createElement('tbody');
+      rowDefs.forEach(function(row){
+        var tr = document.createElement('tr');
+        tr.className = row.kind;
+        var indentPx = 16 + row.indent*18;
+        var a = row.get(atualBal), b = row.get(antBal);
+        var delta = !b ? '–' : fmtDeltaPct((a - b) / Math.abs(b));
+        tr.innerHTML = '<td style="padding-left:'+indentPx+'px">'+row.label+'</td>' +
+          colunasBal.map(function(c){
+            return '<td'+(c.ant?' class="ano-ant"':'')+'>'+fmtBRL(row.get(c.dados))+'</td>';
+          }).join('') + '<td class="ano-ant">'+delta+'</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      side.appendChild(tableWrap);
+      return side;
+    }
+
+    body.appendChild(el('<div class="section-label">Balanço Patrimonial — ' +
+      (isAll() ? 'Consolidado' : state.brand) + '</div>'));
+    cols.appendChild(buildSide('Ativo', ativoRowDefs));
+    cols.appendChild(buildSide('Passivo e Patrimônio Líquido', passivoRowDefs));
+    body.appendChild(cols);
+  }
+
+  function renderRentabilidadePage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    // Margem Bruta acumulada (soma dos meses reais da DRE — mesma lógica das margens já usadas nas partes 1 e 2)
+    var margemBrutaCur = curYtd.margemBruta;
+    var margemBrutaPrior = priorYtd.margemBruta;
+
+    var roaCur   = bal.totalAtivo  ? curYtd.lucro   / bal.totalAtivo  : 0;
+    var roaPrior = balP.totalAtivo ? priorYtd.lucro / balP.totalAtivo : 0;
+
+    // Mesmo problema do EBITDA=0: sem Passivo Circulante (empresa nova/sem Balanço
+    // apurado ainda), essas quatro razões viram 0÷0 = NaN.
+    var temPassivoCircCur = !!bal.totalPassivoCirc;
+    var temPassivoCircPrior = !!balP.totalPassivoCirc;
+    var temPassivoCircAmbos = temPassivoCircCur && temPassivoCircPrior;
+    var liqCorrenteCur = temPassivoCircCur ? bal.totalAtivoCirc / bal.totalPassivoCirc : 0;
+    var liqCorrentePrior = temPassivoCircPrior ? balP.totalAtivoCirc / balP.totalPassivoCirc : 0;
+    var liqSecaCur = temPassivoCircCur ? (bal.totalAtivoCirc - bal.estoques) / bal.totalPassivoCirc : 0;
+    var liqSecaPrior = temPassivoCircPrior ? (balP.totalAtivoCirc - balP.estoques) / balP.totalPassivoCirc : 0;
+    var liqImediataCur = temPassivoCircCur ? bal.disponibilidades / bal.totalPassivoCirc : 0;
+    var liqImediataPrior = temPassivoCircPrior ? balP.disponibilidades / balP.totalPassivoCirc : 0;
+    var temPassivoTotalCur = !!(bal.totalPassivoCirc + bal.totalPassivoNaoCirc);
+    var temPassivoTotalPrior = !!(balP.totalPassivoCirc + balP.totalPassivoNaoCirc);
+    var temPassivoTotalAmbos = temPassivoTotalCur && temPassivoTotalPrior;
+    var liqGeralCur = temPassivoTotalCur ? bal.totalAtivo / (bal.totalPassivoCirc + bal.totalPassivoNaoCirc) : 0;
+    var liqGeralPrior = temPassivoTotalPrior ? balP.totalAtivo / (balP.totalPassivoCirc + balP.totalPassivoNaoCirc) : 0;
+
+    body.appendChild(el('<div class="section-label">Rentabilidade</div>'));
+    var kpi4a = [
+      { label:'Margem Bruta', value: fmtPct(margemBrutaCur), sub:'De cada R$100 vendidos, o que sobra do custo do produto', delta: fmtPP(margemBrutaCur, margemBrutaPrior), positive: margemBrutaCur >= margemBrutaPrior },
+      { label:'Margem EBITDA', value: fmtPct(margemEbitdaCur), sub:'De cada R$100 vendidos, o que a operação gera de caixa', delta: fmtPP(margemEbitdaCur, margemEbitdaPrior), positive: margemEbitdaCur >= margemEbitdaPrior },
+      { label:'Margem Líquida', value: fmtPct(margemLiqCur), sub:'De cada R$100 vendidos, o que sobra limpo no final', delta: fmtPP(margemLiqCur, margemLiqPrior), positive: margemLiqCur >= margemLiqPrior },
+      { label:'ROE (acum., não anualizado)', value: fmtPct(roeCur), sub:'De cada R$100 investidos na empresa, quanto voltou de lucro', delta: fmtPP(roeCur, roePrior), positive: roeCur >= roePrior },
+      { label:'ROA (acum., não anualizado)', value: fmtPct(roaCur), sub:'A cada R$100 investidos em Ativo, quanto temos este lucro', delta: fmtPP(roaCur, roaPrior), positive: roaCur >= roaPrior }
+    ];
+    body.appendChild(renderKpiGrid(kpi4a));
+
+    body.appendChild(el('<div class="section-label">Liquidez (posição em '+periodoRef()+' vs. '+periodoRefAnt()+')</div>'));
+    var kpi4b = [
+      { label:'Liquidez Corrente', value: temPassivoCircCur ? fmtRatioPrecise(liqCorrenteCur) : '–', sub:'A capacidade de pagar o que vence este ano', delta: temPassivoCircAmbos ? fmtChangePct(liqCorrenteCur, liqCorrentePrior) : '', positive: temPassivoCircAmbos ? liqCorrenteCur >= liqCorrentePrior : true },
+      { label:'Liquidez Seca', value: temPassivoCircCur ? fmtRatioPrecise(liqSecaCur) : '–', sub:'A capacidade de pagar o que vence este ano, sem contar o estoque', delta: temPassivoCircAmbos ? fmtChangePct(liqSecaCur, liqSecaPrior) : '', positive: temPassivoCircAmbos ? liqSecaCur >= liqSecaPrior : true },
+      { label:'Liquidez Geral', value: temPassivoTotalCur ? fmtRatioPrecise(liqGeralCur) : '–', sub:'Se a empresa acabasse hoje, cobriria as dívidas todas?', delta: temPassivoTotalAmbos ? fmtChangePct(liqGeralCur, liqGeralPrior) : '', positive: temPassivoTotalAmbos ? liqGeralCur >= liqGeralPrior : true },
+      { label:'Liquidez Imediata', value: temPassivoCircCur ? fmtRatioPrecise(liqImediataCur) : '–', sub:'Dinheiro vivo na mão pra pagar os boletos de hoje', delta: temPassivoCircAmbos ? fmtChangePct(liqImediataCur, liqImediataPrior) : '', positive: temPassivoCircAmbos ? liqImediataCur >= liqImediataPrior : true }
+    ];
+    var kpiGrid4b = renderKpiGrid(kpi4b);
+    Array.prototype.forEach.call(kpiGrid4b.children, function(card, i){
+      var s = card.querySelector('.kpi-sub'); if (s && !s.textContent) s.remove();
+      if (!kpi4b[i].delta) { var d = card.querySelector('.kpi-delta'); if (d) d.remove(); }
+    });
+    body.appendChild(kpiGrid4b);
+
+    body.appendChild(el('<div class="section-label">Margem EBITDA — Acumulado '+anoAtual()+' vs. Acumulado '+anoAnterior()+'</div>'));
+    var panel = document.createElement('div'); panel.className = 'panel';
+    var bars = document.createElement('div'); bars.className = 'hbars';
+    var maxM = Math.max(margemEbitdaCur, margemEbitdaPrior, 0.001);
+    [ {label:janAte(anoAtual()), value:margemEbitdaCur, color:'#C3002F'}, {label:janAte(anoAnterior()), value:margemEbitdaPrior, color:'#D6D6D6'} ].forEach(function(d){
+      var pct = Math.max(d.value/maxM*100, 2);
+      var row = document.createElement('div'); row.className = 'hbar-row';
+      row.innerHTML = '<div class="hbar-label">'+d.label+'</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%;background:'+d.color+'"></div></div>' +
+        '<div class="hbar-value">'+fmtPct(d.value)+'</div>';
+      bars.appendChild(row);
+    });
+    panel.appendChild(bars);
+    body.appendChild(panel);
+
+    body.appendChild(renderGlossario('Como calculamos cada indicador', [
+      { nome:'Margem Bruta',
+        explicacao:'De cada 100 reais que vendemos, quanto sobra depois de pagar só o custo de fazer ou comprar o produto.',
+        formula:'Lucro Bruto ÷ Receita Líquida × 100',
+        expectativa:'Quanto maior, melhor.' },
+      { nome:'Margem EBITDA',
+        explicacao:'De cada 100 reais que vendemos, quanto o negócio gera de caixa na operação pura, antes de pagar dívidas e impostos.',
+        formula:'EBITDA ÷ Receita Líquida × 100',
+        expectativa:'Quanto maior, melhor.' },
+      { nome:'Margem Líquida',
+        explicacao:'De tudo o que vendemos, a porcentagem que sobrou limpa no bolso no final das contas.',
+        formula:'Lucro Líquido ÷ Receita Líquida × 100',
+        expectativa:'Quanto maior, melhor.' },
+      { nome:'ROE',
+        explicacao:'De cada 100 reais investidos na empresa, quantos reais voltaram de lucro.',
+        formula:'(Lucro Líquido ÷ Patrimônio Líquido) × 100',
+        expectativa:'Quanto maior, mais eficiente a empresa é em rentabilizar o capital.' },
+      { nome:'ROA',
+        explicacao:'Mostra quantos reais de lucro a empresa consegue espremer de cada R$100 investidos.',
+        formula:'(Lucro Líquido ÷ Ativo Total) × 100',
+        expectativa:'Quanto maior, mais lucrativos são os ativos da empresa.' },
+      { nome:'Liquidez Corrente',
+        explicacao:'Mostra a capacidade de pagar o que vence este ano.',
+        formula:'Ativo Circulante ÷ Passivo Circulante',
+        expectativa:'Maior que 1: sobra dinheiro depois de pagar a dívida deste ano.' },
+      { nome:'Liquidez Seca',
+        explicacao:'Se vendermos todos os bens, menos o estoque, conseguimos pagar as contas do ano?',
+        formula:'(Ativo Circulante − Estoques) ÷ Passivo Circulante',
+        expectativa:'Maior que 1: dá pra quitar as dívidas de curto prazo sem vender o estoque.' },
+      { nome:'Liquidez Geral',
+        explicacao:'Se a empresa acabasse hoje, o que tem cobriria todas as dívidas do presente e do futuro?',
+        formula:'(Ativo Circulante + Ativo Não Circulante) ÷ (Passivo Circulante + Passivo Não Circulante)',
+        expectativa:'Maior que 1: tem o suficiente para quitar todas as dívidas.' },
+      { nome:'Liquidez Imediata',
+        explicacao:'Quanto dinheiro vivo temos em caixa agora para pagar os boletos de hoje.',
+        formula:'(Caixa + Bancos + Aplicações Imediatas) ÷ Passivo Circulante',
+        expectativa:'Quanto maior, mais fôlego pra pagar contas imediatas — mas exagerado indica caixa parado.' }
+    ]));
+  }
+
+  function renderEndividamentoPage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    var dividaFinCur = bal.emprestFinanc + bal.emprestFinancLP;
+    var dividaFinPrior = balP.emprestFinanc + balP.emprestFinancLP;
+    var dividaLiqCur = ((bal.emprestFinanc + bal.emprestFinancLP) - bal.disponibilidades);
+    var dividaLiqPrior = ((balP.emprestFinanc + balP.emprestFinancLP) - balP.disponibilidades);
+    // Todos os X/EBITDA abaixo dependem de curYtd.ebitda/priorYtd.ebitda como denominador —
+    // sem guarda, um período com EBITDA exatamente zero (empresa nova/sem atividade, ex.:
+    // OMODA em 2025) vira 0÷0 = NaN, exibido como "NaNx". A conta em si vira 0 (sentinela
+    // segura pra qualquer outro uso interno, tipo o gráfico de barras) e o card mostra "–".
+    var temEbitdaCur = !!curYtd.ebitda;
+    var temEbitdaPrior = !!priorYtd.ebitda;
+    var temEbitdaAmbos = temEbitdaCur && temEbitdaPrior;
+    var dividaBrutaEbitdaCur = temEbitdaCur ? dividaFinCur / curYtd.ebitda : 0;
+    var dividaBrutaEbitdaPrior = temEbitdaPrior ? dividaFinPrior / priorYtd.ebitda : 0;
+    var dividaLiqEbitdaCur = temEbitdaCur ? dividaLiqCur / curYtd.ebitda : 0;
+    var dividaLiqEbitdaPrior = temEbitdaPrior ? dividaLiqPrior / priorYtd.ebitda : 0;
+    // Mesmo problema do EBITDA=0 acima, aqui com Patrimônio Líquido no denominador
+    // (ex.: empresa nova sem PL apurado ainda).
+    var temPLCur = !!bal.totalPL;
+    var temPLPrior = !!balP.totalPL;
+    var temPLAmbos = temPLCur && temPLPrior;
+    var dividaPLCur = temPLCur ? dividaFinCur / bal.totalPL : 0;
+    var dividaPLPrior = temPLPrior ? dividaFinPrior / balP.totalPL : 0;
+    // Floor Plan (estoque financiado de VN + VU + Peças) fica fora da "Dívida sem Floor
+    // Plan" acima de propósito — aqui medimos o próprio Floor Plan contra o EBITDA.
+    var floorPlanEbitdaCur = temEbitdaCur ? bal.floorPlan / curYtd.ebitda : 0;
+    var floorPlanEbitdaPrior = temEbitdaPrior ? balP.floorPlan / priorYtd.ebitda : 0;
+    // Sem dívida financeira, "% de curto prazo" não tem resposta (0 ÷ 0) — mostra
+    // "–" em vez de NaN%, tanto no card quanto no gráfico de composição abaixo.
+    var composicaoCPCur = dividaFinCur ? (bal.emprestFinanc / dividaFinCur) : null;
+    var composicaoCPPrior = dividaFinPrior ? (balP.emprestFinanc / dividaFinPrior) : null;
+
+    // EBIT e Despesas Financeiras acumulados — somam os meses reais da DRE do ano
+    // selecionado; o ano anterior soma os mesmos meses (mesma consulta DAX).
+    var ebitCurYtd = curYtd.ebit;
+    var despFinCurYtd = -curYtd.despFin;      // despFin vem negativo no VALOR_AJUSTADO
+    var ebitPriorYtd = priorYtd.ebit;
+    var despFinPriorYtd = -priorYtd.despFin;
+    var temDespFinCur = !!despFinCurYtd;
+    var temDespFinPrior = !!despFinPriorYtd;
+    var temDespFinAmbos = temDespFinCur && temDespFinPrior;
+    var coberturaJurosCur = temDespFinCur ? ebitCurYtd / despFinCurYtd : 0;
+    var coberturaJurosPrior = temDespFinPrior ? ebitPriorYtd / despFinPriorYtd : 0;
+
+    // O gráfico de composição CP x LP só depende do período atual ter dívida — comparar
+    // com o ano anterior é só para o delta do card, não deveria esconder o gráfico quando
+    // só o ano anterior está zerado (ex.: dívida nova, sem histórico no ano anterior).
+    var temComposicao = composicaoCPCur !== null;
+    var temComparacaoCP = composicaoCPCur !== null && composicaoCPPrior !== null;
+    var kpi5 = [
+      { label:'Dívida Bruta sem Floor Plan / EBITDA', value: temEbitdaCur ? fmtRatioPrecise(dividaBrutaEbitdaCur) : '–', sub:'Em quantos anos de caixa a empresa paga tudo o que deve',
+        delta: temEbitdaAmbos ? fmtChangePct(dividaBrutaEbitdaCur, dividaBrutaEbitdaPrior) : '', positive: temEbitdaAmbos ? dividaBrutaEbitdaCur <= dividaBrutaEbitdaPrior : true },
+      { label:'Dívida Líquida sem Floor Plan / EBITDA', value: temEbitdaCur ? fmtRatioPrecise(dividaLiqEbitdaCur) : '–', sub:'Se a empresa usar todo o dinheiro para abater as dívidas,  quantos anos faltam para pagar o resto',
+        delta: temEbitdaAmbos ? fmtChangePct(dividaLiqEbitdaCur, dividaLiqEbitdaPrior) : '', positive: temEbitdaAmbos ? dividaLiqEbitdaCur <= dividaLiqEbitdaPrior : true },
+      { label:'Dívida Bruta sem Floor Plan / Patrimônio Líquido', value: temPLCur ? fmtRatioPrecise(dividaPLCur) : '–', sub:'Quanto do negócio é bancado por dinheiro emprestado',
+        delta: temPLAmbos ? fmtChangePct(dividaPLCur, dividaPLPrior) : '', positive: temPLAmbos ? dividaPLCur <= dividaPLPrior : true },
+      { label:'Floor Plan / EBITDA', value: temEbitdaCur ? fmtRatioPrecise(floorPlanEbitdaCur) : '–', sub:'Em quantos anos de caixa a empresa paga o floor plan de estoque',
+        delta: temEbitdaAmbos ? fmtChangePct(floorPlanEbitdaCur, floorPlanEbitdaPrior) : '', positive: temEbitdaAmbos ? floorPlanEbitdaCur <= floorPlanEbitdaPrior : true },
+      { label:'Composição (Curto Prazo)', value: temComposicao ? fmtPct(composicaoCPCur) : '–',
+        sub:'Quanto da fatia da dívida precisa ser paga neste ano',
+        delta: temComparacaoCP ? fmtPP(composicaoCPCur, composicaoCPPrior) : '',
+        positive: temComparacaoCP ? composicaoCPCur <= composicaoCPPrior : true },
+      { label:'Cobertura de Juros', value: temDespFinCur ? fmtRatioPrecise(coberturaJurosCur) : '–', sub:'Quanto o EBIT paga o juros sem sufocar o caixa',
+        delta: temDespFinAmbos ? fmtChangePct(coberturaJurosCur, coberturaJurosPrior) : '', positive: temDespFinAmbos ? coberturaJurosCur >= coberturaJurosPrior : true }
+    ];
+    var kpiGrid5 = renderKpiGrid(kpi5);
+    Array.prototype.forEach.call(kpiGrid5.children, function(card, i){
+      if (!kpi5[i].delta) { var d = card.querySelector('.kpi-delta'); if (d) d.remove(); }
+    });
+    body.appendChild(kpiGrid5);
+
+    if (temDespFinCur && coberturaJurosCur < 1) {
+      body.appendChild(el('<div class="callout"><b>Cobertura de Juros abaixo de 1x</b>: o EBIT acumulado (R$ '+Math.round(ebitCurYtd).toLocaleString('pt-BR')+') não cobre as despesas financeiras do período (R$ '+Math.round(despFinCurYtd).toLocaleString('pt-BR')+'). Em '+janAte(anoAnterior())+' a cobertura era de '+(temDespFinPrior ? fmtRatioPrecise(coberturaJurosPrior) : '–')+'.</div>'));
+    }
+
+    body.appendChild(el('<div class="section-label">Composição da Dívida Financeira (Curto x Longo Prazo) — '+periodoRef()+'</div>'));
+    var compPanel = document.createElement('div'); compPanel.className = 'panel';
+    if (temComposicao) {
+      var cpPct = Math.max(bal.emprestFinanc/dividaFinCur*100, 2);
+      var lpPct = Math.max(bal.emprestFinancLP/dividaFinCur*100, 2);
+      var stack = document.createElement('div');
+      stack.style.cssText = 'display:flex;height:26px;border-radius:6px;overflow:hidden;width:100%';
+      stack.innerHTML = '<div style="background:#C3002F;height:100%;width:'+cpPct+'%"></div>' +
+        '<div style="background:#D6D6D6;height:100%;width:'+lpPct+'%"></div>';
+      compPanel.appendChild(stack);
+      var legend = el('<div class="legend" style="margin-top:14px"></div>');
+      legend.appendChild(el('<div class="legend-item"><div class="legend-swatch" style="background:#C3002F"></div>Curto Prazo — '+fmtBRL(bal.emprestFinanc)+' ('+fmtPct(composicaoCPCur)+')</div>'));
+      legend.appendChild(el('<div class="legend-item"><div class="legend-swatch" style="background:#D6D6D6"></div>Longo Prazo — '+fmtBRL(bal.emprestFinancLP)+' ('+fmtPct(1-composicaoCPCur)+')</div>'));
+      compPanel.appendChild(legend);
+      body.appendChild(compPanel);
+      body.appendChild(el('<div class="footnote">A dívida financeira do grupo é quase toda de curto prazo — perfil típico de floor plan e capital de giro de revenda de veículos, mas que exige rolagem constante.</div>'));
+    } else {
+      compPanel.appendChild(el('<div style="color:var(--muted-1);font-size:13px">Sem dívida financeira em '+periodoRef()+' — nada para compor entre curto e longo prazo.</div>'));
+      body.appendChild(compPanel);
+    }
+
+    body.appendChild(el('<div class="section-label">Dívida Líquida / EBITDA — Acumulado '+anoAtual()+' vs. Acumulado '+anoAnterior()+'</div>'));
+    var panel2 = document.createElement('div'); panel2.className = 'panel';
+    var bars2 = document.createElement('div'); bars2.className = 'hbars';
+    var maxD = Math.max(dividaLiqEbitdaCur, dividaLiqEbitdaPrior, 0.001);
+    [ {label:janAte(anoAtual()), value:dividaLiqEbitdaCur, color:'#C3002F', tem:temEbitdaCur}, {label:janAte(anoAnterior()), value:dividaLiqEbitdaPrior, color:'#D6D6D6', tem:temEbitdaPrior} ].forEach(function(d){
+      var pct = Math.max(d.value/maxD*100, 2);
+      var row = document.createElement('div'); row.className = 'hbar-row';
+      row.innerHTML = '<div class="hbar-label">'+d.label+'</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%;background:'+d.color+'"></div></div>' +
+        '<div class="hbar-value">'+(d.tem ? fmtRatioPrecise(d.value) : '–')+'</div>';
+      bars2.appendChild(row);
+    });
+    panel2.appendChild(bars2);
+    body.appendChild(panel2);
+
+    body.appendChild(renderGlossario('Como calculamos cada indicador', [
+      { nome:'Dívida Bruta / EBITDA',
+        explicacao:'Em quantos anos de caixa a empresa paga tudo o que deve.',
+        formula:'(Empréstimos e Financiamentos de Curto e Longo Prazo) ÷ EBITDA',
+        expectativa:'Quanto menor, melhor.' },
+      { nome:'Dívida Líquida / EBITDA',
+        explicacao:'Se a empresa usar todo o dinheiro disponível pra abater as dívidas, quantos anos faltam pra pagar o resto.',
+        formula:'(Dívida Bruta − Caixa, Bancos e Aplicações) ÷ EBITDA',
+        expectativa:'Quanto menor, melhor.' },
+      { nome:'Dívida Bruta / Patrimônio Líquido',
+        explicacao:'Quanto do negócio é movido por dinheiro emprestado, comparado ao dinheiro dos próprios donos.',
+        formula:'Dívida Bruta ÷ Patrimônio Líquido',
+        expectativa:'Maior que 1: o capital de terceiros financia mais que o capital próprio.' },
+      { nome:'Floor Plan / EBITDA',
+        explicacao:'Em quantos anos de caixa a empresa paga o estoque financiado (veículos novos, usados e peças).',
+        formula:'(Floor Plan VN + Floor Plan VU + Floor Plan Peças) ÷ EBITDA',
+        expectativa:'Quanto menor, melhor — mede o estoque financiado, à parte da dívida financeira.' },
+      { nome:'Composição da Dívida (Curto Prazo)',
+        explicacao:'Qual fatia da nossa dívida financeira precisa ser paga neste ano.',
+        formula:'Empréstimos de Curto Prazo ÷ Dívida Financeira Total × 100',
+        expectativa:'Quanto menor, melhor.' },
+      { nome:'Cobertura de Juros',
+        explicacao:'Quantas vezes o EBIT consegue pagar o custo dos juros do banco sem sufocar o caixa',
+        formula:'EBIT ÷ Despesas Financeiras',
+        expectativa:'Quanto maior, melhor.' }
+    ]));
+  }
+
+  // Indicadores de Eficiencia na convencao oficial do modelo (relatorio_indicadores):
+  // mes de referencia = ultimo mes do ano selecionado, saldo final do Balanco x fluxo do mes x 30 dias.
+  function eficienciaDe(brand, idx){
+    var d = detalheMeses(brand)[MESES.length - 1];   // ultimo mes do ano selecionado
+    var b = balancoDe(brand, idx);
+    var DIAS = 30;
+    // No modelo os custos vem negativos; as formulas oficiais usam o valor positivo.
+    var custoVN = -d.custoVN, custoVU = -d.custoVU, custoPecas = -d.custoPecas;
+    var custoOficina = -d.custoOficina, custoTotal = -d.custoTotal;
+    var custoPessoal = -(d.folha + d.gastosFunc), despOper = -d.despTotal;
+    function div(a, b2){ return b2 ? a / b2 : 0; }
+    return {
+      giroVN: div(b.estVN, custoVN) * DIAS,
+      giroVU: div(b.estVU, custoVU) * DIAS,
+      giroPecas: div(b.estPecas, custoPecas + custoOficina) * DIAS,
+      pmr: div(b.contasReceber, d.rl) * DIAS,
+      pmp: div(b.fornecDiv, custoTotal) * DIAS,
+      cicloFinanceiro: (div(b.contasReceber, d.rl) + div(b.estoques, custoTotal) - div(b.fornecDiv, custoTotal)) * DIAS,
+      custoPessoalRL: div(custoPessoal, d.rl),
+      despOperRL: div(despOper, d.rl)
+    };
+  }
+
+  function renderEficienciaPage(){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+
+    // Painel travado na ROYAL (nunca 'all'): o comparativo do ano anterior desta
+    // seção só existe no Consolidado, então aqui `p` é sempre null.
+    var c = eficienciaDe(state.brand, 0);
+    var p = null;
+
+    function card(label, valor, sub, delta, positivo){
+      return { label:label, value:valor, sub:sub, delta:delta, positive:positivo };
+    }
+    var kpi6 = [
+      card('Giro de Estoque — Veículos Novos', fmtDays(c.giroVN), 'menor é melhor',
+           p ? fmtDiffDays(c.giroVN, p.giroVN) : '', p ? c.giroVN <= p.giroVN : c.giroVN >= 0),
+      card('Giro de Estoque — Veículos Usados', fmtDays(c.giroVU), 'menor é melhor',
+           p ? fmtDiffDays(c.giroVU, p.giroVU) : '', p ? c.giroVU <= p.giroVU : c.giroVU >= 0),
+      card('Giro de Estoque — Peças', fmtDays(c.giroPecas), 'menor é melhor',
+           p ? fmtDiffDays(c.giroPecas, p.giroPecas) : '', p ? c.giroPecas <= p.giroPecas : c.giroPecas >= 0),
+      card('Prazo Médio de Recebimento', fmtDays(c.pmr), 'menor é melhor',
+           p ? fmtDiffDays(c.pmr, p.pmr) : '', p ? c.pmr <= p.pmr : true),
+      card('Prazo Médio de Pagamento', fmtDays(c.pmp), 'maior financia o giro',
+           p ? fmtDiffDays(c.pmp, p.pmp) : '', p ? c.pmp >= p.pmp : true),
+      card('Ciclo Financeiro', fmtDays(c.cicloFinanceiro), 'PMR + giro − PMP',
+           p ? fmtDiffDays(c.cicloFinanceiro, p.cicloFinanceiro) : '', p ? c.cicloFinanceiro <= p.cicloFinanceiro : true),
+      card('Custo de Pessoal / Receita Líquida', fmtPct(c.custoPessoalRL), 'Folha + Gastos c/ Funcionários',
+           p ? fmtPP(c.custoPessoalRL, p.custoPessoalRL) : '', p ? c.custoPessoalRL <= p.custoPessoalRL : true),
+      card('Despesas Operacionais / Receita Líquida', fmtPct(c.despOperRL), '',
+           p ? fmtPP(c.despOperRL, p.despOperRL) : '', p ? c.despOperRL <= p.despOperRL : true)
+    ];
+    var grid = renderKpiGrid(kpi6);
+    Array.prototype.forEach.call(grid.children, function(cardEl, i){
+      if (!kpi6[i].delta) { var dEl = cardEl.querySelector('.kpi-delta'); if (dEl) dEl.remove(); }
+      var sEl = cardEl.querySelector('.kpi-sub'); if (sEl && !sEl.textContent) sEl.remove();
+    });
+    body.appendChild(grid);
+  }
+
+  function renderPlaceholderPage(title){
+    var body = document.getElementById('page-body');
+    body.innerHTML = '';
+    var card = document.createElement('div');
+    card.className = 'placeholder-card';
+    card.innerHTML = '<b>'+title+' — em construção</b>Essa parte do painel entra numa próxima etapa, com os mesmos dados reais do Power BI. Por ora, confirme a Visão Geral antes de seguirmos.';
+    body.appendChild(card);
+  }
+
+  function render(){
+    aplicarAno(state.ano);
+    recomputar(state.brand);
+    document.getElementById('sidebar-foot').innerHTML =
+      'Dados reais · Power BI<br>Base até ' + periodoRef() + '<br>Snapshot de ' + SNAPSHOT;
+
+    renderNavGroup(document.getElementById('nav-visao'), navVisao);
+    renderNavGroup(document.getElementById('nav-relatorios'), navRelatorios);
+    renderNavGroup(document.getElementById('nav-indicadores'), navIndicadores);
+    renderAnoToggle();
+    renderPeriodToggle();
+
+    var allNav = navVisao.concat(navRelatorios, navIndicadores);
+    var current = allNav.filter(function(n){ return n.id === state.page; })[0];
+    document.getElementById('page-eyebrow').textContent = isAll()
+      ? 'Consolidado — Todas as Empresas'
+      : 'Empresa: ' + state.brand;
+    document.getElementById('page-title').textContent = current.label;
+    document.getElementById('page-desc').textContent = (state.page === 0)
+      ? 'Indicadores consolidados de resultado — real, ' + janAte(anoAtual()) + ' (acumulado no ano) contra ' + janAte(anoAnterior()) + '.'
+      : pageDescs[state.page];
+
+    if (state.page === 0) renderOverviewPage();
+    else if (state.page === 1) renderDrePage();
+    else if (state.page === 2) renderFluxoCaixaPage();
+    else if (state.page === 3) renderBalancoPage();
+    else if (state.page === 4) renderRentabilidadePage();
+    else if (state.page === 5) renderEndividamentoPage();
+    else if (state.page === 6) renderEficienciaPage();
+    else renderPlaceholderPage(current.label);
+
+    // Rodapé do painel: última linha de qualquer página.
+    document.getElementById('page-body').appendChild(
+      el('<div class="page-updated">Atualizado até a data de ' + SNAPSHOT + '</div>'));
+
+    // Replay da animação de entrada a cada render() (troca de página, filtro de período,
+    // expandir/colapsar drill-down etc.). Os KPI cards já reanimam sozinhos (são elementos
+    // novos a cada render); o page-body precisa do truque de reflow porque é o mesmo nó DOM
+    // reaproveitado — só trocar innerHTML não reinicia uma animação CSS.
+    var pageBody = document.getElementById('page-body');
+    pageBody.classList.remove('page-fade');
+    void pageBody.offsetWidth;
+    pageBody.classList.add('page-fade');
+  }
+
+  render();
+})();
+</script>
