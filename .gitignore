@@ -34,6 +34,10 @@ manutencao_*.json
 dre_multi_empresa.json
 balanco_*.json
 
+# Pasta de trabalho fixa dos scripts de atualização de painel (ano_*.js /
+# consol_*.js) — dados brutos intermediários, nunca commitar.
+Dashboard financeiro/_scratch/
+
 # ---------------------------------------------------------------------------
 # Python
 # ---------------------------------------------------------------------------
@@ -70,3 +74,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Logs do job do COAF — contêm nomes de clientes nas mensagens
+logs/
+
+# Configurações locais do Claude Code (permissões específicas da máquina)
+.claude/settings.local.json

@@ -210,7 +210,7 @@
   // ================= DADOS REAIS DO POWER BI (analista-bi MCP) =================
   // Período do painel: Jan–Jun/2026, por pedido do gestor — julho/2026 fica de
   // fora (não é falta de dado: a base já tem julho lançado, só não entra aqui).
-  var SNAPSHOT = '05/08/2026';
+  var SNAPSHOT = '31/08/2026';
 
   // ---- Dados por ano (filtro de Ano na sidebar) ----
   // Cada entrada tem os mesmos blocos que o painel sempre teve, só que
@@ -219,140 +219,213 @@
   // 2026 é o ano corrente, em andamento (Jan-Jun); 2025 é ano fechado (Jan-Dez).
   var DADOS_ANO = {
     '2026': {
-    meses: ['Jan','Fev','Mar','Abr','Mai','Jun'],
+    meses: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago'],
     dreDet: {'OMODA': {
-      gastosFunc:[0,0,0,0,-2370.85,-27677.98],
-      despFin:[0,0,0,0,-32807.76,-9320.26],
-      folha:[0,0,0,0,0,-1945.20],
-      vendaVN:[0,0,0,0,0,347980.00],
-      custoVN:[0,0,0,0,0,-325281.41],
-      despComercial:[0,0,0,0,-13521.75,-39218.00],
-      despGeraisFunc:[0,0,0,-16961.36,-19.03,0],
-      recFin:[0,0,0,0,215.06,108.82],
-      taxasImpostos:[0,0,0,-470.32,-185.49,-39398.81],
-      impostosVenda:[0,0,0,0,0,-10.06],
-      servProf:[0,0,0,0,0,-1815.00],
-      outrasDesp:[0,0,0,0,0,-1125.00],
-      da:[0,0,0,0,-8622.06,-10571.94]
+      gastosFunc:[0,0,0,0,-2370.85,-27677.98,-50.82,-3097.03],
+      despComercial:[0,0,0,0,-13521.75,-39218.00,-38621.53,-31097.95],
+      da:[0,0,0,0,-8622.06,-10571.94,-12414.77,0],
+      despFin:[0,0,0,0,-32807.76,-9320.26,-49628.46,-194924.67],
+      folha:[0,0,0,0,0,-1945.20,-58833.55,0],
+      oficina:[0,0,0,0,0,0,0,5961.00],
+      vendaVU:[0,0,0,0,0,0,0,869830.00],
+      custoVU:[0,0,0,0,0,0,0,-809203.18],
+      vendaVN:[0,0,0,0,0,347980.00,1950450.00,1886920.00],
+      recFin:[0,0,0,0,215.06,108.82,10.70,0.01],
+      receitasDiversas:[0,0,0,0,0,0,0,19499.80],
+      devolucoes:[0,0,0,0,0,0,0,-191000.00],
+      custoVN:[0,0,0,0,0,-325281.41,-1781567.79,-1572366.03],
+      despGerais:[0,0,0,0,0,0,-89.99,0],
+      taxasImpostos:[0,0,0,-470.32,-185.49,-39398.81,-15108.67,-8714.17],
+      outrasDesp:[0,0,0,0,0,-1125.00,-1000.00,-2375.00],
+      despGeraisFunc:[0,0,0,-16961.36,-19.03,0,-3827.36,-7597.48],
+      impostosVenda:[0,0,0,0,0,-10.06,-0.99,-730.17],
+      servProf:[0,0,0,0,0,-1815.00,-6338.78,-6523.78],
+      despFuncionamento:[0,0,0,0,0,0,-7550.58,-549.79],
+      alugueis:[0,0,0,0,0,0,-30500.00,-30500.00]
     }},
     dreDetAnt: {'OMODA': {
 
     }},
     balDet: {'OMODA': {
-      caixaBancos:[6654.43,0],
-      aplicacoesFinanceiras:[102233.48,0],
-      contasReceber:[100000.00,0],
-      financiamentosReceber:[1875.95,0],
-      adiantForn:[2762039.65,0],
-      impostosRecuperar:[7225.80,0],
-      estVN:[2249818.81,0],
-      estVU:[228000.00,0],
-      veiculos:[570053.88,0],
-      maquinas:[72844.83,0],
-      moveis:[185000.00,0],
-      construcoes:[1000032.83,0],
-      deprecAcum:[-21150.53,0],
-      floorVN:[2575100.22,0],
-      fornecDiv:[720062.19,0],
+      caixaBancos:[18306.77,0],
+      aplicacoesFinanceiras:[448100.05,0],
+      contasReceber:[713590.00,0],
+      cartoesReceber:[5152.00,0],
+      financiamentosReceber:[291980.00,0],
+      adiantForn:[1494483.06,0],
+      outrosAdiant:[8380.46,0],
+      impostosRecuperar:[16915.88,0],
+      estVN:[4452489.00,0],
+      estVU:[1180300.00,0],
+      estPecas:[102361.30,0],
+      veiculos:[781694.69,0],
+      maquinas:[179703.01,0],
+      computadores:[57028.08,0],
+      moveis:[348383.95,0],
+      construcoes:[1641746.37,0],
+      deprecAcum:[-34830.82,0],
+      floorVN:[5822464.22,0],
+      floorPecas:[109297.66,0],
+      fornecDiv:[596776.64,0],
       emprestBancarios:[3500000.00,0],
-      financiamentos:[547311.37,0],
-      obrigSociais:[1945.20,0],
-      obrigTrib:[40342.55,0],
-      adiantCliente:[14568.00,0],
+      financiamentos:[887302.08,0],
+      obrigSociais:[497.61,0],
+      obrigTrib:[13370.22,0],
+      adiantCliente:[1006324.63,0],
+      provisoes:[32795.62,0],
       capitalSocial:[46750.00,0],
       prejuizosAcum:[-181450.40,0]
     }},
     mov: {'OMODA': {
-      veiculos:[0,0,0,0,570053.88,0],
-      caixaBancos:[0,0,0,0,577.80,6076.63],
-      aplicacoesFinanceiras:[0,0,0,0,4484.28,97749.20],
-      adiantForn:[0,0,0,0,3335214.93,-573175.28],
-      obrigSociais:[0,0,0,0,0,1945.20],
-      adiantCliente:[0,0,0,0,16441.85,-1873.85],
-      capitalSocial:[0,0,0,0,46750.00,0],
-      prejuizosAcum:[0,0,0,0,0,-181450.40],
-      impostosRecuperar:[0,0,0,1728.85,2434.90,3062.05],
-      maquinas:[0,0,0,0,0,72844.83],
-      moveis:[0,0,0,0,0,185000.00],
-      construcoes:[0,0,0,0,673197.73,326835.10],
-      deprecAcum:[0,0,0,0,-9500.90,-11649.63],
-      fornecDiv:[0,0,0,17572.49,499546.44,202943.26],
-      emprestBancarios:[0,0,0,0,3500000.00,0],
-      financiamentos:[0,0,0,0,571107.51,-23796.14],
-      obrigTrib:[0,0,0,1588.04,-71.30,38825.81],
-      contasReceber:[0,0,0,0,0,100000.00],
-      financiamentosReceber:[0,0,0,0,0,1875.95],
-      estVN:[0,0,0,0,1043924.23,1205894.58],
-      floorVN:[0,0,0,0,1043924.23,1531175.99],
-      estVU:[0,0,0,0,0,228000.00]
+      estVN:[0,0,0,0,1043924.23,1205894.58,-1207515.39,3410185.58],
+      veiculos:[0,0,0,0,570053.88,0,0,211640.81],
+      obrigSociais:[0,0,0,0,0,1945.20,24133.15,-25580.74],
+      obrigTrib:[0,0,0,1588.04,-71.30,38825.81,-15364.87,-11607.46],
+      provisoes:[0,0,0,0,0,0,32795.62,0],
+      caixaBancos:[0,0,0,0,577.80,6076.63,31565.82,-19913.48],
+      aplicacoesFinanceiras:[0,0,0,0,4484.28,97749.20,-77128.93,422995.50],
+      adiantForn:[0,0,0,0,3335214.93,-573175.28,-395764.25,-871792.34],
+      adiantCliente:[0,0,0,0,16441.85,-1873.85,202336.70,789419.93],
+      capitalSocial:[0,0,0,0,46750.00,0,0,0],
+      prejuizosAcum:[0,0,0,0,0,-181450.40,0,0],
+      deprecAcum:[0,0,0,0,-9500.90,-11649.63,-13680.29,0],
+      outrosAdiant:[0,0,0,0,0,0,0,8380.46],
+      impostosRecuperar:[0,0,0,1728.85,2434.90,3062.05,2644.75,7045.33],
+      maquinas:[0,0,0,0,0,72844.83,55629.70,51228.48],
+      computadores:[0,0,0,0,0,0,49328.08,7700.00],
+      moveis:[0,0,0,0,0,185000.00,163383.95,0],
+      construcoes:[0,0,0,0,673197.73,326835.10,306990.76,334722.78],
+      fornecDiv:[0,0,0,17572.49,499546.44,202943.26,-166415.21,43129.66],
+      emprestBancarios:[0,0,0,0,3500000.00,0,0,0],
+      financiamentos:[0,0,0,0,571107.51,-23796.14,-23796.14,363786.85],
+      contasReceber:[0,0,0,0,0,100000.00,-999.00,614589.00],
+      financiamentosReceber:[0,0,0,0,0,1875.95,78000.00,212104.05],
+      outrosCreditos:[0,0,0,0,0,0,128000.00,-128000.00],
+      floorVN:[0,0,0,0,1043924.23,1531175.99,-684063.01,3931427.01],
+      cartoesReceber:[0,0,0,0,0,0,995.00,4157.00],
+      estPecas:[0,0,0,0,0,0,0,102361.30],
+      floorPecas:[0,0,0,0,0,0,0,109297.66],
+      estVU:[0,0,0,0,0,228000.00,196300.00,756000.00]
     }},
     movAnt: {'OMODA': {
 
     }},
     nat: {'OMODA': {
-      depD:[0,0,0,0,-9500.90,-11649.63],
-      imobC:[0,0,0,0,0,0],
-      imobD:[0,0,0,0,1243251.61,584679.93],
-      acumD:[0,0,0,0,0,0]
+      depD:[0,0,0,0,-9500.90,-11649.63,-13680.29,0],
+      imobC:[0,0,0,0,0,0,0,0],
+      imobD:[0,0,0,0,1243251.61,584679.93,575332.49,605292.07],
+      acumD:[0,0,0,0,0,0,0,0]
     }},
     fcCont: {'OMODA': {
-      lucro:[0,0,0,-17431.68,-57311.88,-106706.84],
-      depD:[0,0,0,0,-9500.90,-11649.63]
+      lucro:[0,0,0,-17431.68,-57311.88,-106706.84,-51876.04,-76468.44],
+      depD:[0,0,0,0,-9500.90,-11649.63,-13680.29,0]
     }},
     saldoIni: {'OMODA':0},
     dreDesc: {
+      alugueis: {
+        'ALUGUEIS DE IMOVEIS':[0,0,0,0,0,0,-30500.00,-30500.00]
+      },
       custoVN: {
-        'CUSTO MERC. VENDIDAS - CMV':[0,0,0,0,0,-325281.41]
+        'CUSTO MERC. VENDIDAS - CMV':[0,0,0,0,0,-325281.41,-1781567.79,-1572366.03]
+      },
+      custoVU: {
+        'CUSTO MERC. VENDIDAS - CMV':[0,0,0,0,0,0,0,-809203.18]
       },
       da: {
-        'DEPRECIACAO':[0,0,0,0,-8622.06,-10571.94]
+        'DEPRECIACAO':[0,0,0,0,-8622.06,-10571.94,-12414.77,0]
       },
       despComercial: {
-        'DESPESAS C/ VENDAS':[0,0,0,0,0,-4077.00],
-        'DESPESAS VENDAS ONLINE':[0,0,0,0,0,-1994.00],
-        'EVENTOS E EXPOSICOES':[0,0,0,0,0,-30020.00],
-        'FRETES DIVERSOS':[0,0,0,0,-13521.75,0],
-        'MIDIA NAO COOPERADA':[0,0,0,0,0,-3127.00]
+        'DESPESAS C/ VENDAS':[0,0,0,0,0,-4077.00,-498.17,-7590.37],
+        'DESPESAS VENDAS ONLINE':[0,0,0,0,0,-1994.00,0,-2142.22],
+        'EMPLACAMENTOS':[0,0,0,0,0,0,-52.08,-2605.36],
+        'EVENTOS E EXPOSICOES':[0,0,0,0,0,-30020.00,-28117.60,-14250.00],
+        'FRETES DIVERSOS':[0,0,0,0,-13521.75,0,-9953.68,-1350.00],
+        'MIDIA COOPERADA':[0,0,0,0,0,0,0,-1490.00],
+        'MIDIA NAO COOPERADA':[0,0,0,0,0,-3127.00,0,0],
+        'PREPARACAO E REVISAO DE ENTREGA':[0,0,0,0,0,0,0,-1360.00],
+        'SERVICOS GRATUITOS E CORTESIAS':[0,0,0,0,0,0,0,-310.00]
       },
       despFin: {
-        'I.O.F':[0,0,0,0,-154.13,-3971.23],
-        'JUROS PASSIVOS':[0,0,0,0,0,-0.01],
-        'JUROS S/ FINANCIAMENTOS E EMPRESTIMOS':[0,0,0,0,0,-4782.07],
-        'TAXAS BANCARIAS':[0,0,0,0,-32653.63,-566.95]
+        'DESCONTOS CONCEDIDOS':[0,0,0,0,0,0,-25293.12,-36945.61],
+        'FLOOR PLAN COMPRAS A PRAZO':[0,0,0,0,0,0,-12147.40,-5998.52],
+        'I.O.F':[0,0,0,0,-154.13,-3971.23,-6780.96,-4718.18],
+        'JUROS PASSIVOS':[0,0,0,0,0,-0.01,-52.37,-5.77],
+        'JUROS S/ FINANCIAMENTOS E EMPRESTIMOS':[0,0,0,0,0,-4782.07,-4782.07,-146334.54],
+        'TAXAS BANCARIAS':[0,0,0,0,-32653.63,-566.95,-572.54,-922.05]
+      },
+      despFuncionamento: {
+        'ENERGIA ELETRICA':[0,0,0,0,0,0,-7510.59,0],
+        'INTERNET':[0,0,0,0,0,0,0,-549.79],
+        'TELEFONE':[0,0,0,0,0,0,-39.99,0]
+      },
+      despGerais: {
+        'MATERIAL DE CONSUMO E FERRAMENTAS':[0,0,0,0,0,0,-29.99,0],
+        'MATERIAL DIVERSOS':[0,0,0,0,0,0,-60.00,0]
       },
       despGeraisFunc: {
-        'PROCESSAMENTO DE DADOS':[0,0,0,-16961.36,0,0],
-        'VIAGENS E REPRESENTACOES':[0,0,0,0,-19.03,0]
+        'PROCESSAMENTO DE DADOS':[0,0,0,-16961.36,0,0,-3827.36,-3149.62],
+        'VIAGENS E REPRESENTACOES':[0,0,0,0,-19.03,0,0,-4447.86]
+      },
+      devolucoes: {
+        'DEVOLUCAO DE VENDAS':[0,0,0,0,0,0,0,-191000.00]
       },
       folha: {
-        'HONORARIOS/PRO-LABORE':[0,0,0,0,0,-1621.00],
-        'INSS':[0,0,0,0,0,-324.20]
+        'COMISSOES':[0,0,0,0,0,0,-6798.58,0],
+        'FGTS':[0,0,0,0,0,0,-1294.06,0],
+        'HONORARIOS/PRO-LABORE':[0,0,0,0,0,-1621.00,-1621.00,0],
+        'INSS':[0,0,0,0,0,-324.20,-5725.88,32.00],
+        'INSS CPP MEI':[0,0,0,0,0,0,0,-32.00],
+        'PREMIOS':[0,0,0,0,0,0,-1220.99,0],
+        'PROVISAO 13º SALARIO':[0,0,0,0,0,0,-5783.32,0],
+        'PROVISAO FERIAS':[0,0,0,0,0,0,-18366.66,0],
+        'PROVISAO FGTS 13º SALARIO':[0,0,0,0,0,0,-462.63,0],
+        'PROVISAO FGTS FERIAS':[0,0,0,0,0,0,-1469.29,0],
+        'PROVISAO INSS 13º SALARIO':[0,0,0,0,0,0,-1607.78,0],
+        'PROVISAO INSS FERIAS':[0,0,0,0,0,0,-5105.94,0],
+        'SALARIOS':[0,0,0,0,0,0,-9377.42,0]
       },
       gastosFunc: {
-        'ASSISTENCIA MEDICA E OCUPACIONAL - PCMSO':[0,0,0,0,0,-50.82],
-        'UNIFORMES':[0,0,0,0,-2370.85,-26059.16],
-        'VALE-TRANSPORTE':[0,0,0,0,0,-1568.00]
+        'ASSISTENCIA MEDICA E OCUPACIONAL - PCMSO':[0,0,0,0,0,-50.82,-50.82,-84.00],
+        'CONVENIOS':[0,0,0,0,0,0,0,-1944.00],
+        'UNIFORMES':[0,0,0,0,-2370.85,-26059.16,0,-1069.03],
+        'VALE-TRANSPORTE':[0,0,0,0,0,-1568.00,0,0]
       },
       impostosVenda: {
-        'COFINS NAO-CUMULATIVO - OUTROS':[0,0,0,0,0,-8.27],
-        'PIS NAO-CUMULATIVO - OUTROS':[0,0,0,0,0,-1.79]
+        'COFINS NAO-CUMULATIVO':[0,0,0,0,0,0,0,-453.01],
+        'COFINS NAO-CUMULATIVO - OUTROS':[0,0,0,0,0,-8.27,-0.81,0],
+        'ISSQN':[0,0,0,0,0,0,0,-178.83],
+        'PIS NAO-CUMULATIVO - OUTROS':[0,0,0,0,0,-1.79,-0.18,0],
+        'PIS NÃO-CUMULATIVO':[0,0,0,0,0,0,0,-98.33]
+      },
+      oficina: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[0,0,0,0,0,0,0,5961.00]
       },
       outrasDesp: {
-        'ASSOCIACAO E CONTRIBUICAO':[0,0,0,0,0,-1125.00]
+        'ASSOCIACAO E CONTRIBUICAO':[0,0,0,0,0,-1125.00,-1000.00,-125.00],
+        'DOACOES E PATROCINIOS':[0,0,0,0,0,0,0,-2250.00]
       },
       recFin: {
-        'DESCONTOS OBTIDOS':[0,0,0,0,0,103.33],
-        'RENDIMENTOS S/ APLIC. FINANCEIRAS':[0,0,0,0,215.06,5.49]
+        'DESCONTOS OBTIDOS':[0,0,0,0,0,103.33,0.01,0.01],
+        'RENDIMENTOS S/ APLIC. FINANCEIRAS':[0,0,0,0,215.06,5.49,10.69,0]
+      },
+      receitasDiversas: {
+        'BONUS/COMISSOES':[0,0,0,0,0,0,0,16000.00],
+        'DEALER MARGIN':[0,0,0,0,0,0,0,3499.80]
       },
       servProf: {
-        'SERVICOS PJ P/ CONTRATO FIXO':[0,0,0,0,0,-1815.00]
+        'SERVICOS DIVERSOS - PF':[0,0,0,0,0,0,-4523.78,-4523.78],
+        'SERVICOS PJ P/ CONTRATO FIXO':[0,0,0,0,0,-1815.00,-1815.00,-2000.00]
       },
       taxasImpostos: {
-        'ICMS - DIFERENCA DE ALIQUOTA':[0,0,0,0,-185.49,-39276.36],
-        'TAXAS DIVERSAS':[0,0,0,-470.32,0,-122.45]
+        'ICMS - DIFERENCA DE ALIQUOTA':[0,0,0,0,-185.49,-39276.36,-15108.67,0],
+        'IPVA':[0,0,0,0,0,0,0,-7901.33],
+        'TAXAS DIVERSAS':[0,0,0,-470.32,0,-122.45,0,-812.84]
       },
       vendaVN: {
-        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[0,0,0,0,0,347980.00]
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[0,0,0,0,0,347980.00,1950450.00,1886920.00]
+      },
+      vendaVU: {
+        'RECEITA BRUTA DE MERCADORIAS E SERVICOS':[0,0,0,0,0,0,0,869830.00]
       }
     }
     },
