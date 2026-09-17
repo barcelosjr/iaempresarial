@@ -1105,6 +1105,45 @@ def test_incremento_abaixo_do_limiar_nao_notifica(con, cfg, monkeypatch):
     assert coaf.deve_notificar(casos2[0], 30000.0) is False
 
 
+def test_copia_da_dmf_vai_so_ao_responsavel_nao_ao_coaf(con, cfg, monkeypatch):
+    """``email_copia_dmf`` entra em Cc da DMF do caixa; o consolidado do COAF
+    continua indo só para ``email_coaf`` (decisão do gestor, 17/09/2026)."""
+    from notify import email_zoho
+
+    df = pd.DataFrame([_lancamento(DATA=date(2026, 3, 10), VALOR=31000.0)])
+    prep = coaf.preparar_lancamentos(df, cfg, hoje=date(2026, 3, 15))
+    casos = coaf.detectar(prep, cfg, hoje=date(2026, 3, 15))
+    coaf.persistir(con, casos, "grupo")
+    coaf.enriquecer_com_incremento(con, casos, "grupo", 30000.0)
+
+    chamadas: list[tuple[list[str], list[str]]] = []
+    monkeypatch.setattr(
+        email_zoho, "enviar",
+        lambda c, para, cc, a, b, anexos=(): chamadas.append((list(para), list(cc))),
+    )
+    destinatarios = _destinatarios()
+    destinatarios["email_copia_dmf"] = "compliance@empresa.com, ana@empresa.com"
+    email_zoho.notificar_casos(
+        con=con, casos=casos, anexos_por_caso={}, destinatarios=destinatarios,
+        cfg=cfg, config=_config_fake(), escopo="grupo", enviar=True,
+    )
+
+    # 1) DMF ao responsável: Ana no Para; compliance em Cc; Ana não repete no Cc.
+    # 2) Consolidado ao COAF: sem cópia nenhuma.
+    assert chamadas == [
+        (["ana@empresa.com"], ["compliance@empresa.com"]),
+        (["coaf@empresa.com"], []),
+    ]
+    # A cópia fica registrada no histórico como notificada.
+    notificados = {
+        d for (d,) in con.execute(
+            "SELECT DISTINCT destinatario FROM coaf_notificacao WHERE status = ?",
+            [estado.STATUS_ENVIADO],
+        ).fetchall()
+    }
+    assert notificados == {"ana@empresa.com", "compliance@empresa.com", "coaf@empresa.com"}
+
+
 def test_gatilho_do_incremento_endereca_o_novo_cruzamento(con, cfg):
     """No reenvio, quem responde é o caixa do lançamento que fechou o incremento."""
     from notify.email_zoho import destinatario_do_caso

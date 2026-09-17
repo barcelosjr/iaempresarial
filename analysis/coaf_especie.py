@@ -125,14 +125,15 @@ def carregar_destinatarios(caminho: Path | None = None) -> dict[str, Any]:
     seria o pior dos mundos para o compliance.
 
     Returns:
-        Dicionário com ``email_coaf``, ``email_padrao``, ``responsavel_padrao``
-        e o mapa ``(revenda, caixa) -> {"nome", "email"}``.
+        Dicionário com ``email_coaf``, ``email_copia_dmf``, ``email_padrao``,
+        ``responsavel_padrao`` e o mapa ``(revenda, caixa) -> {"nome", "email"}``.
     """
     caminho = caminho or CONFIG_DESTINATARIOS
     if not caminho.exists():
         logger.warning("Mapa de responsáveis não encontrado: %s", caminho)
         return {
             "email_coaf": "",
+            "email_copia_dmf": "",
             "email_padrao": "",
             "responsavel_padrao": "Controladoria",
             "mapa": {},
@@ -150,6 +151,7 @@ def carregar_destinatarios(caminho: Path | None = None) -> dict[str, Any]:
         }
     return {
         "email_coaf": (dados.get("email_coaf") or "").strip(),
+        "email_copia_dmf": (dados.get("email_copia_dmf") or "").strip(),
         "email_padrao": (dados.get("email_padrao") or "").strip(),
         "responsavel_padrao": dados.get("responsavel_padrao") or "Controladoria",
         "mapa": mapa,

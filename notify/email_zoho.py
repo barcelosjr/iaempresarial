@@ -425,10 +425,11 @@ def notificar_casos(
 
     1. **Responsável pelo lançamento-gatilho** — recebe uma DMF por empresa do
        grupo em que houve recebimento. É quem tem que preencher e colher a
-       assinatura.
+       assinatura. Quem está em ``email_copia_dmf`` vai em cópia (Cc).
     2. **Setor de COAF** — recebe as mesmas DMFs **mais** o relatório
        consolidado do grupo, que mostra a soma entre empresas e a quem a
-       cobrança foi endereçada. Esse relatório não vai para mais ninguém.
+       cobrança foi endereçada. Esse relatório não vai para mais ninguém —
+       nem para quem está em cópia da DMF.
 
     Quem entra nesta lista já foi filtrado por
     ``analysis.coaf_especie.deve_notificar``; aqui não há decisão de reenvio.
@@ -455,6 +456,7 @@ def notificar_casos(
 
     limiar = float(cfg["limiar_reais"])
     email_coaf = (destinatarios.get("email_coaf") or "").strip()
+    copia_dmf = _emails_da_string(destinatarios.get("email_copia_dmf", ""))
     agora = datetime.now()
 
     enviados = 0
@@ -584,26 +586,29 @@ def notificar_casos(
         # mesmo "Para", para que um veja que o outro também foi avisado.
         if emails_resp:
             assunto, corpo = montar_mensagem(caso, limiar, qtd_empresas=len(dmfs))
+            # Cc só quem não está no "Para" — evita o mesmo endereço duas vezes.
+            cc = [e for e in copia_dmf if e not in emails_resp]
             try:
-                enviar(config, emails_resp, [], assunto, corpo, anexos_resp)
+                enviar(config, emails_resp, cc, assunto, corpo, anexos_resp)
             except ErroEnvioEmail as exc:
                 avisos.append(f"{caso['nome_cliente']}: falha no envio ao responsável — {exc}")
                 logger.error("Falha ao notificar %s: %s", caso["nome_cliente"], exc)
-                for destino in emails_resp:
+                for destino in [*emails_resp, *cc]:
                     estado.registrar_notificacao(
                         con, chave, escopo, destino, caso.get("id_deteccao", ""),
                         "; ".join(str(a) for a in anexos_resp), estado.STATUS_FALHA, agora,
                     )
             else:
                 houve_envio = True
-                for destino in emails_resp:
+                for destino in [*emails_resp, *cc]:
                     estado.registrar_notificacao(
                         con, chave, escopo, destino, caso.get("id_deteccao", ""),
                         "; ".join(str(a) for a in anexos_resp), estado.STATUS_ENVIADO, agora,
                     )
                 logger.info(
-                    "DMF (%d empresa(s)) enviada para %s <%s> — cliente %s.",
-                    len(dmfs), caixa_destino, emails_resp_txt, caso["nome_cliente"],
+                    "DMF (%d empresa(s)) enviada para %s <%s>%s — cliente %s.",
+                    len(dmfs), caixa_destino, emails_resp_txt,
+                    f" (cc: {', '.join(cc)})" if cc else "", caso["nome_cliente"],
                 )
 
         # ---- 2) setor de COAF, com o consolidado -------------------------- #

@@ -11,7 +11,9 @@
 #
 # Os anexos são uma DMF POR EMPRESA do grupo em que houve recebimento.
 # O setor de COAF (email_coaf) recebe as mesmas DMFs MAIS o relatório
-# consolidado do grupo — que não vai para mais ninguém.
+# consolidado do grupo — que não vai para mais ninguém. Quem está em
+# email_copia_dmf vai em CÓPIA (Cc) da DMF enviada ao responsável do caixa,
+# mas NÃO recebe o consolidado (decisão do gestor, 17/09/2026).
 #
 # MAIS DE UM RESPONSÁVEL NO MESMO CAIXA: separe os e-mails por vírgula no
 # mesmo campo `email:`. Todos recebem a mesma mensagem, no mesmo "Para".
@@ -27,7 +29,11 @@
 # =============================================================================
 
 # Recebe o relatório consolidado do grupo + todas as DMFs por empresa.
-email_coaf: "gestao.compliance@grupomulticar.com.br, controladoria3@kobeveiculos.com.br"
+email_coaf: "controladoria3@kobeveiculos.com.br"
+
+# Vai em cópia (Cc) de toda DMF enviada ao responsável do caixa. Não recebe o
+# consolidado. Vários endereços: separe por vírgula. Vazio = ninguém em cópia.
+email_copia_dmf: "gestao.compliance@grupomulticar.com.br"
 
 # Usado quando o caixa do lançamento decisivo não está mapeado abaixo.
 email_padrao: "controladoria3@kobeveiculos.com.br"

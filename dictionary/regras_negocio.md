@@ -489,6 +489,7 @@ pego. A cobrança, porém, tem **um dono só**.
 |---|---|
 | Responsável pelo **caixa do lançamento-gatilho** | Uma DMF **por empresa** do grupo em que houve recebimento |
 | Setor de COAF (`email_coaf`) | As mesmas DMFs **mais** o relatório consolidado do grupo |
+| Cópia da DMF (`email_copia_dmf`) | Vai em **Cc** da DMF enviada ao responsável do caixa; **não** recebe o consolidado (decisão do gestor, 17/09/2026 — hoje `gestao.compliance@`) |
 
 **Lançamento-gatilho** é aquele em que o acumulado do cliente, ordenado por data,
 alcança ou ultrapassa o limiar. O destino sai de `REVENDA` + `CAIXA` desse lançamento,
