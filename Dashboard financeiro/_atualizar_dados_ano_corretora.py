@@ -16,7 +16,7 @@ BUILD = Path(__file__).resolve().parent / "build"
 HTML = BUILD / "painel_financeiro_corretora.html"
 SCRATCH = Path(
     r"C:\Users\CONTRO~1\AppData\Local\Temp\claude\C--Users-Controladoria--claude-projects-iaempresarial"
-    r"\0fccc12d-ca8a-4a2a-b657-10656c7cf6d5\scratchpad"
+    r"\0c87d784-aeab-426f-9426-2604bf11d94a\scratchpad"
 )
 
 

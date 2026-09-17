@@ -37,3 +37,10 @@ datasets:
     dataset_id: "00000000-0000-0000-0000-000000000000"
     descricao: >-
       Modelo contábil: plano de contas, lançamentos e demonstrativos.
+
+  controlador:
+    padrao: false
+    workspace_id: "6142a272-21e4-4713-b05e-4cdba12e072b"
+    dataset_id: "8ad7a5d3-5bda-4f41-b4ed-47a3b8bc4aaa"
+    descricao: >-
+      Modelo de lançamentos de caixa.

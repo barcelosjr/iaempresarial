@@ -1,0 +1,5 @@
+- [Estrutura oficial da DRE](dre-estrutura-oficial.md) — 7 grupos e subgrupos; não simplificar; CORRETORA tem receita e custo diferentes.
+- [Limite de linhas e truncamento](limite-linhas-e-truncamento.md) — limite é 1000; se truncar, avisar antes de atualizar valores.
+- [Contexto do painel da CORRETORA](dashboard-corretora-contexto.md) — URLs publicadas, o que está pendente de subir, correção recente no modelo semântico.
+- [Arquitetura do painel da CORRETORA](dashboard-corretora-arquitetura.md) — filtro de Ano (DADOS_ANO/aplicarAno), drill-down por DESCRICAO_CONTA, scripts geradores.
+- [Explicações pra diretoria](feedback-explicacoes-diretoria.md) — KPI em uma frase, linguagem de criança, sem poluir o card.

@@ -104,9 +104,11 @@ def test_dre_inclui_todas_as_contas_da_estrutura():
         + fin.DRE_G6_FINANCEIRO
         + fin.DRE_G7_IMPOSTOS
     )
-    assert len(contas) == 34, (
+    assert len(contas) == 35, (
         "31 linhas do documento original + 3 de receita da CORRETORA "
-        "(Comissão sobre Seguros/Consórcios/Intermediação)"
+        "(Comissão sobre Seguros/Consórcios/Intermediação) + 1 líquido do "
+        "desmembramento de 'Despesas Gerais e Rateio do Grupo' (descontinuada) "
+        "em 'Rateio do Grupo' + 'Despesas Gerais de Funcionamento' (2 novas - 1 antiga)"
     )
     for conta in contas:
         assert conta in query
@@ -206,6 +208,79 @@ def test_escapa_aspas_no_filtro():
     """Aspas no valor não podem quebrar/injetar na string DAX."""
     query = fin.dre("12/2024", empresa='ACME "X"')
     assert 'ACME ""X""' in query
+
+
+# --------------------------------------------------------------------------- #
+# Visão contábil x gerencial (TIPO_LANÇAMENTO) — exclusiva da DRE
+# --------------------------------------------------------------------------- #
+def test_dre_contabil_filtra_tipo_lancamento():
+    query = fin.dre("12/2024", visao="contabil")
+    assert "TRIM('lancamentos'[TIPO_LANÇAMENTO]) = \"CONTÁBIL\"" in query
+
+
+def test_dre_gerencial_nao_filtra_tipo_lancamento():
+    """Gerencial = todos os lançamentos (contábeis + extras), sem filtro."""
+    assert "[TIPO_LANÇAMENTO]" not in fin.dre("12/2024", visao="gerencial")
+
+
+def test_dre_padrao_e_gerencial():
+    """O padrão traz tudo — mesma consulta de antes da coluna existir."""
+    assert fin.dre("12/2024") == fin.dre("12/2024", visao="gerencial")
+
+
+@pytest.mark.parametrize("visao", ["CONTABIL", " Contabil ", "cOnTaBiL"])
+def test_dre_visao_aceita_variacoes_de_caixa_e_espacos(visao):
+    assert fin.dre("12/2024", visao=visao) == fin.dre("12/2024", visao="contabil")
+
+
+@pytest.mark.parametrize("invalida", ["extra", "contábil", "", "ambos", None])
+def test_dre_visao_invalida_propaga_erro(invalida):
+    with pytest.raises(ValueError):
+        fin.dre("12/2024", visao=invalida)
+
+
+def test_dre_combina_visao_com_empresa_e_modo():
+    query = fin.dre("12/2025", empresa="KOBE", modo="anual", visao="contabil")
+    assert 'TRIM(\'lancamentos\'[EMPRESA]) = "KOBE"' in query
+    assert "TRIM('lancamentos'[TIPO_LANÇAMENTO]) = \"CONTÁBIL\"" in query
+    assert ">= 202501" in query and "<= 202512" in query
+
+
+def test_visao_nao_afeta_o_balanco():
+    """O Balanço não tem recorte contábil/gerencial."""
+    assert "[TIPO_LANÇAMENTO]" not in fin.balanco("12/2024")
+
+
+# --------------------------------------------------------------------------- #
+# Fluxo de Caixa: resultado e depreciação só sobre lançamentos contábeis
+# --------------------------------------------------------------------------- #
+def _var(query: str, nome: str) -> str:
+    """Linha do ``VAR`` pedido dentro da consulta."""
+    return query.split(f"VAR {nome} = ")[1].split("\n")[0]
+
+
+def test_fluxo_tem_base_contabil_separada():
+    query = fin.fluxo_caixa("12/2024")
+    assert "TRIM('lancamentos'[TIPO_LANÇAMENTO]) = \"CONTÁBIL\"" in _var(
+        query, "_PerCont"
+    )
+
+
+def test_fluxo_apura_resultado_e_depreciacao_na_base_contabil():
+    """_AggDre (Lucro Líquido) e _AggDreNat (depreciação) saem de _PerCont."""
+    query = fin.fluxo_caixa("12/2024")
+    assert "ADDCOLUMNS(_PerCont," in _var(query, "_AggDrePrep")
+    assert "ADDCOLUMNS(_PerCont," in _var(query, "_NatDrePrep")
+
+
+def test_fluxo_mantem_variacoes_patrimoniais_com_todos_os_lancamentos():
+    """Balanço e saldo inicial seguem sobre _Per/_AteAnt, sem filtro de tipo."""
+    query = fin.fluxo_caixa("12/2024")
+    assert "ADDCOLUMNS(_Per," in _var(query, "_AggBalPrep")
+    assert "ADDCOLUMNS(_Per," in _var(query, "_NatPrep")
+    assert "ADDCOLUMNS(_AteAnt," in _var(query, "_AggAntPrep")
+    assert "[TIPO_LANÇAMENTO]" not in _var(query, "_Per")
+    assert "[TIPO_LANÇAMENTO]" not in _var(query, "_AteAnt")
 
 
 # --------------------------------------------------------------------------- #
@@ -339,9 +414,9 @@ def test_todas_as_linhas_tem_operacao_definida():
         + fin.DRE_G6_FINANCEIRO
         + fin.DRE_G7_IMPOSTOS
     )
-    assert len(contas) == 34
+    assert len(contas) == 35
     assert {fin.operacao_dre(c) for c in contas} == {1, -1}
-    # 20 linhas subtrativas (5 custos + 11 despesas + 4 deduções/outras) + demais
+    # 21 linhas subtrativas (5 custos + 12 despesas + 4 deduções/outras) + demais
     assert sum(1 for c in contas if fin.operacao_dre(c) == -1) == len(
         fin.DRE_LINHAS_SUBTRATIVAS
     )
@@ -477,6 +552,33 @@ def test_consolidado_mantem_todas_as_linhas():
     for conta in fin.LINHAS_EXCLUSIVAS_DE_EMPRESA:
         assert conta in exibidas
     assert "Custo de Mercado e Serviço" not in exibidas
+
+
+# --------------------------------------------------------------------------- #
+# Desmembramento de "Despesas Gerais e Rateio do Grupo" (conta descontinuada)
+# --------------------------------------------------------------------------- #
+def test_despesas_operacionais_tem_as_contas_novas():
+    for empresa in ("KOBE", "CORRETORA"):
+        exibidas = _linhas_exibidas(fin.dre("01/2026", empresa=empresa))
+        assert "Rateio do Grupo" in exibidas
+        assert "Despesas Gerais de Funcionamento" in exibidas
+
+
+def test_conta_de_rateio_antiga_nao_faz_mais_parte_da_estrutura():
+    """Descontinuada em 31/07/2026 (0 lançamentos em toda a base) — nem a
+    CORRETORA, última empresa que ainda lançava nela, mostra a linha."""
+    contas = (
+        fin.DRE_G1_RECEITA
+        + fin.DRE_G2_CUSTOS
+        + fin.DRE_G3_DESPESAS
+        + fin.DRE_G4_OUTRAS
+        + fin.DRE_G5_DEPRECIACAO
+        + fin.DRE_G6_FINANCEIRO
+        + fin.DRE_G7_IMPOSTOS
+    )
+    assert "Despesas Gerais e Rateio do Grupo" not in contas
+    for query in (fin.dre("01/2026", empresa="CORRETORA"), fin.dre("01/2026")):
+        assert "Despesas Gerais e Rateio do Grupo" not in _linhas_exibidas(query)
 
 
 @pytest.mark.parametrize(

@@ -80,3 +80,7 @@ logs/
 
 # Configurações locais do Claude Code (permissões específicas da máquina)
 .claude/settings.local.json
+
+# Perfil dedicado do Chrome usado na impressão das DMFs (cache local, recriado
+# sozinho — ver analysis/dmf_html.py, PERFIL_CHROME)
+.chrome_perfil_dmf/

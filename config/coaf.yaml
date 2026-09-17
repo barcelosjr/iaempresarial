@@ -1,0 +1,144 @@
+# =============================================================================
+# Monitoramento COAF — recebimentos em espécie
+# =============================================================================
+# Regras de negócio do job `analysis/coaf_especie.py`. Este arquivo existe para
+# que o setor de compliance ajuste os critérios SEM tocar em código.
+#
+# Documentação da regra: dictionary/regras_negocio.md, seção
+# "COAF / Recebimentos em espécie".
+# =============================================================================
+
+# Valor acumulado (em reais) que dispara o alerta e a exigência da DMF.
+limiar_reais: 30000
+
+# Tamanho da janela de acumulação, em meses. A janela termina SEMPRE HOJE e
+# olha para trás: [hoje - janela_meses - janela_dias_folga, hoje].
+# Como o job roda de 30 em 30 minutos, todo cruzamento é pego no dia em que
+# acontece — e fica gravado no histórico permanente mesmo depois de a janela
+# andar e o cliente sair da lista.
+janela_meses: 6
+
+# Folga em dias, somada ao início da janela. Margem de segurança pedida pelo
+# gestor (19/08/2026) para não perder nada em virada de mês, atraso de
+# lançamento ou refresh da base.
+janela_dias_folga: 5
+
+# Escopo do alerta:
+#   grupo   -> soma o cliente em todas as revendas/empresas (decisão do gestor)
+#   empresa -> soma por marca (KOBE, ROYAL ENFIELD, MIT, ...)
+# O relatório sempre mostra a quebra por empresa, independente desta escolha.
+escopo_alerta: grupo
+
+# ---------------------------------------------------------------------------
+# Definição de "espécie"
+# ---------------------------------------------------------------------------
+# A tabela CAIXAS não tem coluna de forma de pagamento. Decisão do gestor
+# (19/08/2026): TODO recebimento (PAGAR_RECEBER = "R") conta como espécie,
+# EXCETO transferências internas — transferência entre caixas, depósito e saque,
+# que são movimentação do próprio grupo e não dinheiro recebido de cliente.
+#
+# ATENÇÃO — risco registrado: com esta regra, cartão (417 - VENDA CARTAO
+# DEB/CRED, R$ 949.762,59 em recebimentos), PIX/TED (346), cheque (3001) e
+# boleto (1042) CONTAM como espécie, assim como origens que não são pagamento de
+# cliente (349 - ADIANTAMENTO FORNECEDOR, 203 - ADIANTAMENTO DESPESA VIAGEM,
+# estornos). Para excluí-las, basta acrescentar o padrão ou o texto exato abaixo.
+exclusoes_origem:
+  # Casados com SEARCH (case-insensitive) em qualquer parte de ORIGEM.
+  padroes:
+    - "TRANSF"      # 707 - TRANSF. SALDO CAIXA, 703 - TRANSF. SANTANDER P/ CAIXA, ...
+    - "DEPOSITO"    # 1008 - DEPOSITO NAO IDENTIFICADO, 3010 - DEPOSITO CAIXA
+    - "SAQUE"
+  # Casados por igualdade exata com o texto de ORIGEM.
+  exatas: []
+
+# ---------------------------------------------------------------------------
+# Caixas excluídos — nem entram na apuração
+# ---------------------------------------------------------------------------
+# Decisão do gestor (25/08/2026): caixa "9", em QUALQUER revenda, não deve
+# ser verificado pelo COAF. Diferente de caixas_sinalizados (abaixo), estes
+# nem chegam a ser consultados — o número vale para toda revenda, não é por
+# revenda específica.
+caixas_excluidos:
+  global: ["9"]
+
+# ---------------------------------------------------------------------------
+# Caixas sinalizados — entram na apuração, mas saem marcados
+# ---------------------------------------------------------------------------
+# Os caixas 99/4 (e 8/14 na Multicar Mits) não representam saldo real e são
+# excluídos dos painéis de saldo. Para o COAF a decisão foi diferente: eles
+# ENTRAM na análise (concentram volume movimentado e recebimentos acima do
+# limiar), mas os lançamentos saem MARCADOS no alerta e no PDF, para o
+# compliance avaliar caso a caso. Caixa "9" saiu daqui em 25/08/2026 — passou
+# a ser excluído por completo (ver caixas_excluidos acima), não só marcado.
+caixas_sinalizados:
+  global: ["99", "4"]
+  por_revenda:
+    "MULTICAR MITS MATRIZ": ["8", "14"]
+    "MULTICAR MITS VV": ["8", "14"]
+
+# ---------------------------------------------------------------------------
+# Clientes excluídos — nem entram na apuração
+# ---------------------------------------------------------------------------
+# Decisão do gestor (25/08/2026): clientes específicos que nunca devem gerar
+# alerta do COAF (ex.: empresas do próprio grupo, contas internas). Casados
+# por nome (maiúsculo, sem acento — mesma normalização de
+# analysis.coaf_especie.normalizar_texto) OU por código de cliente
+# (CAIXAS[CLIENTE], como string). Um cliente cai fora se casar em QUALQUER um
+# dos dois critérios.
+clientes_excluidos:
+  nomes: []      # ex.: "MULTI COMERCIO DE VEICULOS LTDA"
+  # Lista aprovada pelo gestor em 25/08/2026 — 24 códigos, checados um a um
+  # contra o nome real na base antes de excluir (ver dictionary/regras_negocio.md,
+  # seção "COAF / Recebimentos em espécie", para o mapeamento completo).
+  codigos:
+    # LAGE E SCARABELI COMERCIO DE VEICULOS LTDA (8 códigos, mesma empresa)
+    - "30184"
+    - "30201"
+    - "81177"
+    - "81178"
+    - "89335"
+    - "111070"
+    - "188259"
+    - "188260"
+    # LAGE E COSTA COMERCIO DE VEICULOS LTDA
+    - "205255"
+    # Ambíguo: majoritariamente LAGE E COSTA, mas também aparece com o nome
+    # "SYLVIO MARTINS" (pessoa física) em algum lançamento. Excluído mesmo
+    # assim por decisão explícita do gestor — ciente de que isso também
+    # bloqueia eventuais lançamentos legítimos do Sylvio Martins sob este
+    # mesmo código.
+    - "130611"
+    # MULTI COMERCIO DE VEICULOS LTDA
+    - "2088"
+    - "34642"
+    # MULT ADMINISTRACAO E CORRETAGEM DE SEGUROS LTDA
+    - "152358"
+    # MULTICAR MEGA STORE COMERCIO DE VEICULOS LTDA
+    - "126307"
+    # LAGE E GOMES COMERCIO DE VEICULOS LTDA
+    - "116861"
+    # MULT BOATS COMERCIO LTDA
+    - "143768"
+    # MULT SOLUCOES GOVERNAMENTAIS E EMPRESARIAIS LTDA
+    - "150010"
+    # Sem nome no histórico de nenhum lançamento — excluídos só pelo código,
+    # sem confirmação de a quem pertencem (decisão explícita do gestor).
+    - "80469"
+    - "105564"
+    - "245278"
+    - "245657"
+    - "202623"
+    - "219879"
+    - "248869"
+
+# ---------------------------------------------------------------------------
+# Notificação
+# ---------------------------------------------------------------------------
+# Dias mínimos entre dois e-mails sobre o MESMO cliente para o MESMO
+# destinatário. Só vale para reenvio: o primeiro alerta sai na hora.
+# Não afeta o histórico — nada é apagado por causa disto.
+reenvio_dias: 30
+
+# Meses de histórico buscados no Power BI. Precisa ser maior que janela_meses
+# para que a janela móvel possa ser avaliada em datas passadas.
+meses_consulta: 12

@@ -1,0 +1,61 @@
+# =============================================================================
+# Conciliação de Caixa — financeiro (CAIXAS) x contábil (lancamentos)
+# =============================================================================
+# Parâmetros do conciliador `analysis/conciliacao_caixa.py`. Existe para o
+# controller ajustar contas, mapeamentos e tolerância SEM tocar em código.
+#
+# Documentação da regra: dictionary/regras_negocio.md, seção
+# "Conciliação de Caixa (financeiro x contábil)".
+# =============================================================================
+
+# Contas contábeis que representam o CAIXA (dinheiro em espécie na loja).
+# NÃO inclua contas de banco (11102*, 1112*) — o livro-caixa financeiro
+# (tabela CAIXAS) só controla espécie; banco não tem contrapartida ali.
+#
+# Existem DOIS planos de contas no grupo, por isso duas contas:
+#   11101010001  CAIXA GERAL  -> KOBE, MULT BOATS, MULT SOLUÇÕES, OMODA,
+#                                RENAULT, ROYAL
+#   11111001     CAIXA GERAL  -> CORRETORA, MEGA STORE, MIT
+contas_caixa:
+  - "11101010001"
+  - "11111001"
+
+# Nome da EMPRESA no financeiro -> nome da EMPRESA no contábil.
+# Só as chaves que divergem precisariam estar aqui, mas o mapa é escrito por
+# extenso de propósito: uma empresa nova que não estiver nesta lista aparece
+# no relatório como "sem contrapartida", em vez de sumir em silêncio.
+empresas:
+  KOBE: KOBE
+  MEGA STORE: MEGA STORE
+  MIT: MIT
+  MULT BOATS: MULT BOATS
+  MULT CORRETORA: CORRETORA
+  MULT SOLUÇÕES: MULT SOLUÇÕES
+  OMODA: OMODA
+  RENAULT: RENAULT
+  ROYAL ENFIELD: ROYAL
+
+# Primeiro mês conciliável (AAAAMM). O livro-caixa financeiro começa em
+# 01/01/2025, com as 28 linhas de "SALDO INICIAL DA PLANILHA"; antes disso só
+# existe contábil e não há o que conciliar.
+primeiro_mes: 202501
+
+# Mês em que o contábil fecha o exercício anterior (AAAAMM). O saldo contábil
+# acumulado até aqui é o que a planilha financeira deveria ter trazido como
+# "SALDO INICIAL DA PLANILHA".
+mes_abertura: 202412
+
+# Diferença (em reais) abaixo da qual o mês é considerado conciliado.
+# Um centavo — não existe arredondamento legítimo entre os dois livros.
+tolerancia_reais: 0.01
+
+# Trechos de ORIGEM que marcam transferência de CAIXA para CAIXA — as únicas
+# que não têm lançamento contábil nenhum quando ficam dentro da mesma empresa.
+#
+# NÃO inclua "TRANSF" solto: as origens `TRANSF. CAIXA P/ <banco>` e
+# `TRANSF. SANTANDER P/ CAIXA` têm contrapartida em conta bancária e SÃO
+# contabilizadas. Com elas no filtro, toda empresa aparece com líquido
+# diferente de zero todo mês — inclusive as que conciliam centavo a centavo.
+origens_transferencia_interna:
+  - "SALDO CAIXA"
+  - "SALDO DE CAIXA"

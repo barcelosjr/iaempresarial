@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRE por Revenda — KOBE</title>
+<style>
+:root{
+  --bg:#F7F7F8; --card:#FFFFFF; --ink:#1D1D1F; --muted:#6E6E73; --muted-2:#9A9A9A;
+  --border:#E8E8ED; --surface:#F5F5F7;
+  --accent:#C3002F; --accent-dark:#8C0026;
+  --total-bg:#FBE4E7; --total-ink:#8C0026;
+  --group-bg:#1D1D1F;
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+  --sans: -apple-system, 'SF Pro Text', Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+
+.topbar{background:#111111;color:#fff}
+.topbar-inner{max-width:1400px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-title{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.01em}
+.brand-sub{font-size:11.5px;color:#B8B8BD;margin-top:1px}
+.topbar-fonte{font-size:11.5px;color:#B8B8BD;text-align:right}
+.topbar-fonte b{color:#fff;font-weight:600}
+
+.wrap{max-width:1400px;margin:0 auto;padding:28px 24px 64px}
+.page-head{margin-bottom:18px}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.page-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+.callout{background:#FFF7E6;border:1px solid #F0DBA6;color:#7A5B00;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:18px;max-width:900px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.section-card{padding:20px 22px}
+.section-title{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:14px}
+
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1300px}
+thead th{position:sticky;top:0;background:var(--surface);text-align:right;font-weight:700;color:var(--muted);
+  padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:2}
+thead th:first-child{text-align:left;position:sticky;left:0;z-index:3;min-width:210px}
+tbody td{padding:8px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;position:sticky;left:0;background:var(--card);min-width:210px}
+th.tot-col, td.tot-col{background:var(--surface);font-weight:700}
+th.ano-ant, td.ano-ant{color:var(--muted);font-weight:400}
+
+tr.row-group td{background:var(--group-bg);color:#fff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:10px 8px}
+tr.row-group td:first-child{background:var(--group-bg)}
+tr.row-subtotal td{background:var(--surface);font-weight:700}
+tr.row-subtotal td:first-child{background:var(--surface)}
+tr.row-total td{background:var(--total-bg);color:var(--total-ink);font-weight:800}
+tr.row-total td:first-child{background:var(--total-bg)}
+tr.row-pct td{font-style:italic;color:var(--muted);font-size:12px;background:#FAFAFA}
+tr.row-pct td:first-child{background:#FAFAFA}
+
+.footer-note{font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:22px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">KOBE — Consolidado</div>
+        <div class="brand-sub">DRE — Comparativo por Revenda</div>
+      </div>
+    </div>
+    <div class="topbar-fonte">
+      Fonte: Lançamentos Contábeis<br>
+      Gerado em <b>12/08/2026</b> · uso gerencial interno — não auditado
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="page-head">
+    <div class="page-title">DRE por Revenda — KOBE</div>
+    <div class="page-sub">Jan–Jun/2026 (acumulado) · 10 revendas lado a lado · Visão gerencial · Valores em R$</div>
+  </div>
+
+  <div class="callout">Corte por REVENDA — não é uma medida oficial do MCP (<code>relatorio_dre</code> só filtra por EMPRESA). Usa a mesma DRE_CHAVES/VALOR_AJUSTADO do motor oficial, com REVENDA como filtro extra. A coluna <b>KOBE</b> é a soma das 10 revendas (a DRE tem 100% dos lançamentos da KOBE com revenda atribuída, então bate com o consolidado oficial).</div>
+
+  <div class="card section-card">
+    <div class="section-title">Demonstrativo de Resultado — Jan–Jun/2026 vs Acum./25 (R$)</div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Conta</th><th>GV</th><th>SH</th><th>CI</th><th>IP</th><th>LI</th><th>VI</th><th>VV</th><th>MH</th><th>BH</th><th>CT</th><th class="tot-col">KOBE</th><th class="ano-ant">Acum./25</th><th class="ano-ant">Dif. %</th></tr></thead>
+        <tbody>
+        <tr class="row-group"><td colspan="13">1. RECEITA BRUTA DE VENDAS E SERVIÇOS</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Venda de Veículos Novos</td><td>R$ 14.835.818</td><td>R$ 10.845.597</td><td>R$ 6.715.994</td><td>R$ 10.794.678</td><td>R$ 4.262.300</td><td>R$ 30.323.726</td><td>R$ 19.158.711</td><td>R$ 4.870.403</td><td>R$ 10.869.828</td><td>R$ 5.007.551</td><td class="tot-col">R$ 117.684.606</td><td class="ano-ant">R$ 90.895.484</td><td class="ano-ant">+29,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Venda de Veículos Usados</td><td>R$ 8.682.714</td><td>R$ 17.507.882</td><td>R$ 3.209.311</td><td>R$ 4.868.351</td><td>R$ 819.600</td><td>R$ 13.117.550</td><td>R$ 10.947.155</td><td>R$ 1.976.433</td><td>R$ 4.279.310</td><td>R$ 1.494.200</td><td class="tot-col">R$ 66.902.506</td><td class="ano-ant">R$ 50.692.830</td><td class="ano-ant">+32,0%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Peças e Acessórios</td><td>R$ 305.914</td><td>R$ 0</td><td>R$ 1.056</td><td>R$ 41.552</td><td>R$ 7.025</td><td>R$ 53.197</td><td>R$ 1.511.893</td><td>R$ 23.753</td><td>R$ 1.048.536</td><td>R$ 8.782</td><td class="tot-col">R$ 3.001.708</td><td class="ano-ant">R$ 2.388.649</td><td class="ano-ant">+25,7%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Serviços Oficina</td><td>R$ 3.013.311</td><td>R$ 335.925</td><td>R$ 1.014.740</td><td>R$ 1.952.250</td><td>R$ 951.966</td><td>R$ 4.972.593</td><td>R$ 6.343.922</td><td>R$ 1.194.530</td><td>R$ 2.336.032</td><td>R$ 1.099.735</td><td class="tot-col">R$ 23.215.005</td><td class="ano-ant">R$ 18.930.407</td><td class="ano-ant">+22,6%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Comissões Diversas</td><td>R$ 707.600</td><td>R$ 240.695</td><td>R$ 293.791</td><td>R$ 242.224</td><td>R$ 335.708</td><td>R$ 1.433.518</td><td>R$ 738.485</td><td>R$ 148.910</td><td>R$ 387.835</td><td>R$ 318.358</td><td class="tot-col">R$ 4.847.124</td><td class="ano-ant">R$ 6.095.482</td><td class="ano-ant">-20,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) Devoluções</td><td>R$ 1.061.552</td><td>R$ 941.269</td><td>R$ 268.545</td><td>R$ 1.028.606</td><td>R$ 319.515</td><td>R$ 1.072.684</td><td>R$ 2.257.982</td><td>R$ 345.104</td><td>R$ 1.560.687</td><td>R$ 435.612</td><td class="tot-col">R$ 9.291.556</td><td class="ano-ant">R$ 4.352.196</td><td class="ano-ant">+113,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) Impostos sobre a Venda</td><td>R$ 918.325</td><td>R$ 225.568</td><td>R$ 279.078</td><td>R$ 282.114</td><td>R$ 223.323</td><td>R$ 1.272.948</td><td>R$ 1.755.616</td><td>R$ 134.849</td><td>R$ 330.392</td><td>R$ 131.047</td><td class="tot-col">R$ 5.553.259</td><td class="ano-ant">R$ 3.715.182</td><td class="ano-ant">+49,5%</td></tr>
+<tr class="row-subtotal"><td>= RECEITA LÍQUIDA</td><td>R$ 25.565.480</td><td>R$ 27.763.262</td><td>R$ 10.687.269</td><td>R$ 16.588.336</td><td>R$ 5.833.760</td><td>R$ 47.554.952</td><td>R$ 34.686.568</td><td>R$ 7.734.077</td><td>R$ 17.030.463</td><td>R$ 7.361.966</td><td class="tot-col">R$ 200.806.133</td><td class="ano-ant">R$ 160.935.475</td><td class="ano-ant">+24,8%</td></tr>
+<tr class="row-group"><td colspan="13">2. CUSTOS DAS MERCADORIAS E SERVIÇOS</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Custo de Veículos Novos</td><td>R$ 12.600.120</td><td>R$ 9.190.032</td><td>R$ 6.054.106</td><td>R$ 8.730.546</td><td>R$ 3.693.733</td><td>R$ 26.425.594</td><td>R$ 15.688.550</td><td>R$ 4.233.435</td><td>R$ 8.537.361</td><td>R$ 4.138.276</td><td class="tot-col">R$ 99.291.753</td><td class="ano-ant">R$ 80.046.145</td><td class="ano-ant">+24,0%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Custo de Veículos Usados</td><td>R$ 7.966.755</td><td>R$ 17.348.476</td><td>R$ 2.970.409</td><td>R$ 4.660.288</td><td>R$ 801.000</td><td>R$ 12.563.200</td><td>R$ 10.150.417</td><td>R$ 1.716.473</td><td>R$ 3.897.899</td><td>R$ 1.512.500</td><td class="tot-col">R$ 63.587.417</td><td class="ano-ant">R$ 46.915.473</td><td class="ano-ant">+35,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Custo de Peças e Acessórios</td><td>R$ 251.635</td><td>R$ 0</td><td>R$ 55.840</td><td>-R$ 22.343</td><td>-R$ 8.030</td><td>R$ 4.889</td><td>R$ 882.765</td><td>-R$ 12.991</td><td>R$ 603.338</td><td>R$ 624</td><td class="tot-col">R$ 1.755.726</td><td class="ano-ant">R$ 1.359.127</td><td class="ano-ant">+29,2%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Custo de Serviços Oficina</td><td>R$ 1.277.033</td><td>R$ 216.223</td><td>R$ 481.081</td><td>R$ 879.439</td><td>R$ 308.412</td><td>R$ 1.744.343</td><td>R$ 1.626.413</td><td>R$ 483.847</td><td>R$ 988.060</td><td>R$ 503.308</td><td class="tot-col">R$ 8.508.158</td><td class="ano-ant">R$ 7.763.830</td><td class="ano-ant">+9,6%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Custo de Serviço de Terceiros</td><td>R$ 114.842</td><td>R$ 0</td><td>R$ 38.696</td><td>R$ 150.413</td><td>R$ 13.996</td><td>R$ 164.383</td><td>R$ 114.118</td><td>R$ 15.915</td><td>R$ 68.070</td><td>R$ 7.853</td><td class="tot-col">R$ 688.285</td><td class="ano-ant">R$ 636.348</td><td class="ano-ant">+8,2%</td></tr>
+<tr class="row-subtotal"><td>= LUCRO BRUTO</td><td>R$ 3.355.095</td><td>R$ 1.008.530</td><td>R$ 1.087.136</td><td>R$ 2.189.993</td><td>R$ 1.024.649</td><td>R$ 6.652.544</td><td>R$ 6.224.306</td><td>R$ 1.297.398</td><td>R$ 2.935.736</td><td>R$ 1.199.406</td><td class="tot-col">R$ 26.974.793</td><td class="ano-ant">R$ 24.214.553</td><td class="ano-ant">+11,4%</td></tr>
+<tr class="row-pct"><td>% Margem Bruta</td><td>13%</td><td>4%</td><td>10%</td><td>13%</td><td>18%</td><td>14%</td><td>18%</td><td>17%</td><td>17%</td><td>16%</td><td class="tot-col">13%</td><td class="ano-ant">15%</td><td class="ano-ant">-1,6 p.p.</td></tr>
+<tr class="row-group"><td colspan="13">3. DESPESAS OPERACIONAIS</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Folha de Pagamento</td><td>R$ 1.661.569</td><td>R$ 1.080.726</td><td>R$ 583.075</td><td>R$ 1.106.995</td><td>R$ 718.604</td><td>R$ 2.580.887</td><td>R$ 3.261.538</td><td>R$ 660.275</td><td>R$ 1.602.126</td><td>R$ 632.845</td><td class="tot-col">R$ 13.888.641</td><td class="ano-ant">R$ 10.657.000</td><td class="ano-ant">+30,3%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Despesas Comerciais</td><td>R$ 883.515</td><td>R$ 512.932</td><td>R$ 226.818</td><td>R$ 413.928</td><td>R$ 191.260</td><td>R$ 1.240.396</td><td>R$ 1.113.926</td><td>R$ 251.230</td><td>R$ 1.323.176</td><td>R$ 418.367</td><td class="tot-col">R$ 6.575.548</td><td class="ano-ant">R$ 5.307.293</td><td class="ano-ant">+23,9%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Despesas Gerais</td><td>R$ 115.306</td><td>R$ 48.645</td><td>R$ 35.022</td><td>R$ 64.034</td><td>R$ 37.680</td><td>R$ 101.883</td><td>R$ 332.564</td><td>R$ 50.287</td><td>R$ 47.982</td><td>R$ 21.830</td><td class="tot-col">R$ 855.232</td><td class="ano-ant">R$ 756.422</td><td class="ano-ant">+13,1%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Manutenção de Bens</td><td>R$ 214.269</td><td>R$ 20.466</td><td>R$ 23.588</td><td>R$ 176.444</td><td>R$ 18.356</td><td>R$ 136.615</td><td>R$ 126.739</td><td>R$ 17.572</td><td>R$ 93.693</td><td>R$ 31.728</td><td class="tot-col">R$ 859.471</td><td class="ano-ant">R$ 306.318</td><td class="ano-ant">+180,6%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Serviços Profissionais</td><td>R$ 207.576</td><td>R$ 112.012</td><td>R$ 69.410</td><td>R$ 90.912</td><td>R$ 55.247</td><td>R$ 238.538</td><td>R$ 356.046</td><td>R$ 59.133</td><td>R$ 147.595</td><td>R$ 42.692</td><td class="tot-col">R$ 1.379.163</td><td class="ano-ant">R$ 1.021.111</td><td class="ano-ant">+35,1%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Taxas e Impostos Diversos</td><td>R$ 90.021</td><td>R$ 15.752</td><td>R$ 41.008</td><td>R$ 50.686</td><td>R$ 54.669</td><td>R$ 71.033</td><td>R$ 112.485</td><td>R$ 14.427</td><td>R$ 119.428</td><td>R$ 41.034</td><td class="tot-col">R$ 610.542</td><td class="ano-ant">R$ 404.925</td><td class="ano-ant">+50,8%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Despesas de Funcionamento</td><td>R$ 78.467</td><td>R$ 42.178</td><td>R$ 32.421</td><td>R$ 98.150</td><td>R$ 77.799</td><td>R$ 107.470</td><td>R$ 98.310</td><td>R$ 18.922</td><td>R$ 77.055</td><td>R$ 96.310</td><td class="tot-col">R$ 727.082</td><td class="ano-ant">R$ 480.790</td><td class="ano-ant">+51,2%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Alugueis e Condomínios</td><td>R$ 510.520</td><td>R$ 529.587</td><td>R$ 180.097</td><td>R$ 200.145</td><td>R$ 138.059</td><td>R$ 346.230</td><td>R$ 746.067</td><td>R$ 226.991</td><td>R$ 410.739</td><td>R$ 248.214</td><td class="tot-col">R$ 3.536.649</td><td class="ano-ant">R$ 2.709.405</td><td class="ano-ant">+30,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Despesas Gerais de Funcionamento</td><td>R$ 175.817</td><td>R$ 45.104</td><td>R$ 67.700</td><td>R$ 99.454</td><td>R$ 63.290</td><td>R$ 137.784</td><td>R$ 136.773</td><td>R$ 67.497</td><td>R$ 117.194</td><td>R$ 43.172</td><td class="tot-col">R$ 953.785</td><td class="ano-ant">R$ 684.954</td><td class="ano-ant">+39,2%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Outras Despesas Operacionais</td><td>R$ 45.352</td><td>R$ 30.009</td><td>R$ 18.586</td><td>R$ 29.607</td><td>R$ 20.865</td><td>R$ 67.820</td><td>R$ 44.328</td><td>R$ 16.526</td><td>R$ 34.533</td><td>R$ 11.425</td><td class="tot-col">R$ 319.052</td><td class="ano-ant">R$ 334.487</td><td class="ano-ant">-4,6%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Gastos Diversos com Funcionários</td><td>R$ 64.270</td><td>R$ 105.690</td><td>R$ 77.412</td><td>R$ 94.790</td><td>R$ 100.682</td><td>R$ 276.308</td><td>R$ 343.564</td><td>R$ 59.136</td><td>R$ 176.799</td><td>R$ 170.998</td><td class="tot-col">R$ 1.469.649</td><td class="ano-ant">R$ 977.519</td><td class="ano-ant">+50,3%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Rateio do Grupo</td><td>R$ 250.470</td><td>R$ 286.290</td><td>R$ 187.432</td><td>R$ 284.144</td><td>R$ 210.868</td><td>R$ 632.434</td><td>R$ 328.128</td><td>R$ 192.099</td><td>R$ 461.501</td><td>R$ 232.702</td><td class="tot-col">R$ 3.066.067</td><td class="ano-ant">R$ 2.229.069</td><td class="ano-ant">+37,5%</td></tr>
+<tr class="row-group"><td colspan="13">4. OUTRAS RECEITAS/DESPESAS</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(+) Receitas Diversas</td><td>R$ 3.654.914</td><td>R$ 1.189.197</td><td>R$ 1.038.746</td><td>R$ 1.335.263</td><td>R$ 638.465</td><td>R$ 3.615.411</td><td>R$ 2.789.571</td><td>R$ 565.354</td><td>R$ 1.259.185</td><td>R$ 346.058</td><td class="tot-col">R$ 16.432.163</td><td class="ano-ant">R$ 7.141.751</td><td class="ano-ant">+130,1%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(+) Receitas Não Operacionais</td><td>R$ 367.590</td><td>R$ 500.572</td><td>R$ 197.107</td><td>R$ 332.643</td><td>R$ 585.551</td><td>R$ 547.218</td><td>R$ 754.874</td><td>R$ 5.271</td><td>R$ 183.662</td><td>R$ 7.751</td><td class="tot-col">R$ 3.482.239</td><td class="ano-ant">R$ 1.016.654</td><td class="ano-ant">+242,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) Despesas Não Dedutíveis</td><td>R$ 21.860</td><td>R$ 2.112</td><td>R$ 1.408</td><td>R$ 2.112</td><td>R$ 1.408</td><td>R$ 6.071</td><td>R$ 6.464</td><td>R$ 1.408</td><td>R$ 2.112</td><td>R$ 2.112</td><td class="tot-col">R$ 47.068</td><td class="ano-ant">R$ 16.779</td><td class="ano-ant">+180,5%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) Despesas Não Operacionais</td><td>R$ 77.590</td><td>R$ 404.699</td><td>R$ 122.137</td><td>R$ 244.868</td><td>R$ 439.766</td><td>R$ 403.138</td><td>R$ 294.522</td><td>R$ 0</td><td>R$ 149.400</td><td>R$ 0</td><td class="tot-col">R$ 2.136.120</td><td class="ano-ant">R$ 617.737</td><td class="ano-ant">+245,8%</td></tr>
+<tr class="row-subtotal"><td>= EBITDA</td><td>R$ 2.980.996</td><td>-R$ 537.903</td><td>R$ 656.876</td><td>R$ 901.628</td><td>R$ 120.114</td><td>R$ 4.468.565</td><td>R$ 2.467.298</td><td>R$ 232.521</td><td>-R$ 384.751</td><td>-R$ 440.213</td><td class="tot-col">R$ 10.465.129</td><td class="ano-ant">R$ 5.869.147</td><td class="ano-ant">+78,3%</td></tr>
+<tr class="row-pct"><td>% EBITDA/RL</td><td>12%</td><td>-2%</td><td>6%</td><td>5%</td><td>2%</td><td>9%</td><td>7%</td><td>3%</td><td>-2%</td><td>-6%</td><td class="tot-col">5%</td><td class="ano-ant">4%</td><td class="ano-ant">+1,6 p.p.</td></tr>
+<tr class="row-group"><td colspan="13">5. DEPRECIAÇÃO E AMORTIZAÇÃO</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">Depreciação e Amortização de Ativos</td><td>R$ 184.259</td><td>R$ 109.048</td><td>R$ 84.831</td><td>R$ 142.564</td><td>R$ 93.772</td><td>R$ 120.781</td><td>R$ 1.354.672</td><td>R$ 10.011</td><td>R$ 152.732</td><td>R$ 99.497</td><td class="tot-col">R$ 2.352.166</td><td class="ano-ant">R$ 1.132.161</td><td class="ano-ant">+107,8%</td></tr>
+<tr class="row-subtotal"><td>= EBIT (Resultado Operacional)</td><td>R$ 2.796.737</td><td>-R$ 646.951</td><td>R$ 572.045</td><td>R$ 759.064</td><td>R$ 26.342</td><td>R$ 4.347.783</td><td>R$ 1.112.626</td><td>R$ 222.510</td><td>-R$ 537.483</td><td>-R$ 539.711</td><td class="tot-col">R$ 8.112.963</td><td class="ano-ant">R$ 4.736.987</td><td class="ano-ant">+71,3%</td></tr>
+<tr class="row-group"><td colspan="13">6. RESULTADO FINANCEIRO</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(+) Receitas Financeiras</td><td>R$ 2.036.150</td><td>R$ 75.847</td><td>R$ 73.919</td><td>R$ 76.693</td><td>R$ 74.808</td><td>R$ 78.635</td><td>R$ 992.057</td><td>R$ 74.221</td><td>R$ 80.195</td><td>R$ 73.689</td><td class="tot-col">R$ 3.636.214</td><td class="ano-ant">R$ 1.340.180</td><td class="ano-ant">+171,3%</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) Despesas Financeiras</td><td>R$ 1.378.460</td><td>R$ 343.650</td><td>R$ 418.614</td><td>R$ 416.679</td><td>R$ 500.012</td><td>R$ 872.200</td><td>R$ 2.704.724</td><td>R$ 388.641</td><td>R$ 1.016.347</td><td>R$ 280.592</td><td class="tot-col">R$ 8.319.920</td><td class="ano-ant">R$ 4.171.522</td><td class="ano-ant">+99,4%</td></tr>
+<tr class="row-subtotal"><td>= LAIR (Resultado antes do IR)</td><td>R$ 3.454.426</td><td>-R$ 914.754</td><td>R$ 227.351</td><td>R$ 419.078</td><td>-R$ 398.862</td><td>R$ 3.554.219</td><td>-R$ 600.042</td><td>-R$ 91.910</td><td>-R$ 1.473.635</td><td>-R$ 746.614</td><td class="tot-col">R$ 3.429.257</td><td class="ano-ant">R$ 1.905.644</td><td class="ano-ant">+80,0%</td></tr>
+<tr class="row-group"><td colspan="13">7. IMPOSTOS SOBRE O LUCRO</td></tr>
+<tr class="row-normal"><td style="padding-left:26px">(-) IR e CSLL</td><td>R$ 616.508</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td>R$ 0</td><td class="tot-col">R$ 616.508</td><td class="ano-ant">R$ 690.157</td><td class="ano-ant">-10,7%</td></tr>
+<tr class="row-total"><td>= LUCRO LÍQUIDO DO EXERCÍCIO</td><td>R$ 2.837.918</td><td>-R$ 914.754</td><td>R$ 227.351</td><td>R$ 419.078</td><td>-R$ 398.862</td><td>R$ 3.554.219</td><td>-R$ 600.042</td><td>-R$ 91.910</td><td>-R$ 1.473.635</td><td>-R$ 746.614</td><td class="tot-col">R$ 2.812.749</td><td class="ano-ant">R$ 1.215.488</td><td class="ano-ant">+131,4%</td></tr>
+<tr class="row-pct"><td>% Margem Líquida</td><td>11%</td><td>-3%</td><td>2%</td><td>3%</td><td>-7%</td><td>7%</td><td>-2%</td><td>-1%</td><td>-9%</td><td>-10%</td><td class="tot-col">1%</td><td class="ano-ant">1%</td><td class="ano-ant">+0,6 p.p.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Fonte: Lançamentos Contábeis (dataset <b>lancamentos_contabeis</b>), filtro <b>EMPRESA = "KOBE"</b>, aberto por <b>REVENDA</b> · Gerado em 12/08/2026 · Uso gerencial interno — não auditado
+  </div>
+
+</main>
+</body>
+</html>

@@ -98,7 +98,7 @@ Sempre com `url:` apontando pro artifact já existente (nunca publique sem
 | Painel | Arquivo | URL do artifact |
 |---|---|---|
 | Consolidado — Grupo Mult | `painel_financeiro.html` | https://claude.ai/code/artifact/4f2b423a-c88a-4258-8d3b-b8156abe6bb3 |
-| CORRETORA | `painel_financeiro_corretora.html` | https://claude.ai/code/artifact/8497f8e3-b971-463d-9beb-28daf7b9ffa8 |
+| CORRETORA | `painel_financeiro_corretora.html` | https://claude.ai/artifact/HNeYHe2j8pcxG8mjoFjup3 (era `.../code/artifact/8497f8e3-...` — a ferramenta passou a devolver esse formato curto pro mesmo artifact) |
 | ROYAL ENFIELD | `painel_financeiro_royal.html` | https://claude.ai/code/artifact/374cba84-1a94-4f7e-a755-e89619f38ac1 |
 | KOBE | `painel_financeiro_kobe.html` | https://claude.ai/code/artifact/e8d50b8e-ff41-4071-9458-d15434c684ae |
 | MIT | `painel_financeiro_mit.html` | https://claude.ai/code/artifact/954236f2-d4f9-4eb3-b979-42a61a92f4fc |

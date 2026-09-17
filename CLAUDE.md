@@ -5,6 +5,13 @@ do **Power BI** e você os consulta via API REST (endpoint `executeQueries` com
 DAX), **sempre somente leitura**. As consultas rodam no servidor do Power BI e
 só os **resultados resumidos** entram no seu contexto — nunca dados brutos.
 
+## Primeiro passo de QUALQUER tarefa nesta pasta
+
+**Invoque a skill `comandos`** (`.claude/skills/comandos/SKILL.md`) antes de
+rodar qualquer comando, script ou DAX. Ela tem o catálogo pronto (ferramentas
+MCP, scripts, python correto do venv, atualização do painel). Só monte um
+comando novo se nada do catálogo atender — e avise que saiu do catálogo.
+
 ## Antes de escrever qualquer DAX
 
 1. **Leia `dictionary/modelo_semantico.md`** (mapa do modelo: tabelas, colunas,
@@ -66,9 +73,12 @@ tests/      pytest com mocks (não exige credenciais reais)
 
 ## Comandos úteis
 
+Use **sempre** o Python do venv — o `python` do PATH é o stub da Microsoft Store
+e falha com módulo ausente.
+
 ```bash
-python scripts/validar_setup.py       # valida token, dataset e consulta DAX
-python scripts/gerar_dicionario.py    # (re)gera o dicionário do modelo
-python analysis/briefing_diario.py    # gera o briefing do dia em reports/
-python -m pytest -q                   # roda a suíte de testes
+.venv/Scripts/python.exe scripts/validar_setup.py       # valida token, dataset e consulta DAX
+.venv/Scripts/python.exe scripts/gerar_dicionario.py    # (re)gera o dicionário do modelo
+.venv/Scripts/python.exe analysis/briefing_diario.py    # gera o briefing do dia em reports/
+.venv/Scripts/python.exe -m pytest -q                   # roda a suíte de testes
 ```

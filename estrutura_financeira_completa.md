@@ -148,9 +148,16 @@ Regras vigentes (implementadas em `powerbi/dax_financeiro.py`):
 | 21 | Taxas e Impostos Diversos                  | DETALHE  | -        |
 | 22 | Despesas de Funcionamento                  | DETALHE  | -        |
 | 23 | Alugueis e Condomínios                     | DETALHE  | -        |
-| 24 | Despesas Gerais e Rateio do Grupo          | DETALHE  | -        |
+| 24 | Despesas Gerais de Funcionamento           | DETALHE  | -        |
 | 25 | Outras Despesas Operacionais               | DETALHE  | -        |
 | 26 | Gastos Diversos com Funcionários           | DETALHE  | -        |
+| 27 | Rateio do Grupo                            | DETALHE  | -        |
+
+Em 31/07/2026 a conta antiga `Despesas Gerais e Rateio do Grupo` foi
+descontinuada: a CORRETORA (última empresa que ainda lançava nela) foi
+reclassificada para o par `Rateio do Grupo` + `Despesas Gerais de
+Funcionamento`. A conta está zerada em toda a base (0 lançamentos, todas as
+empresas, todos os períodos) e **não faz mais parte da estrutura da DRE**.
 
 (Este grupo não gera subtotal próprio **na fórmula** — entra direto no cálculo do
 EBITDA, junto com o grupo 4. **Porém, no layout visual**, o cabeçalho do bloco
@@ -253,9 +260,10 @@ blocos numerados com cabeçalho, igual ao relatório de referência)*
 | Taxas e Impostos Diversos          | (25.000)       |
 | Despesas de Funcionamento          | (40.000)       |
 | Alugueis e Condomínios             | (35.000)       |
-| Despesas Gerais e Rateio do Grupo  | (50.000)       |
+| Despesas Gerais de Funcionamento   | (12.000)       |
 | Outras Despesas Operacionais       | (20.000)       |
 | Gastos Diversos com Funcionários   | (15.000)       |
+| Rateio do Grupo                    | (38.000)       |
 
 **4. OUTRAS RECEITAS/DESPESAS**
 | Linha                          | Valor (R$)     |

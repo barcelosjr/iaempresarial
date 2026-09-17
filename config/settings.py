@@ -42,6 +42,11 @@ class Configuracao:
         max_retries: Número máximo de tentativas em erros transitórios.
         limite_linhas_padrao: Limite padrão de linhas retornadas por consulta.
         token_cache_path: Caminho absoluto do cache de token (device_code).
+        smtp_host: Servidor SMTP de saída (Zoho). Opcional.
+        smtp_port: Porta SMTP. 465 = SSL implícito, 587 = STARTTLS.
+        smtp_user: Usuário/remetente SMTP. Opcional.
+        smtp_password: Senha de aplicativo do SMTP. Opcional, nunca logada.
+        smtp_remetente_nome: Nome exibido como remetente.
     """
 
     auth_mode: str
@@ -54,11 +59,26 @@ class Configuracao:
     max_retries: int = 4
     limite_linhas_padrao: int = 20
     token_cache_path: Path = field(default_factory=lambda: RAIZ_PROJETO / ".token_cache.json")
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_remetente_nome: str = ""
 
     @property
     def authority(self) -> str:
         """URL de autoridade do Azure AD para este tenant."""
         return f"https://login.microsoftonline.com/{self.tenant_id}"
+
+    @property
+    def smtp_configurado(self) -> bool:
+        """Se há credenciais suficientes para enviar e-mail.
+
+        O envio é opcional: quem só quer os relatórios não precisa configurar
+        SMTP, e por isso essas variáveis nunca entram na lista de obrigatórias
+        de :func:`carregar_configuracao`.
+        """
+        return bool(self.smtp_host and self.smtp_user and self.smtp_password)
 
 
 def _ler_int(nome: str, padrao: int) -> int:
@@ -153,4 +173,9 @@ def carregar_configuracao(caminho_env: Path | str | None = None) -> Configuracao
         max_retries=_ler_int("PBI_MAX_RETRIES", 4),
         limite_linhas_padrao=_ler_int("PBI_DEFAULT_ROW_LIMIT", 20),
         token_cache_path=token_cache_path,
+        smtp_host=os.getenv("ZOHO_SMTP_HOST", "").strip(),
+        smtp_port=_ler_int("ZOHO_SMTP_PORT", 465),
+        smtp_user=os.getenv("ZOHO_SMTP_USER", "").strip(),
+        smtp_password=os.getenv("ZOHO_SMTP_PASSWORD", "").strip(),
+        smtp_remetente_nome=os.getenv("ZOHO_REMETENTE_NOME", "").strip(),
     )

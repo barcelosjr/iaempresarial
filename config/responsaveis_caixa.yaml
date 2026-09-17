@@ -1,0 +1,277 @@
+# =============================================================================
+# Responsáveis por caixa — destinatários da DMF
+# =============================================================================
+# QUEM RECEBE A DMF: o responsável pelo caixa da REVENDA onde foi feito o
+# lançamento que levou o acumulado do cliente a atingir o limiar.
+#
+# A apuração é sempre do GRUPO INTEIRO (soma todas as empresas e revendas, para
+# pegar fracionamento entre lojas), mas a cobrança vai para UM destinatário: o
+# do caixa do lançamento decisivo. Um cliente que comprou em cinco lojas gera
+# uma cobrança, não cinco.
+#
+# Os anexos são uma DMF POR EMPRESA do grupo em que houve recebimento.
+# O setor de COAF (email_coaf) recebe as mesmas DMFs MAIS o relatório
+# consolidado do grupo — que não vai para mais ninguém.
+#
+# MAIS DE UM RESPONSÁVEL NO MESMO CAIXA: separe os e-mails por vírgula no
+# mesmo campo `email:`. Todos recebem a mesma mensagem, no mesmo "Para".
+#   email: "fulano@empresa.com, ciclana@empresa.com"
+#
+# ATENÇÃO — CONFIGURAÇÃO DE TESTE (controladoria3@kobeveiculos.com.br):
+# todas as 48 combinações revenda + caixa apontam para o mesmo endereço.
+# Troque pelos responsáveis reais antes de entrar em produção.
+#
+# Caixas 9, 99 e 4 (e 8/14 na Multicar Mits) não representam saldo real, mas
+# entram na apuração do COAF por decisão do gestor — os lançamentos saem
+# marcados no PDF.
+# =============================================================================
+
+# Recebe o relatório consolidado do grupo + todas as DMFs por empresa.
+email_coaf: "gestao.compliance@grupomulticar.com.br, controladoria3@kobeveiculos.com.br"
+
+# Usado quando o caixa do lançamento decisivo não está mapeado abaixo.
+email_padrao: "controladoria3@kobeveiculos.com.br"
+
+# Nome exibido como responsável no rodapé da DMF quando o caixa não está mapeado.
+responsavel_padrao: "Controladoria"
+
+responsaveis:
+  - revenda: "MULT CORRETORA"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN BH"
+    caixa: "1"
+    nome: "Nayara Caroline de Brito Lana"
+    email: "felipe.c@kobeveiculos.com.br, super.adm.bh@kobeveiculos.com.br, caixa.bh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN BH"
+    caixa: "2"
+    nome: "Nayara Caroline de Brito Lana"
+    email: "felipe.c@kobeveiculos.com.br, super.adm.bh@kobeveiculos.com.br, caixa.bh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN CI"
+    caixa: "1"
+    nome: "Gabryella Grillo"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.ci@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN CI"
+    caixa: "4"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN CT"
+    caixa: "1"
+    nome: "Graziele Pereira Costa"
+    email: "felipe.c@kobeveiculos.com.br, super.adm.bh@kobeveiculos.com.br, recepcao.ct@multigrupo.com.br"
+    
+  - revenda: "KOBE NISSAN CT"
+    caixa: "2"
+    nome: "Graziele Pereira Costa"
+    email: "felipe.c@kobeveiculos.com.br, super.adm.bh@kobeveiculos.com.br, recepcao.ct@multigrupo.com.br"
+    
+  - revenda: "KOBE NISSAN GV"
+    caixa: "1"
+    nome: "Wania Mara"
+    email: "felipe.c@kobeveiculos.com.br, wania.m@grupomulticar.com.br"
+    
+  - revenda: "KOBE NISSAN GV"
+    caixa: "2"
+    nome: "Luna Victoria"
+    email: "felipe.c@kobeveiculos.com.br, caixa.gv@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN GV"
+    caixa: "4"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN GV"
+    caixa: "7"
+    nome: "Welton Almeida Eller"
+    email: "felipe.c@kobeveiculos.com.br, controladoria8@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN GV"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN IP"
+    caixa: "1"
+    nome: "Jaqueline Bezerra"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.ipa@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN LI"
+    caixa: "1"
+    nome: "Alcileia Gomes"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.li@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN LI"
+    caixa: "2"
+    nome: "Alcileia Gomes"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.li@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN MH"
+    caixa: "1"
+    nome: "Igor Magno Casadei"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.mh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN MH"
+    caixa: "2"
+    nome: "Igor Magno Casadei"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.mh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN SH"
+    caixa: "1"
+    nome: "Erica Samara Santos"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.sh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN SH"
+    caixa: "5"
+    nome: "Erica Samara Santos"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.sh@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN VI"
+    caixa: "2"
+    nome: "Maria Adelaide de Souza Fernandes"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.vv1@kobeveiculos.com.br, caixa.vi@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN VV"
+    caixa: "1"
+    nome: "Maria Eduarda Monteiro Lima"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.vv1@kobeveiculos.com.br, caixa.vv@kobeveiculos.com.br"
+    
+  - revenda: "KOBE NISSAN VV"
+    caixa: "2"
+    nome: "Maria Eduarda Monteiro Lima"
+    email: "felipe.c@kobeveiculos.com.br, financeiro.vv1@kobeveiculos.com.br, caixa.vv@kobeveiculos.com.br"
+    
+  - revenda: "MEGA STORE"
+    caixa: "1"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MEGA STORE"
+    caixa: "3"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MEGA STORE"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR MITS MATRIZ"
+    caixa: "2"
+    nome: "Isabelly Pereira do Nascimento"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavt.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR MITS MATRIZ"
+    caixa: "8"
+    nome: "Isabelly Pereira do Nascimento"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavt.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR MITS MATRIZ"
+    caixa: "15"
+    nome: "Isabelly Pereira do Nascimento"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavt.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR MITS VV"
+    caixa: "2"
+    nome: "Maria Eduarda Deluca Pereira"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavl.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR MITS VV"
+    caixa: "7"
+    nome: "Maria Eduarda Deluca Pereira"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavl.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR MITS VV"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR MITS VV"
+    caixa: "14"
+    nome: "Maria Eduarda Deluca Pereira"
+    email: "gisleia.f@grupomulticar.com.br, financeiro.vv1@kobeveiculos.com.br, caixavl.mit@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR BOATS"
+    caixa: "1"
+    nome: "Rafaela Maria Batista"
+    email: "gisleia.f@grupomulticar.com.br, faturamento.mega@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR BOATS"
+    caixa: "2"
+    nome: "Rafaela Maria Batista"
+    email: "gisleia.f@grupomulticar.com.br, faturamento.mega@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR BOATS"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULT MOTORS OMODA"
+    caixa: "1"
+    nome: "Welton Almeida Eller"
+    email: "gisleia.f@grupomulticar.com.br, controladoria8@kobeveiculos.com.br"
+    
+  - revenda: "MULT MOTORS OMODA"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "RENAULT - GV"
+    caixa: "1"
+    nome: "Mayara Avelar"
+    email: "felipe.c@kobeveiculos.com.br,financeirogv.re2@grupomulticar.com.br"
+    
+  - revenda: "RENAULT - GV"
+    caixa: "2"
+    nome: "Mayara Avelar"
+    email: "felipe.c@kobeveiculos.com.br,financeirogv.re2@grupomulticar.com.br"
+    
+  - revenda: "RENAULT - GV"
+    caixa: "4"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "RENAULT - GV"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR ROYAL - GV"
+    caixa: "1"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR ROYAL - GV"
+    caixa: "2"
+    nome: "Aline Rodrigues de Castro"
+    email: "contabilidade02@kobeveiculos.com.br, faturamento.royalgv@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR ROYAL - VI"
+    caixa: "1"
+    nome: "Cristiane Santos Amorim"
+    email: "contabilidade02@kobeveiculos.com.br, financeiro.royal2@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR ROYAL - VI"
+    caixa: "2"
+    nome: "Cristiane Santos Amorim"
+    email: "contabilidade02@kobeveiculos.com.br, financeiro.royal2@grupomulticar.com.br"
+    
+  - revenda: "MULTICAR ROYAL - VI"
+    caixa: "4"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR ROYAL - VI"
+    caixa: "9"
+    nome: "Julio Barcelos"
+    email: "controladoria3@kobeveiculos.com.br"
+    
+  - revenda: "MULTICAR ROYAL - VI"
+    caixa: "99"
+    nome: "Mercado Livre"
+    email: "contabilidade02@kobeveiculos.com.br, controladoria3@kobeveiculos.com.br"

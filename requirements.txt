@@ -24,3 +24,6 @@ mcp>=1.2,<2
 
 # Testes
 pytest>=8.0,<9
+
+# Geração de PDF (DMF do COAF, relatórios financeiros)
+reportlab>=5.0,<6

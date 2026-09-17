@@ -1,0 +1,1562 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__EMPRESA__ · Planilha Financeira</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --panel:#FFFFFF; --ink:#111111;
+    --muted-1:#595959; --muted-2:#6B6B6B; --muted-3:#8A8A8A; --muted-4:#A8A8A8;
+    --border:#DCDCDC; --border-soft:#EDEDED; --grid:#E8E8E8;
+    --head-bg:#F7F7F7; --group-bg:#333333; --subtotal:#F2F2F2;
+    --total-bg:#FBE4E7; --total-ink:#8C0026;
+    --accent:#C3002F; --accent-soft:#FBE4E7;
+    --pos:#2F6F4E; --neg:#B23B3B;
+    --sans:'Segoe UI',Inter,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    --mono:'Consolas','SF Mono','Roboto Mono',ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px}
+  ::-webkit-scrollbar{height:10px;width:10px}
+  ::-webkit-scrollbar-thumb{background:#C9C9C9;border-radius:5px}
+  ::-webkit-scrollbar-track{background:#F2F2F2}
+
+  .app{display:flex;flex-direction:column;height:100vh}
+
+  /* ---------- Topo ---------- */
+  .topbar{flex:0 0 auto;background:#000;color:#fff;padding:12px 20px;display:flex;
+    align-items:baseline;gap:14px;flex-wrap:wrap}
+  .topbar .marca{font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .topbar .sub{font-size:12px;color:#B8B8B8}
+  .topbar .snap{margin-left:auto;font-size:11.5px;color:#8F8F8F}
+
+  /* ---------- Controles ---------- */
+  .controls{flex:0 0 auto;background:var(--head-bg);border-bottom:1px solid var(--border);
+    padding:8px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .ctl{display:flex;align-items:center;gap:6px}
+  .ctl-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-3);font-weight:600}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;background:#fff}
+  .seg button{border:0;background:#fff;color:var(--muted-1);font:inherit;font-size:12px;
+    padding:5px 11px;cursor:pointer;border-right:1px solid var(--border);white-space:nowrap}
+  .seg button:last-child{border-right:0}
+  .seg button:hover{background:#F0F0F0}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:600}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted-1);cursor:pointer;
+    user-select:none;white-space:nowrap}
+  .chk input{margin:0;accent-color:var(--accent);cursor:pointer}
+  .busca{border:1px solid var(--border);border-radius:5px;padding:5px 9px;font:inherit;font-size:12px;
+    width:180px;background:#fff}
+  .busca:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .btn{border:1px solid var(--border);background:#fff;color:var(--muted-1);font:inherit;font-size:12px;
+    padding:5px 11px;border-radius:5px;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:#F0F0F0;color:var(--ink)}
+  .spacer{margin-left:auto}
+
+  /* ---------- Barra de entidades (revendas) ---------- */
+  .entbar{flex:0 0 auto;background:#fff;border-bottom:1px solid var(--border);
+    padding:7px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .chip{border:1px solid var(--border);background:#fff;color:var(--muted-1);font:inherit;
+    font-size:11.5px;padding:3px 10px;border-radius:20px;cursor:pointer;white-space:nowrap}
+  .chip:hover{background:#F0F0F0;color:var(--ink)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .entcount{font-size:11px;color:var(--muted-3);margin-left:4px}
+  .btn.mini{padding:3px 9px;font-size:11.5px;border-radius:20px}
+
+  /* ---------- Abas ---------- */
+  .tabs{flex:0 0 auto;display:flex;gap:0;border-bottom:1px solid var(--border);background:#fff;
+    padding:0 20px;overflow-x:auto}
+  .tabs button{border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--muted-2);
+    padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+  /* ---------- Área da planilha ---------- */
+  .area{flex:1 1 auto;overflow:auto;background:#fff}
+  .titulo{padding:12px 20px 6px;font-size:12px;color:var(--muted-1)}
+  .titulo b{color:var(--ink)}
+  .nota{padding:0 20px 10px;font-size:11.5px;color:var(--muted-3);line-height:1.5;max-width:1100px}
+  .aviso{margin:0 20px 12px;background:#FFF7E6;border:1px solid #F0DBA6;color:#7A5B00;
+    border-radius:6px;padding:8px 12px;font-size:12px;line-height:1.5;max-width:1100px}
+
+  table.sheet{border-collapse:separate;border-spacing:0;font-size:12px;width:auto;min-width:100%}
+  table.sheet th,table.sheet td{border-right:1px solid var(--grid);border-bottom:1px solid var(--border-soft);
+    padding:4px 10px;white-space:nowrap}
+  table.sheet thead th{position:sticky;top:0;z-index:3;background:var(--head-bg);color:var(--muted-1);
+    font-weight:600;text-align:right;border-bottom:1px solid var(--border);padding:6px 10px;font-size:11.5px}
+  table.sheet thead th .sub{display:block;font-weight:400;font-size:10px;color:var(--muted-4);margin-top:1px}
+  table.sheet thead th.c0{left:0;z-index:5;text-align:left;min-width:270px;max-width:270px;
+    border-right:1px solid var(--border)}
+  table.sheet thead th.acum{background:#ECECEC;color:var(--ink);border-left:2px solid var(--border)}
+
+  table.sheet td{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
+    font-size:11.5px;color:#2A2A2A}
+  table.sheet td.c0{position:sticky;left:0;z-index:2;background:#fff;text-align:left;
+    font-family:var(--sans);font-size:12px;color:var(--ink);min-width:270px;max-width:270px;
+    overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--border)}
+  table.sheet td.acum{background:#FAFAFA;border-left:2px solid var(--border);font-weight:600}
+  table.sheet tbody tr:hover td{background:#FFF8F9}
+  table.sheet tbody tr:hover td.c0{background:#FFF0F2}
+
+  tr.group td{background:var(--group-bg)!important;color:#fff!important;font-weight:700;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.04em}
+  tr.group td.c0{background:var(--group-bg)!important;color:#fff!important;white-space:normal;
+    line-height:1.3;font-family:var(--sans)}
+  tr.group:hover td{background:#3D3D3D!important}
+  tr.subtotal td{background:var(--subtotal);font-weight:700;color:var(--ink)}
+  tr.subtotal td.c0{background:var(--subtotal);font-weight:700}
+  tr.subtotal td.acum{background:#E9E9E9}
+  tr.total td{background:var(--total-bg);font-weight:700;color:var(--total-ink)}
+  tr.total td.c0{background:var(--total-bg);font-weight:700;color:var(--total-ink)}
+  tr.total td.acum{background:#F7D6DB}
+  tr.pct td{background:#FAFAFA;font-style:italic;color:var(--muted-1);font-size:11px}
+  tr.pct td.c0{background:#FAFAFA;font-style:italic;color:var(--muted-1);font-size:11.5px}
+  tr.check td{font-size:10.5px;color:var(--muted-3);font-style:italic}
+  tr.check td.c0{font-size:11px;color:var(--muted-3);font-style:italic}
+  tr.sub td{background:#FCFCFC;color:var(--muted-2);font-size:11px}
+  tr.sub td.c0{background:#FCFCFC;color:var(--muted-2);font-size:11.5px}
+
+  .neg{color:var(--neg)}
+  .zero{color:var(--muted-4)}
+  .linha2{display:block;font-size:9.5px;font-family:var(--sans);margin-top:1px;line-height:1.25}
+  .d-pos{color:var(--pos)}
+  .d-neg{color:var(--neg)}
+  .d-nil{color:var(--muted-4)}
+  .av{color:var(--muted-3)}
+  .chev{display:inline-block;width:13px;color:var(--muted-3);font-size:9px}
+  tr.expansivel td.c0{cursor:pointer}
+  tr.expansivel td.c0:hover{color:var(--accent)}
+
+  .foot{flex:0 0 auto;border-top:1px solid var(--border);background:var(--head-bg);
+    padding:7px 20px;font-size:11px;color:var(--muted-3);display:flex;gap:16px;flex-wrap:wrap}
+  /* Selecao de celulas (estilo planilha). O texto da tabela nao e selecionavel:
+     a selecao aqui e de celulas, para somar/tirar media — nao para copiar. */
+  table.sheet{user-select:none;-webkit-user-select:none}
+  table.sheet td.sel{background:#FDE7EB!important;box-shadow:inset 0 0 0 1px var(--accent)}
+  table.sheet td[data-v]{cursor:cell}
+  .selinfo{position:fixed;z-index:60;background:#111;color:#fff;border-radius:7px;
+    padding:8px 12px;font-size:12px;line-height:1.5;pointer-events:none;
+    box-shadow:0 6px 20px rgba(0,0,0,.28);white-space:nowrap}
+  .selinfo b{font-family:var(--mono);font-weight:700;color:#fff}
+  .selinfo .rot{color:#A8A8A8;margin-right:4px}
+  .selinfo .mista{display:block;color:#F0C36D;font-size:10.5px;margin-top:3px}
+  @media print{.controls,.tabs,.topbar .snap{display:none}.area{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <span class="marca">__EMPRESA__</span>
+    <span class="sub">Planilha Financeira — visão tabular, período a período</span>
+    <span class="snap" id="snap"></span>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span class="ctl-label">Ano</span><span class="seg" id="seg-ano"></span></div>
+    <div class="ctl"><span class="ctl-label">Período</span><span class="seg" id="seg-periodo"></span></div>
+    <div class="ctl"><span class="ctl-label">Escala</span><span class="seg" id="seg-escala"></span></div>
+    <label class="chk"><input type="checkbox" id="ck-delta"> vs. ano anterior</label>
+    <label class="chk"><input type="checkbox" id="ck-av"> % análise vertical</label>
+    <label class="chk"><input type="checkbox" id="ck-detalhe"> detalhar todas as contas</label>
+    <span class="spacer"></span>
+    <input class="busca" id="busca" type="search" placeholder="filtrar linhas…">
+    <button class="btn" id="btn-limpar-sel" hidden>Limpar seleção</button>
+  </div>
+
+  <div class="entbar" id="entbar" hidden></div>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="area" id="area"></div>
+
+  <footer class="foot">
+    <span>Fonte: Power BI (analista-bi) — mesmas medidas dos painéis oficiais.</span>
+    <span id="foot-periodo"></span>
+    <span id="foot-visao"></span>
+  </footer>
+</div>
+<div class="selinfo" id="selinfo" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===================== DADOS =====================
+  // Bloco copiado verbatim do painel oficial __ARQUIVO_FONTE__ por
+  // gerar_planilha.py. Nunca editar aqui na mão — regenerar pelo script.
+  var SNAPSHOT = '__SNAPSHOT__';
+  var EMPRESA  = '__EMPRESA__';
+  // Entidades que a DRE abre (uma so, ou as N revendas de uma marca). O filtro so
+  // aparece quando ha mais de uma.
+  var ENTIDADES = __ENTIDADES__;
+  var ROTULO_ENTIDADE = '__ROTULO_ENTIDADE__';
+  // Balanco e Fluxo de Caixa nao existem por revenda: ~73% do valor do Balanco da
+  // KOBE nao tem REVENDA atribuida (fica centralizado no grupo), enquanto a DRE tem
+  // 100% de cobertura. Por isso essas demonstracoes vem de UMA chave so — a marca
+  // inteira — e so aparecem com todas as entidades selecionadas.
+  var ENTIDADE_BALANCO = '__ENTIDADE_BALANCO__';
+  var SNAPSHOT_BALANCO = '__SNAPSHOT_BALANCO__';
+  // dreDesc vem por entidade (Kobe) ou plano (marca unica).
+  var DESC_POR_ENTIDADE = __DESC_POR_ENTIDADE__;
+
+/*__DADOS_ANO__*/
+
+  var ANOS_DISPONIVEIS = Object.keys(DADOS_ANO).sort().reverse();
+
+  // ===================== ESTADO =====================
+  var state = {
+    ano: ANOS_DISPONIVEIS[0],
+    period: 'mensal',
+    escala: 1,             // 1 = unidade, 1000 = R$ mil
+    aba: 'resumo',
+    delta: false,
+    av: false,
+    filtro: '',
+    // Entidades marcadas (ids de ENTIDADES). Comeca com todas.
+    sel: ENTIDADES.map(function(e){ return e.id; }),
+    // Expansao do drill-down por CONTA (chave de CAMPOS_DRE), nao global: abrir
+    // "Venda de Veiculos Novos" nao pode abrir as outras 30 linhas junto.
+    expandido: {}
+  };
+
+  // Contexto do ano selecionado (equivalente ao aplicarAno() do painel oficial).
+  var MESES, DRE_DET, DRE_DET_ANT, BAL_DET, MOV, MOV_ANT, NAT, FC_CONT, SALDO_INI, DRE_DESC;
+  function aplicarAno(ano){
+    var d = DADOS_ANO[ano];
+    MESES = d.meses; DRE_DET = d.dreDet; DRE_DET_ANT = d.dreDetAnt; BAL_DET = d.balDet;
+    MOV = d.mov; MOV_ANT = d.movAnt; NAT = d.nat; FC_CONT = d.fcCont;
+    SALDO_INI = d.saldoIni; DRE_DESC = d.dreDesc || {};
+  }
+  // Drill-down da selecao atual, ja somado (recalculado a cada render).
+  var DESC_SEL = {};
+  function descDaSelecao(){
+    var base = DRE_DESC || {};
+    if (!DESC_POR_ENTIDADE) return base;
+    var out = {};
+    state.sel.forEach(function(id){
+      var porConta = base[id];
+      if (!porConta) return;
+      Object.keys(porConta).forEach(function(conta){
+        var alvo = out[conta] || (out[conta] = {});
+        Object.keys(porConta[conta]).forEach(function(desc){
+          var arr = porConta[conta][desc];
+          var acc = alvo[desc] || (alvo[desc] = []);
+          for (var i = 0; i < arr.length; i++) acc[i] = (acc[i] || 0) + arr[i];
+        });
+      });
+    });
+    return out;
+  }
+  function selecaoCompleta(){ return state.sel.length === ENTIDADES.length; }
+  function multiEntidade(){ return ENTIDADES.length > 1; }
+  // Ha Balanco no arquivo? (marca unica sempre tem; a Kobe por revenda tambem,
+  // na chave da marca inteira).
+  function temBalanco(){ return !!(BAL_DET && BAL_DET[ENTIDADE_BALANCO]); }
+  // Da pra cruzar DRE com Balanco? So quando a DRE cobre a marca toda — senao o
+  // indicador misturaria o resultado de N lojas com o patrimonio de todas.
+  function podeMisturar(){ return temBalanco() && selecaoCompleta(); }
+  function rotuloSelecao(){
+    if (!multiEntidade()) return EMPRESA;
+    if (selecaoCompleta()) return EMPRESA + ' (todas as ' + ENTIDADES.length + ')';
+    if (state.sel.length === 0) return 'nenhuma ' + ROTULO_ENTIDADE.toLowerCase() + ' selecionada';
+    if (state.sel.length <= 3) return state.sel.join(' + ');
+    return state.sel.length + ' de ' + ENTIDADES.length + ' ' + ROTULO_ENTIDADE.toLowerCase() + 's';
+  }
+
+  function anoAtual(){ return state.ano; }
+  function anoAnterior(){ return String(Number(state.ano) - 1); }
+  function sufixo(a){ return String(a).slice(2); }
+  function mesFinal(){ return MESES[MESES.length - 1]; }
+  function janAte(ano){ return 'Jan–' + mesFinal() + '/' + ano; }
+
+  // ===================== DRE =====================
+  // Portado do painel oficial sem alteração de fórmula (ver painel_financeiro___SLUG__.html).
+  var CAMPOS_DRE = ['vendaVN','vendaVU','pecas','oficina','comissoes','comSeguros','comConsorcios',
+    'comIntermediacao','devolucoes','impostosVenda','custoVN','custoVU','custoPecas','custoOficina',
+    'custoTerceiros','folha','despComercial','despGerais','manutencao','servProf','taxasImpostos',
+    'despFuncionamento','alugueis','despGeraisFunc','outrasDesp','gastosFunc','rateioGrupo',
+    'receitasDiversas','receitasNaoOper','despNaoDedutiveis','despNaoOper','da','recFin','despFin','irCsll'];
+
+  var SUBTOTAIS_DRE = ['rl','custoTotal','lucroBruto','despTotal','outrasTotal','ebitda','ebit','lair','lucro'];
+
+  function detalheMeses(base){
+    base = base || DRE_DET;
+    var ids = state.sel;
+    return MESES.map(function(rot, i){
+      var o = { m: rot };
+      CAMPOS_DRE.forEach(function(k){
+        var t = 0;
+        ids.forEach(function(id){ var a = base[id] && base[id][k]; if (a) t += a[i]; });
+        o[k] = t;
+      });
+      o.rl = o.vendaVN+o.vendaVU+o.pecas+o.oficina+o.comissoes+o.comSeguros+o.comConsorcios+
+             o.comIntermediacao+o.devolucoes+o.impostosVenda;
+      o.custoTotal = o.custoVN+o.custoVU+o.custoPecas+o.custoOficina+o.custoTerceiros;
+      o.lucroBruto = o.rl + o.custoTotal;
+      o.despTotal = o.folha+o.despComercial+o.despGerais+o.manutencao+o.servProf+o.taxasImpostos+
+             o.despFuncionamento+o.alugueis+o.despGeraisFunc+o.outrasDesp+o.gastosFunc+o.rateioGrupo;
+      o.outrasTotal = o.receitasDiversas+o.receitasNaoOper+o.despNaoDedutiveis+o.despNaoOper;
+      o.ebitda = o.lucroBruto + o.despTotal + o.outrasTotal;
+      o.ebit = o.ebitda + o.da;
+      o.lair = o.ebit + o.recFin + o.despFin;
+      o.lucro = o.lair + o.irCsll;
+      return margensDre(o);
+    });
+  }
+  function margensDre(o){
+    o.margemBruta  = o.rl ? o.lucroBruto/o.rl : 0;
+    o.margemEbitda = o.rl ? o.ebitda/o.rl : 0;
+    o.margemLiq    = o.rl ? o.lucro/o.rl : 0;
+    // Cabeçalhos de bloco, na convenção de exibição do relatório oficial.
+    o.outrasTotalNeg = -o.outrasTotal;
+    o.resFinNeg = -(o.recFin + o.despFin);
+    return o;
+  }
+
+  // ===================== BALANÇO =====================
+  var CAMPOS_BAL = ['caixaBancos','aplicacoesFinanceiras','contasReceber','cartoesReceber',
+    'financiamentosReceber','adiantForn','outrosAdiant','outrosCreditos','impostosRecuperar',
+    'estVN','estVU','estPecas','realizavelLP','invLP','invPermanentes','terrenos','edificios',
+    'instalacoes','veiculos','maquinas','computadores','moveis','construcoes','benfeitorias',
+    'consorcios','aeronaves','deprecAcum','direitosConcessao','amortAcum','floorVN','floorVU',
+    'floorPecas','fornecDiv','emprestBancarios','emprestTerceiros','contaGarantida','financiamentos',
+    'notasComerciais','obrigSociais','obrigTrib','adiantCliente','provisoes','outrasContas',
+    'lucrosPagar','emprestFinancLP','outrosCredores','parcelamentosLP','adiantFuturaIntegr',
+    'capitalSocial','reservasCapital','reservasLucros','reservasIncentivos','prejuizosAcum',
+    'ajustesExercAnt'];
+
+  function subtotaisBal(o){
+    o.disponibilidades = o.caixaBancos + o.aplicacoesFinanceiras;
+    o.valoresReceber = o.contasReceber + o.cartoesReceber + o.financiamentosReceber +
+      o.adiantForn + o.outrosAdiant + o.outrosCreditos + o.impostosRecuperar;
+    o.estoques = o.estVN + o.estVU + o.estPecas;
+    o.totalAtivoCirc = o.disponibilidades + o.valoresReceber + o.estoques;
+    o.investimentos = o.invLP + o.invPermanentes;
+    o.imobilizado = o.terrenos + o.edificios + o.instalacoes + o.veiculos + o.maquinas +
+      o.computadores + o.moveis + o.construcoes + o.benfeitorias + o.consorcios + o.aeronaves + o.deprecAcum;
+    o.intangivel = o.direitosConcessao + o.amortAcum;
+    o.totalAtivoNaoCirc = o.realizavelLP + o.investimentos + o.imobilizado + o.intangivel;
+    o.ativoNaoCirc = o.totalAtivoNaoCirc;
+    o.totalAtivo = o.totalAtivoCirc + o.totalAtivoNaoCirc;
+    o.floorPlan = o.floorVN + o.floorVU + o.floorPecas;
+    o.fornecedores = o.floorPlan + o.fornecDiv;
+    o.fornecDiversos = o.fornecDiv;
+    o.emprestFinanc = o.emprestBancarios + o.emprestTerceiros + o.contaGarantida +
+      o.financiamentos + o.notasComerciais;
+    o.outrasObrig = o.obrigSociais + o.obrigTrib + o.adiantCliente + o.provisoes +
+      o.outrasContas + o.lucrosPagar;
+    o.totalPassivoCirc = o.fornecedores + o.emprestFinanc + o.outrasObrig;
+    o.outrosPNC = o.outrosCredores + o.parcelamentosLP + o.adiantFuturaIntegr;
+    o.totalPassivoNaoCirc = o.emprestFinancLP + o.outrosPNC;
+    o.totalPL = o.capitalSocial + o.reservasCapital + o.reservasLucros +
+      o.reservasIncentivos + o.prejuizosAcum + o.ajustesExercAnt;
+    o.totalPassivo = o.totalPassivoCirc + o.totalPassivoNaoCirc;
+    o.totalPassivoPL = o.totalPassivo + o.totalPL;
+    o.check = o.totalAtivo - o.totalPassivoPL;
+    return o;
+  }
+
+  // Posição patrimonial no fim do mês `mesIdx`, reconstruída a partir do saldo do
+  // último mês carregado descontando o movimento dos meses seguintes — idêntico ao
+  // balancoNoMes() do painel oficial. `ano`: 0 = corrente, 1 = anterior.
+  function balancoNoMes(mesIdx, ano){
+    var idx = ano || 0;
+    var movimento = idx === 1 ? MOV_ANT : MOV;
+    var bal = BAL_DET[ENTIDADE_BALANCO] || {}, mv = movimento[ENTIDADE_BALANCO] || {};
+    var o = {};
+    CAMPOS_BAL.forEach(function(k){
+      var t = 0;
+      var a = bal[k]; if (a) t += a[idx];
+      var m = mv[k];
+      if (m) for (var j = mesIdx + 1; j < MESES.length; j++) t -= (m[j] || 0);
+      o[k] = t;
+    });
+    return subtotaisBal(o);
+  }
+
+  // ===================== FLUXO DE CAIXA =====================
+  // Mesmo método indireto do painel oficial. `bundle` permite rodar o mesmo cálculo
+  // sobre os dados de outro ano (DADOS_ANO[ano-1]) para a comparação período a período.
+  function fluxoDe(bundle){
+    var b = bundle || DADOS_ANO[state.ano];
+    var _mov = (b.mov[ENTIDADE_BALANCO] || {}), _nat = (b.nat[ENTIDADE_BALANCO] || {});
+    var _cont = (b.fcCont[ENTIDADE_BALANCO] || {}), _ini = (b.saldoIni[ENTIDADE_BALANCO] || 0);
+    function mov(k, i){ var a = _mov[k]; return a ? (a[i] || 0) : 0; }
+    function nat(k, i){ var a = _nat[k]; return a ? (a[i] || 0) : 0; }
+    function cont(k, i){ var a = _cont[k]; return a ? (a[i] || 0) : 0; }
+    var dispAcum = _ini;
+    return MESES.map(function(rot, i){
+      var o = { m: rot };
+      o.lucroExercicio = cont('lucro', i);
+      o.da = -cont('depD', i);
+      o.varContasReceber = -mov('contasReceber', i);
+      o.varCartoes = -mov('cartoesReceber', i);
+      o.varFinanciamentos = -mov('financiamentosReceber', i);
+      o.varAdiantForn = -mov('adiantForn', i);
+      o.varOutrosAdiant = -mov('outrosAdiant', i);
+      o.varOutrosCreditos = -mov('outrosCreditos', i);
+      o.varImpostosRecuperar = -mov('impostosRecuperar', i);
+      o.valoresReceber = o.varContasReceber + o.varCartoes + o.varFinanciamentos +
+        o.varAdiantForn + o.varOutrosAdiant + o.varOutrosCreditos + o.varImpostosRecuperar;
+      o.varEstVN = -mov('estVN', i); o.varEstVU = -mov('estVU', i); o.varEstPecas = -mov('estPecas', i);
+      o.estoque = o.varEstVN + o.varEstVU + o.varEstPecas;
+      o.varFornecDiv = mov('fornecDiv', i);
+      o.varObrigSociais = mov('obrigSociais', i);
+      o.varObrigTrib = mov('obrigTrib', i);
+      o.varAdiantCliente = mov('adiantCliente', i);
+      o.varProvisoes = mov('provisoes', i);
+      o.varOutrasContas = mov('outrasContas', i);
+      o.varLucrosPagar = mov('lucrosPagar', i);
+      o.valoresPagar = o.varFornecDiv + o.varObrigSociais + o.varObrigTrib + o.varAdiantCliente +
+        o.varProvisoes + o.varOutrasContas + o.varLucrosPagar +
+        mov('outrosCredores', i) + mov('parcelamentosLP', i);
+      o.caixaOperacional = o.lucroExercicio + o.da + mov('ajustesExercAnt', i) +
+        o.valoresReceber + o.estoque + o.valoresPagar;
+      o.invLP = -(mov('realizavelLP', i) + mov('invLP', i) + mov('invPermanentes', i));
+      o.vendaAtivos = -nat('imobC', i) - nat('acumD', i);
+      o.adicoesAtivo = -nat('imobD', i);
+      o.caixaInvestimento = o.invLP + o.vendaAtivos + o.adicoesAtivo;
+      o.varEmprestimos = mov('emprestBancarios', i) + mov('emprestTerceiros', i) +
+        mov('contaGarantida', i) + mov('financiamentos', i) + mov('notasComerciais', i) +
+        mov('emprestFinancLP', i);
+      o.varFPNovos = mov('floorVN', i); o.varFPUsados = mov('floorVU', i); o.varFPPecas = mov('floorPecas', i);
+      o.varCapital = mov('capitalSocial', i) + mov('reservasCapital', i);
+      o.caixaFinanciamento = o.varEmprestimos + o.varFPNovos + o.varFPUsados + o.varFPPecas +
+        o.varCapital + mov('adiantFuturaIntegr', i);
+      o.variacaoLiquida = o.caixaOperacional + o.caixaInvestimento + o.caixaFinanciamento;
+      o.saldoInicial = dispAcum;
+      o.saldoFinal = o.saldoInicial + o.variacaoLiquida;
+      dispAcum += mov('caixaBancos', i) + mov('aplicacoesFinanceiras', i);
+      o.dispReferencia = dispAcum;
+      o.check = o.saldoFinal - dispAcum;
+      return o;
+    });
+  }
+
+  // ===================== AGRUPAMENTO POR PERÍODO =====================
+  function gruposDoPeriodo(){
+    var n = MESES.length;
+    if (state.period === 'anual'){
+      var completo = (n === 12);
+      return [{ label: anoAtual() + (completo ? '' : '*'), sub:'Jan–'+MESES[n-1],
+                idx: MESES.map(function(_,i){ return i; }) }];
+    }
+    if (state.period === 'trimestral'){
+      var out = [], t = 1;
+      for (var i = 0; i < n; i += 3){
+        var idx = [];
+        for (var j = i; j < Math.min(i+3, n); j++) idx.push(j);
+        out.push({ label:'T'+t+'/'+sufixo(anoAtual()) + (idx.length === 3 ? '' : '*'),
+                   sub: MESES[idx[0]]+'–'+MESES[idx[idx.length-1]], idx: idx });
+        t++;
+      }
+      return out;
+    }
+    return MESES.map(function(rot, i){
+      return { label: rot+'/'+sufixo(anoAtual()), sub:'', idx:[i] };
+    });
+  }
+
+  function agruparDre(meses){
+    var campos = CAMPOS_DRE.concat(SUBTOTAIS_DRE);
+    return gruposDoPeriodo().map(function(g){
+      var o = { m: g.label };
+      campos.forEach(function(k){
+        o[k] = g.idx.reduce(function(t,i){ return t + (meses[i][k] || 0); }, 0);
+      });
+      return margensDre(o);
+    });
+  }
+  function acumularDre(meses){
+    var campos = CAMPOS_DRE.concat(SUBTOTAIS_DRE);
+    var o = { m:'Acum.' };
+    campos.forEach(function(k){
+      o[k] = meses.reduce(function(t,x){ return t + (x[k] || 0); }, 0);
+    });
+    return margensDre(o);
+  }
+
+  function agruparFluxo(fluxos){
+    var somaveis = Object.keys(fluxos[0]).filter(function(k){
+      return k !== 'm' && k !== 'saldoInicial' && k !== 'saldoFinal' &&
+             k !== 'dispReferencia' && k !== 'check';
+    });
+    return gruposDoPeriodo().map(function(g){
+      return montarGrupoFluxo(fluxos, g.idx, g.label, somaveis);
+    });
+  }
+  function acumularFluxo(fluxos){
+    var somaveis = Object.keys(fluxos[0]).filter(function(k){
+      return k !== 'm' && k !== 'saldoInicial' && k !== 'saldoFinal' &&
+             k !== 'dispReferencia' && k !== 'check';
+    });
+    return montarGrupoFluxo(fluxos, fluxos.map(function(_,i){return i;}), 'Acum.', somaveis);
+  }
+  function montarGrupoFluxo(fluxos, idx, label, somaveis){
+    var o = { m: label };
+    somaveis.forEach(function(k){
+      o[k] = idx.reduce(function(t,i){ return t + (fluxos[i][k] || 0); }, 0);
+    });
+    var primeiro = fluxos[idx[0]], ultimo = fluxos[idx[idx.length-1]];
+    o.saldoInicial = primeiro.saldoInicial;
+    o.saldoFinal = o.saldoInicial + o.variacaoLiquida;
+    o.dispReferencia = ultimo.dispReferencia;
+    o.check = o.saldoFinal - o.dispReferencia;
+    return o;
+  }
+
+  // ===================== FORMATAÇÃO =====================
+  function nz(n){ return n === 0 ? 0 : n; }
+  function fmtNum(v){
+    if (v === null || v === undefined || !isFinite(v)) return '–';
+    var x = v / state.escala;
+    var casas = (state.escala === 1000) ? 1 : 0;
+    if (Math.round(x * Math.pow(10, casas)) === 0) return '–';
+    return x.toLocaleString('pt-BR', {minimumFractionDigits:casas, maximumFractionDigits:casas});
+  }
+  function fmtPct(v){
+    if (v === null || !isFinite(v)) return '–';
+    return nz(Math.round(v*1000)/10).toLocaleString('pt-BR',
+      {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+  }
+  function fmtRatio(v){
+    if (v === null || !isFinite(v)) return '–';
+    return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + 'x';
+  }
+  function fmtDias(v){
+    if (v === null || !isFinite(v)) return '–';
+    return Math.round(v).toLocaleString('pt-BR') + 'd';
+  }
+  function fmtValor(v, tipo){
+    if (tipo === 'pct') return fmtPct(v);
+    if (tipo === 'ratio') return fmtRatio(v);
+    if (tipo === 'dias') return fmtDias(v);
+    // O CHECK nunca segue a escala nem vira "–": uma divergencia de R$ 43 some se
+    // dividida por mil, e a regra do projeto e reportar o CHECK, nao suaviza-lo.
+    if (tipo === 'check'){
+      var r = Math.round(v);
+      return r === 0 ? '0' : r.toLocaleString('pt-BR');
+    }
+    return fmtNum(v);
+  }
+  // Δ contra o mesmo período do ano anterior. Percentual para valores em R$,
+  // pontos percentuais para margens, diferença absoluta para índices e prazos.
+  function fmtDelta(cur, ant, tipo){
+    if (ant === null || ant === undefined || cur === null || cur === undefined) return null;
+    if (!isFinite(cur) || !isFinite(ant)) return null;
+    if (tipo === 'pct'){
+      var pp = (cur - ant) * 100;
+      if (Math.abs(pp) < 0.05) return {txt:'0,0 p.p.', dir:0};
+      return {txt:(pp>0?'+':'') + pp.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' p.p.',
+              dir: pp>0?1:-1};
+    }
+    if (tipo === 'ratio'){
+      var dr = cur - ant;
+      if (Math.abs(dr) < 0.005) return {txt:'0,00x', dir:0};
+      return {txt:(dr>0?'+':'') + dr.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + 'x',
+              dir: dr>0?1:-1};
+    }
+    if (tipo === 'dias'){
+      var dd = Math.round(cur - ant);
+      return {txt:(dd>0?'+':'') + dd + 'd', dir: dd>0?1:(dd<0?-1:0)};
+    }
+    if (!ant) return null;
+    var p = (cur - ant) / Math.abs(ant) * 100;
+    if (!isFinite(p)) return null;
+    return {txt:(p>0?'+':'') + nz(Math.round(p*10)/10).toLocaleString('pt-BR',
+      {minimumFractionDigits:1,maximumFractionDigits:1}) + '%', dir: p>0?1:(p<0?-1:0)};
+  }
+
+  // ===================== ESTRUTURA DAS LINHAS =====================
+  // Idêntica ao painel oficial. `receita` marca a linha que NÃO tem o sinal invertido
+  // na exibição; `k` é o campo do objeto do período.
+  function linhasDre(){
+    function det(label, k, receita){ return {label:label, kind:'normal', k:k, receita:!!receita, indent:2}; }
+    var L = [];
+    L.push({label:'1. RECEITA BRUTA DE VENDAS E SERVIÇOS', kind:'group'});
+    L.push(det('Venda de Veículos Novos','vendaVN',true));
+    L.push(det('Venda de Veículos Usados','vendaVU',true));
+    L.push(det('Peças e Acessórios','pecas',true));
+    L.push(det('Serviços Oficina','oficina',true));
+    L.push(det('Comissões Diversas','comissoes',true));
+    L.push(det('(-) Devoluções','devolucoes'));
+    L.push(det('(-) Impostos sobre a Venda','impostosVenda'));
+    L.push({label:'= RECEITA LÍQUIDA', kind:'subtotal', k:'rl', receita:true, indent:1});
+    L.push({label:'2. CUSTOS DAS MERCADORIAS E SERVIÇOS', kind:'group'});
+    L.push(det('Custo de Veículos Novos','custoVN'));
+    L.push(det('Custo de Veículos Usados','custoVU'));
+    L.push(det('Custo de Peças e Acessórios','custoPecas'));
+    L.push(det('Custo de Serviços Oficina','custoOficina'));
+    L.push(det('Custo de Serviço de Terceiros','custoTerceiros'));
+    L.push({label:'= LUCRO BRUTO', kind:'subtotal', k:'lucroBruto', receita:true, indent:1});
+    L.push({label:'% Margem Bruta', kind:'pct', k:'margemBruta', tipo:'pct', indent:2});
+    L.push({label:'3. DESPESAS OPERACIONAIS', kind:'group', k:'despTotal', inverter:true});
+    L.push(det('Folha de Pagamento','folha'));
+    L.push(det('Despesas Comerciais','despComercial'));
+    L.push(det('Despesas Gerais','despGerais'));
+    L.push(det('Manutenção de Bens','manutencao'));
+    L.push(det('Serviços Profissionais','servProf'));
+    L.push(det('Taxas e Impostos Diversos','taxasImpostos'));
+    L.push(det('Despesas de Funcionamento','despFuncionamento'));
+    L.push(det('Alugueis e Condomínios','alugueis'));
+    L.push(det('Despesas Gerais de Funcionamento','despGeraisFunc'));
+    L.push(det('Outras Despesas Operacionais','outrasDesp'));
+    L.push(det('Gastos Diversos com Funcionários','gastosFunc'));
+    L.push(det('Rateio do Grupo','rateioGrupo'));
+    L.push({label:'4. OUTRAS RECEITAS/DESPESAS', kind:'group', k:'outrasTotalNeg', inverter:false});
+    L.push(det('(+) Receitas Diversas','receitasDiversas',true));
+    L.push(det('(+) Receitas Não Operacionais','receitasNaoOper',true));
+    L.push(det('(-) Despesas Não Dedutíveis','despNaoDedutiveis'));
+    L.push(det('(-) Despesas Não Operacionais','despNaoOper'));
+    L.push({label:'= EBITDA', kind:'subtotal', k:'ebitda', receita:true, indent:1});
+    L.push({label:'% EBITDA / Receita Líquida', kind:'pct', k:'margemEbitda', tipo:'pct', indent:2});
+    L.push({label:'5. DEPRECIAÇÃO E AMORTIZAÇÃO', kind:'group'});
+    L.push(det('Depreciação e Amortização de Ativos','da'));
+    L.push({label:'= EBIT (Resultado Operacional)', kind:'subtotal', k:'ebit', receita:true, indent:1});
+    L.push({label:'6. RESULTADO FINANCEIRO', kind:'group', k:'resFinNeg', inverter:false});
+    L.push(det('(+) Receitas Financeiras','recFin',true));
+    L.push(det('(-) Despesas Financeiras','despFin'));
+    L.push({label:'= LAIR (Resultado antes do IR)', kind:'subtotal', k:'lair', receita:true, indent:1});
+    L.push({label:'7. IMPOSTOS SOBRE O LUCRO', kind:'group'});
+    L.push(det('(-) IR e CSLL','irCsll'));
+    L.push({label:'= LUCRO LÍQUIDO DO EXERCÍCIO', kind:'total', k:'lucro', receita:true, indent:1});
+    L.push({label:'% Margem Líquida', kind:'pct', k:'margemLiq', tipo:'pct', indent:2});
+    return L;
+  }
+
+  var LINHAS_BAL = [
+    {label:'ATIVO CIRCULANTE', kind:'group'},
+    {label:'Caixa e Bancos', k:'caixaBancos', indent:2},
+    {label:'Aplicações Financeiras', k:'aplicacoesFinanceiras', indent:2},
+    {label:'= Disponibilidades', kind:'subtotal', k:'disponibilidades', indent:1},
+    {label:'Contas a Receber', k:'contasReceber', indent:2},
+    {label:'Cartões de Crédito a Receber', k:'cartoesReceber', indent:2},
+    {label:'Financiamentos a Receber', k:'financiamentosReceber', indent:2},
+    {label:'Adiantamentos a Fornecedores', k:'adiantForn', indent:2},
+    {label:'Outros Adiantamentos', k:'outrosAdiant', indent:2},
+    {label:'Outros Créditos a Receber', k:'outrosCreditos', indent:2},
+    {label:'Impostos a Recuperar', k:'impostosRecuperar', indent:2},
+    {label:'= Valores a Receber', kind:'subtotal', k:'valoresReceber', indent:1},
+    {label:'Estoque de Veículos Novos', k:'estVN', indent:2},
+    {label:'Estoque de Veículos Usados', k:'estVU', indent:2},
+    {label:'Estoque de Peças', k:'estPecas', indent:2},
+    {label:'= Estoques', kind:'subtotal', k:'estoques', indent:1},
+    {label:'= TOTAL DO ATIVO CIRCULANTE', kind:'total', k:'totalAtivoCirc', indent:1},
+    {label:'ATIVO NÃO CIRCULANTE', kind:'group'},
+    {label:'Realizável a Longo Prazo (Invest. LP - FVN)', k:'realizavelLP', indent:2},
+    {label:'Investimentos a Longo Prazo', k:'invLP', indent:2},
+    {label:'Investimentos Permanentes', k:'invPermanentes', indent:2},
+    {label:'= Investimentos', kind:'subtotal', k:'investimentos', indent:1},
+    {label:'Terrenos', k:'terrenos', indent:2},
+    {label:'Edifícios', k:'edificios', indent:2},
+    {label:'Instalações', k:'instalacoes', indent:2},
+    {label:'Veículos', k:'veiculos', indent:2},
+    {label:'Máquinas e Equipamentos', k:'maquinas', indent:2},
+    {label:'Computadores e Periféricos', k:'computadores', indent:2},
+    {label:'Móveis e Utensílios', k:'moveis', indent:2},
+    {label:'Construções em Andamento', k:'construcoes', indent:2},
+    {label:'Benfeitorias em Bens de Terceiros', k:'benfeitorias', indent:2},
+    {label:'Consórcios', k:'consorcios', indent:2},
+    {label:'Aeronaves', k:'aeronaves', indent:2},
+    {label:'(-) Depreciação Acumulada', k:'deprecAcum', indent:2},
+    {label:'= Imobilizado de Uso', kind:'subtotal', k:'imobilizado', indent:1},
+    {label:'Direitos de Concessão', k:'direitosConcessao', indent:2},
+    {label:'(-) Amortização Acumulada', k:'amortAcum', indent:2},
+    {label:'= Intangível', kind:'subtotal', k:'intangivel', indent:1},
+    {label:'= TOTAL DO ATIVO NÃO CIRCULANTE', kind:'total', k:'totalAtivoNaoCirc', indent:1},
+    {label:'= TOTAL DO ATIVO', kind:'total', k:'totalAtivo', indent:0},
+    {label:'PASSIVO CIRCULANTE', kind:'group'},
+    {label:'Floor Plan Veículos Novos', k:'floorVN', indent:2},
+    {label:'Floor Plan Veículos Usados', k:'floorVU', indent:2},
+    {label:'Floor Plan Peças e Acessórios', k:'floorPecas', indent:2},
+    {label:'Fornecedores Diversos', k:'fornecDiv', indent:2},
+    {label:'= Fornecedores', kind:'subtotal', k:'fornecedores', indent:1},
+    {label:'Empréstimos Bancários', k:'emprestBancarios', indent:2},
+    {label:'Empréstimos de Terceiros', k:'emprestTerceiros', indent:2},
+    {label:'Conta Garantida', k:'contaGarantida', indent:2},
+    {label:'Financiamentos', k:'financiamentos', indent:2},
+    {label:'Notas Comerciais', k:'notasComerciais', indent:2},
+    {label:'= Empréstimos e Financiamentos', kind:'subtotal', k:'emprestFinanc', indent:1},
+    {label:'Obrigações Sociais e Trabalhistas', k:'obrigSociais', indent:2},
+    {label:'Obrigações Tributárias e Diversas', k:'obrigTrib', indent:2},
+    {label:'Adiantamento de Clientes', k:'adiantCliente', indent:2},
+    {label:'Provisões', k:'provisoes', indent:2},
+    {label:'Outras Contas a Pagar', k:'outrasContas', indent:2},
+    {label:'Lucros a Pagar', k:'lucrosPagar', indent:2},
+    {label:'= Outras Obrigações', kind:'subtotal', k:'outrasObrig', indent:1},
+    {label:'= TOTAL DO PASSIVO CIRCULANTE', kind:'total', k:'totalPassivoCirc', indent:1},
+    {label:'PASSIVO NÃO CIRCULANTE E PATRIMÔNIO LÍQUIDO', kind:'group'},
+    {label:'Empréstimos e Financiamentos LP', k:'emprestFinancLP', indent:2},
+    {label:'Outros Credores', k:'outrosCredores', indent:2},
+    {label:'Parcelamentos de Longo Prazo', k:'parcelamentosLP', indent:2},
+    {label:'Adiantamento p/ Futura Integralização', k:'adiantFuturaIntegr', indent:2},
+    {label:'= TOTAL DO PASSIVO NÃO CIRCULANTE', kind:'total', k:'totalPassivoNaoCirc', indent:1},
+    {label:'Capital Social Integralizado', k:'capitalSocial', indent:2},
+    {label:'Reservas de Capital', k:'reservasCapital', indent:2},
+    {label:'Reservas de Lucros', k:'reservasLucros', indent:2},
+    {label:'Reservas de Incentivos Fiscais', k:'reservasIncentivos', indent:2},
+    {label:'Prejuízos Acumulados', k:'prejuizosAcum', indent:2},
+    {label:'Ajustes de Exercícios Anteriores', k:'ajustesExercAnt', indent:2},
+    {label:'= TOTAL DO PATRIMÔNIO LÍQUIDO', kind:'total', k:'totalPL', indent:1},
+    {label:'= TOTAL DO PASSIVO + PL', kind:'total', k:'totalPassivoPL', indent:0},
+    {label:'CHECK: Ativo − (Passivo + PL)', kind:'check', k:'check', indent:0}
+  ];
+
+  var LINHAS_FLUXO = [
+    {label:'ATIVIDADES OPERACIONAIS', kind:'group'},
+    {label:'Lucro Líquido do Exercício', k:'lucroExercicio', indent:2},
+    {label:'(+) Depreciação e Amortização', k:'da', indent:2},
+    {label:'(+/-) Variação em Contas a Receber', k:'varContasReceber', indent:2},
+    {label:'(+/-) Variação em Cartões de Crédito a Receber', k:'varCartoes', indent:2},
+    {label:'(+/-) Variação em Financiamentos a Receber', k:'varFinanciamentos', indent:2},
+    {label:'(+/-) Variação em Adiantamentos a Fornecedores', k:'varAdiantForn', indent:2},
+    {label:'(+/-) Variação em Outros Adiantamentos', k:'varOutrosAdiant', indent:2},
+    {label:'(+/-) Variação em Outros Créditos a Receber', k:'varOutrosCreditos', indent:2},
+    {label:'(+/-) Variação em Impostos a Recuperar', k:'varImpostosRecuperar', indent:2},
+    {label:'= Valores a Receber', kind:'subtotal', k:'valoresReceber', indent:1},
+    {label:'(+/-) Variação em Estoque de Veículos Novos', k:'varEstVN', indent:2},
+    {label:'(+/-) Variação em Estoque de Veículos Usados', k:'varEstVU', indent:2},
+    {label:'(+/-) Variação em Estoque de Peças', k:'varEstPecas', indent:2},
+    {label:'= Estoque', kind:'subtotal', k:'estoque', indent:1},
+    {label:'(+/-) Variação em Fornecedores Diversos', k:'varFornecDiv', indent:2},
+    {label:'(+/-) Variação em Obrigações Sociais e Trabalhistas', k:'varObrigSociais', indent:2},
+    {label:'(+/-) Variação em Obrigações Tributárias e Diversas', k:'varObrigTrib', indent:2},
+    {label:'(+/-) Variação em Adiantamento de Clientes', k:'varAdiantCliente', indent:2},
+    {label:'(+/-) Variação em Provisões', k:'varProvisoes', indent:2},
+    {label:'(+/-) Variação em Outras Contas a Pagar', k:'varOutrasContas', indent:2},
+    {label:'(+/-) Variação em Lucros a Pagar', k:'varLucrosPagar', indent:2},
+    {label:'= Valores a Pagar', kind:'subtotal', k:'valoresPagar', indent:1},
+    {label:'= CAIXA GERADO NAS ATIVIDADES OPERACIONAIS', kind:'total', k:'caixaOperacional', indent:0},
+    {label:'ATIVIDADES DE INVESTIMENTO', kind:'group'},
+    {label:'(+/-) Investimentos a Longo Prazo', k:'invLP', indent:2},
+    {label:'(+) Venda de Ativos Imobilizados', k:'vendaAtivos', indent:2},
+    {label:'(-) Adições ao Ativo Imobilizado (Capex)', k:'adicoesAtivo', indent:2},
+    {label:'= CAIXA DAS ATIVIDADES DE INVESTIMENTO', kind:'total', k:'caixaInvestimento', indent:0},
+    {label:'ATIVIDADES DE FINANCIAMENTO', kind:'group'},
+    {label:'(+/-) Empréstimos e Financiamentos', k:'varEmprestimos', indent:2},
+    {label:'(+/-) Variação em Floor Plan de Veículos Novos', k:'varFPNovos', indent:2},
+    {label:'(+/-) Variação em Floor Plan de Veículos Usados', k:'varFPUsados', indent:2},
+    {label:'(+/-) Variação em Floor Plan de Peças', k:'varFPPecas', indent:2},
+    {label:'(+/-) Variação de Capital', k:'varCapital', indent:2},
+    {label:'= CAIXA DAS ATIVIDADES DE FINANCIAMENTO', kind:'total', k:'caixaFinanciamento', indent:0},
+    {label:'POSIÇÃO DE CAIXA', kind:'group'},
+    {label:'= Variação Líquida de Caixa no Período', kind:'subtotal', k:'variacaoLiquida', indent:1},
+    {label:'(+) Saldo de Caixa Inicial do Período', k:'saldoInicial', indent:2},
+    {label:'= SALDO DE CAIXA FINAL DO PERÍODO', kind:'total', k:'saldoFinal', indent:0},
+    {label:'Disponibilidades do Balanço (referência)', k:'dispReferencia', indent:2},
+    {label:'CHECK: Saldo Final − Disponibilidades do Balanço', kind:'check', k:'check', indent:0}
+  ];
+
+  // ===================== INDICADORES =====================
+  // Cada período usa: DRE do próprio período (margens), DRE acumulada no ano até o fim
+  // do período (razões contra EBITDA/lucro, como o painel oficial faz) e o Balanço na
+  // data de fechamento do período. Eficiência usa o mês médio do período × 30 dias —
+  // no modo Mensal isso é exatamente a fórmula oficial.
+  function indicadoresDoGrupo(dreGrupo, dreYtd, bal, nMeses){
+    var o = {};
+    var div = function(a,b){ return b ? a/b : null; };
+    o.margemBruta = dreGrupo.margemBruta;
+    o.margemEbitda = dreGrupo.margemEbitda;
+    o.margemLiq = dreGrupo.margemLiq;
+    o.margemEbit = div(dreGrupo.ebit, dreGrupo.rl);
+    o.ebitLucroBruto = div(dreGrupo.ebit, dreGrupo.lucroBruto);
+    o.roe = div(dreYtd.lucro, bal.totalPL);
+    o.roa = div(dreYtd.lucro, bal.totalAtivo);
+
+    o.liqCorrente = div(bal.totalAtivoCirc, bal.totalPassivoCirc);
+    o.liqSeca = div(bal.totalAtivoCirc - bal.estoques, bal.totalPassivoCirc);
+    o.liqImediata = div(bal.disponibilidades, bal.totalPassivoCirc);
+    o.liqGeral = div(bal.totalAtivo, bal.totalPassivoCirc + bal.totalPassivoNaoCirc);
+
+    var dividaFin = bal.emprestFinanc + bal.emprestFinancLP;
+    var dividaLiq = dividaFin - bal.disponibilidades;
+    o.dividaBruta = dividaFin;
+    o.dividaLiquida = dividaLiq;
+    o.dividaBrutaEbitda = div(dividaFin, dreYtd.ebitda);
+    o.dividaLiqEbitda = div(dividaLiq, dreYtd.ebitda);
+    o.dividaPL = div(dividaFin, bal.totalPL);
+    o.floorPlanEbitda = div(bal.floorPlan, dreYtd.ebitda);
+    o.composicaoCP = div(bal.emprestFinanc, dividaFin);
+    o.endividGeral = div(bal.totalPassivo, bal.totalAtivo);
+    o.coberturaJuros = div(dreYtd.ebit, -dreYtd.despFin);
+
+    // Mês médio do período — mantém o "×30 dias" comparável entre mensal/trimestral/anual.
+    var n = nMeses || 1, DIAS = 30;
+    var mm = function(k){ return -dreGrupo[k] / n; };            // custos vêm negativos
+    var rlMes = dreGrupo.rl / n;
+    var custoTotalMes = mm('custoTotal');
+    var fornecDiv = bal.fornecDiv;
+    o.giroVN = div(bal.estVN, mm('custoVN'));  o.giroVN = o.giroVN === null ? null : o.giroVN * DIAS;
+    o.giroVU = div(bal.estVU, mm('custoVU'));  o.giroVU = o.giroVU === null ? null : o.giroVU * DIAS;
+    var custoPecasOficina = mm('custoPecas') + mm('custoOficina');
+    o.giroPecas = div(bal.estPecas, custoPecasOficina); o.giroPecas = o.giroPecas === null ? null : o.giroPecas * DIAS;
+    o.pmr = div(bal.contasReceber, rlMes); o.pmr = o.pmr === null ? null : o.pmr * DIAS;
+    o.pmp = div(fornecDiv, custoTotalMes); o.pmp = o.pmp === null ? null : o.pmp * DIAS;
+    var pmrF = div(bal.contasReceber, rlMes), estF = div(bal.estoques, custoTotalMes), pmpF = div(fornecDiv, custoTotalMes);
+    o.ciclo = (pmrF === null || estF === null || pmpF === null) ? null : (pmrF + estF - pmpF) * DIAS;
+    o.custoPessoalRL = div(-(dreGrupo.folha + dreGrupo.gastosFunc), dreGrupo.rl);
+    o.despOperRL = div(-dreGrupo.despTotal, dreGrupo.rl);
+    return o;
+  }
+
+  // `bal:true` = a linha precisa do Balanco, logo so existe com todas as entidades
+  // marcadas (ver temBalanco). Com um subconjunto, essas linhas somem em vez de sair
+  // um numero que mistura a DRE de 3 lojas com o Balanco da marca inteira.
+  // `fonte` diz de onde o indicador sai, e por isso como ele reage ao filtro:
+  //   (sem fonte) = so DRE       -> acompanha a selecao de revendas;
+  //   'bal'       = so Balanco   -> e sempre da marca inteira (nao existe Balanco
+  //                                 por revenda: ~73% do valor nao tem revenda
+  //                                 atribuida, fica centralizado no grupo);
+  //   'misto'     = DRE / Balanco -> so faz sentido com todas marcadas, senao seria
+  //                                 o lucro de 3 lojas dividido pelo PL da marca toda.
+  var LINHAS_IND = [
+    {label:'RENTABILIDADE', kind:'group'},
+    {label:'Margem Bruta', k:'margemBruta', tipo:'pct', indent:2},
+    {label:'Margem EBITDA', k:'margemEbitda', tipo:'pct', indent:2},
+    {label:'Margem EBIT', k:'margemEbit', tipo:'pct', indent:2},
+    {label:'Margem Líquida', k:'margemLiq', tipo:'pct', indent:2},
+    {label:'EBIT / Lucro Bruto', k:'ebitLucroBruto', tipo:'pct', indent:2},
+    {label:'Cobertura de Juros (EBIT ÷ Desp. Fin.)', k:'coberturaJuros', tipo:'ratio', indent:2},
+    {label:'ROE (lucro acum. no ano ÷ PL)', k:'roe', tipo:'pct', indent:2, fonte:'misto'},
+    {label:'ROA (lucro acum. no ano ÷ Ativo)', k:'roa', tipo:'pct', indent:2, fonte:'misto'},
+    {label:'LIQUIDEZ (posição no fim do período)', kind:'group', fonte:'bal'},
+    {label:'Liquidez Corrente', k:'liqCorrente', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'Liquidez Seca', k:'liqSeca', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'Liquidez Imediata', k:'liqImediata', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'Liquidez Geral', k:'liqGeral', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'ENDIVIDAMENTO', kind:'group', fonte:'bal'},
+    {label:'Dívida Bruta s/ Floor Plan (R$)', k:'dividaBruta', tipo:'brl', indent:2, fonte:'bal'},
+    {label:'Dívida Líquida s/ Floor Plan (R$)', k:'dividaLiquida', tipo:'brl', indent:2, fonte:'bal'},
+    {label:'Dívida Bruta / Patrimônio Líquido', k:'dividaPL', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'Composição da Dívida (Curto Prazo)', k:'composicaoCP', tipo:'pct', indent:2, fonte:'bal'},
+    {label:'Endividamento Geral (Passivo / Ativo)', k:'endividGeral', tipo:'pct', indent:2, fonte:'bal'},
+    {label:'Dívida Bruta / EBITDA acum.', k:'dividaBrutaEbitda', tipo:'ratio', indent:2, fonte:'misto'},
+    {label:'Dívida Líquida / EBITDA acum.', k:'dividaLiqEbitda', tipo:'ratio', indent:2, fonte:'misto'},
+    {label:'Floor Plan / EBITDA acum.', k:'floorPlanEbitda', tipo:'ratio', indent:2, fonte:'misto'},
+    {label:'EFICIÊNCIA OPERACIONAL (mês médio do período × 30 dias)', kind:'group'},
+    {label:'Custo de Pessoal / Receita Líquida', k:'custoPessoalRL', tipo:'pct', indent:2},
+    {label:'Despesas Operacionais / Receita Líquida', k:'despOperRL', tipo:'pct', indent:2},
+    {label:'Giro do Estoque de Veículos Novos', k:'giroVN', tipo:'dias', indent:2, fonte:'misto'},
+    {label:'Giro do Estoque de Veículos Usados', k:'giroVU', tipo:'dias', indent:2, fonte:'misto'},
+    {label:'Giro do Estoque de Peças', k:'giroPecas', tipo:'dias', indent:2, fonte:'misto'},
+    {label:'PMR — Prazo Médio de Recebimento', k:'pmr', tipo:'dias', indent:2, fonte:'misto'},
+    {label:'PMP — Prazo Médio de Pagamento', k:'pmp', tipo:'dias', indent:2, fonte:'misto'},
+    {label:'Ciclo Financeiro', k:'ciclo', tipo:'dias', indent:2, fonte:'misto'}
+  ];
+
+  var LINHAS_RESUMO = [
+    {label:'RESULTADO', kind:'group'},
+    {label:'Receita Líquida', k:'rl', src:'dre', receita:true, kind:'subtotal', indent:1},
+    {label:'(-) Custo das Mercadorias e Serviços', k:'custoTotal', src:'dre', indent:2},
+    {label:'= Lucro Bruto', k:'lucroBruto', src:'dre', receita:true, kind:'subtotal', indent:1},
+    {label:'% Margem Bruta', k:'margemBruta', src:'dre', tipo:'pct', kind:'pct', indent:2},
+    {label:'(-) Despesas Operacionais', k:'despTotal', src:'dre', indent:2},
+    {label:'(+/-) Outras Receitas e Despesas', k:'outrasTotal', src:'dre', receita:true, indent:2},
+    {label:'= EBITDA', k:'ebitda', src:'dre', receita:true, kind:'subtotal', indent:1},
+    {label:'% Margem EBITDA', k:'margemEbitda', src:'dre', tipo:'pct', kind:'pct', indent:2},
+    {label:'(-) Depreciação e Amortização', k:'da', src:'dre', indent:2},
+    {label:'= EBIT', k:'ebit', src:'dre', receita:true, kind:'subtotal', indent:1},
+    {label:'(+/-) Resultado Financeiro', k:'resFin', src:'dre', receita:true, indent:2},
+    {label:'(-) IR e CSLL', k:'irCsll', src:'dre', indent:2},
+    {label:'= LUCRO LÍQUIDO', k:'lucro', src:'dre', receita:true, kind:'total', indent:0},
+    {label:'% Margem Líquida', k:'margemLiq', src:'dre', tipo:'pct', kind:'pct', indent:2},
+    {label:'CAIXA', kind:'group', fonte:'bal'},
+    {label:'Caixa das Atividades Operacionais', k:'caixaOperacional', src:'fluxo', indent:2, fonte:'bal'},
+    {label:'Caixa das Atividades de Investimento', k:'caixaInvestimento', src:'fluxo', indent:2, fonte:'bal'},
+    {label:'Caixa das Atividades de Financiamento', k:'caixaFinanciamento', src:'fluxo', indent:2, fonte:'bal'},
+    {label:'= Variação Líquida de Caixa', k:'variacaoLiquida', src:'fluxo', kind:'subtotal', indent:1, fonte:'bal'},
+    {label:'Saldo de Caixa no Fim do Período (método indireto)', k:'saldoFinal', src:'fluxo', indent:2, fonte:'bal'},
+    {label:'POSIÇÃO PATRIMONIAL (fim do período)', kind:'group', fonte:'bal'},
+    {label:'Disponibilidades (Balanço)', k:'disponibilidades', src:'bal', indent:2, fonte:'bal'},
+    {label:'Estoques', k:'estoques', src:'bal', indent:2, fonte:'bal'},
+    {label:'= Total do Ativo', k:'totalAtivo', src:'bal', kind:'subtotal', indent:1, fonte:'bal'},
+    {label:'Floor Plan', k:'floorPlan', src:'bal', indent:2, fonte:'bal'},
+    {label:'Empréstimos e Financiamentos (CP + LP)', k:'dividaFin', src:'bal', indent:2, fonte:'bal'},
+    {label:'= Total do Passivo', k:'totalPassivo', src:'bal', kind:'subtotal', indent:1, fonte:'bal'},
+    {label:'= Patrimônio Líquido', k:'totalPL', src:'bal', kind:'total', indent:0, fonte:'bal'},
+    {label:'INDICADORES-CHAVE', kind:'group'},
+    {label:'Liquidez Corrente', k:'liqCorrente', src:'ind', tipo:'ratio', indent:2, fonte:'bal'},
+    {label:'Cobertura de Juros (EBIT ÷ Desp. Fin.)', k:'coberturaJuros', src:'ind', tipo:'ratio', indent:2},
+    {label:'Dívida Líquida / EBITDA acum.', k:'dividaLiqEbitda', src:'ind', tipo:'ratio', indent:2, fonte:'misto'},
+    {label:'ROE (lucro acum. no ano ÷ PL)', k:'roe', src:'ind', tipo:'pct', indent:2, fonte:'misto'},
+    {label:'PMR — Prazo Médio de Recebimento', k:'pmr', src:'ind', tipo:'dias', indent:2, fonte:'misto'}
+  ];
+
+  // ===================== MONTAGEM DO MODELO DA TABELA =====================
+  // `modelo` = {cols:[{label,sub,acum}], rows:[{label,kind,indent,tipo,vals,ant,av,expansivel,k}]}
+
+  function montarDRE(){
+    var mesesAtual = detalheMeses(DRE_DET);
+    var mesesAnt   = detalheMeses(DRE_DET_ANT);
+    var grupos = gruposDoPeriodo();
+    var atuais = agruparDre(mesesAtual);
+    var anteriores = agruparDre(mesesAnt);
+    var cols = grupos.map(function(g){ return {label:g.label, sub:g.sub, acum:false, idx:g.idx}; });
+    if (grupos.length > 1){
+      atuais = atuais.concat([acumularDre(mesesAtual)]);
+      anteriores = anteriores.concat([acumularDre(mesesAnt)]);
+      cols.push({label:'Acum./'+sufixo(anoAtual()), sub:janAte('').replace('/',''), acum:true,
+                 idx: MESES.map(function(_,i){return i;})});
+    }
+
+    var rows = [];
+    linhasDre().forEach(function(L){
+      var tipo = L.tipo || 'brl';
+      var inverter = (L.kind === 'normal' && !L.receita);
+      if (L.kind === 'group' && L.k) inverter = !!L.inverter;
+      var row = {label:L.label, kind:L.kind, indent:L.indent || 0, tipo:tipo, k:L.k,
+                 vals:[], ant:[], av:[]};
+      if (L.kind === 'group' && !L.k){
+        cols.forEach(function(){ row.vals.push(null); row.ant.push(null); row.av.push(null); });
+      } else {
+        atuais.forEach(function(m, i){
+          var v = m[L.k], a = anteriores[i][L.k];
+          if (tipo !== 'pct' && inverter){ v = -v; a = -a; }
+          row.vals.push(v); row.ant.push(a);
+          row.av.push(tipo === 'pct' ? null : (m.rl ? v / Math.abs(m.rl) : null));
+        });
+      }
+      row.expansivel = (L.kind === 'normal' && !!DESC_SEL[L.k]);
+      rows.push(row);
+      // Drill-down: DESCRICAO_CONTA por trás da conta (bloco dreDesc do painel oficial).
+      if (row.expansivel && state.expandido[L.k]){
+        Object.keys(DESC_SEL[L.k]).sort().forEach(function(desc){
+          var arr = DESC_SEL[L.k][desc];
+          var sub = {label:desc, kind:'sub', indent:3, tipo:'brl', vals:[], ant:[], av:[]};
+          cols.forEach(function(c, i){
+            var v = c.idx.reduce(function(t,j){ return t + (arr[j] || 0); }, 0);
+            if (inverter) v = -v;
+            sub.vals.push(v); sub.ant.push(null);
+            sub.av.push(atuais[i].rl ? v / Math.abs(atuais[i].rl) : null);
+          });
+          rows.push(sub);
+        });
+      }
+    });
+    return {cols:cols, rows:rows, avBase:'Receita Líquida do período'};
+  }
+
+  function montarBalanco(){
+    var grupos = gruposDoPeriodo();
+    var cols = grupos.map(function(g){
+      var ultimo = g.idx[g.idx.length - 1];
+      return {label:g.label, sub:'fim de '+MESES[ultimo], acum:false, mesIdx:ultimo};
+    });
+    var pos    = cols.map(function(c){ return balancoNoMes(c.mesIdx, 0); });
+    var posAnt = cols.map(function(c){ return balancoNoMes(c.mesIdx, 1); });
+    var rows = LINHAS_BAL.map(function(L){
+      var row = {label:L.label, kind:L.kind || 'normal', indent:L.indent || 0,
+                 tipo:(L.kind === 'check' ? 'check' : 'brl'), vals:[], ant:[], av:[]};
+      if (L.kind === 'group'){
+        cols.forEach(function(){ row.vals.push(null); row.ant.push(null); row.av.push(null); });
+      } else {
+        pos.forEach(function(b, i){
+          row.vals.push(b[L.k]); row.ant.push(posAnt[i][L.k]);
+          row.av.push(b.totalAtivo ? b[L.k] / Math.abs(b.totalAtivo) : null);
+        });
+      }
+      return row;
+    });
+    return {cols:cols, rows:rows, avBase:'Total do Ativo na data', marcaInteira:true};
+  }
+
+  function montarFluxo(){
+    var fx = fluxoDe(DADOS_ANO[state.ano]);
+    var grupos = gruposDoPeriodo();
+    var atuais = agruparFluxo(fx);
+    var cols = grupos.map(function(g){ return {label:g.label, sub:g.sub, acum:false}; });
+    if (grupos.length > 1){
+      atuais = atuais.concat([acumularFluxo(fx)]);
+      cols.push({label:'Acum./'+sufixo(anoAtual()), sub:'', acum:true});
+    }
+    // Ano anterior só existe se o ano anterior estiver carregado no arquivo.
+    var bundleAnt = DADOS_ANO[anoAnterior()];
+    var anteriores = null;
+    if (bundleAnt){
+      var fxAnt = fluxoDe(bundleAnt);
+      anteriores = agruparFluxo(fxAnt);
+      if (grupos.length > 1) anteriores = anteriores.concat([acumularFluxo(fxAnt)]);
+    }
+    var rows = LINHAS_FLUXO.map(function(L){
+      var row = {label:L.label, kind:L.kind || 'normal', indent:L.indent || 0,
+                 tipo:(L.kind === 'check' ? 'check' : 'brl'), vals:[], ant:[], av:[]};
+      if (L.kind === 'group'){
+        cols.forEach(function(){ row.vals.push(null); row.ant.push(null); row.av.push(null); });
+      } else {
+        atuais.forEach(function(m, i){
+          row.vals.push(m[L.k]);
+          row.ant.push(anteriores ? anteriores[i][L.k] : null);
+          row.av.push(null);
+        });
+      }
+      return row;
+    });
+    return {cols:cols, rows:rows, semAv:true, marcaInteira:true,
+            semDelta: !bundleAnt ? ('O ano '+anoAnterior()+' não está carregado neste arquivo — sem comparação no Fluxo de Caixa.') : null};
+  }
+
+  function contextoIndicadores(fonteDre, anoBal){
+    var meses = detalheMeses(fonteDre);
+    var grupos = gruposDoPeriodo();
+    var porGrupo = agruparDre(meses);
+    return grupos.map(function(g, i){
+      var ultimo = g.idx[g.idx.length - 1];
+      var ytd = acumularDre(meses.slice(0, ultimo + 1));
+      return indicadoresDoGrupo(porGrupo[i], ytd, balancoNoMes(ultimo, anoBal), g.idx.length);
+    });
+  }
+
+  function montarIndicadores(){
+    var grupos = gruposDoPeriodo();
+    var cols = grupos.map(function(g){
+      var ultimo = g.idx[g.idx.length - 1];
+      return {label:g.label, sub:'até '+MESES[ultimo], acum:false};
+    });
+    var atuais = contextoIndicadores(DRE_DET, 0);
+    var anteriores = contextoIndicadores(DRE_DET_ANT, 1);
+    var misto = podeMisturar(), comBal = temBalanco();
+    var rows = LINHAS_IND.filter(function(L){ return linhaVisivel(L, misto, comBal); }).map(function(L){
+      var row = {label:L.label, kind:L.kind || 'normal', indent:L.indent || 0,
+                 tipo:L.tipo || 'brl', vals:[], ant:[], av:[]};
+      if (L.fonte === 'bal' && multiEntidade() && !selecaoCompleta()) row.label += MARCA_BAL;
+      if (L.kind === 'group'){
+        cols.forEach(function(){ row.vals.push(null); row.ant.push(null); row.av.push(null); });
+      } else {
+        atuais.forEach(function(o, i){
+          row.vals.push(o[L.k]); row.ant.push(anteriores[i][L.k]); row.av.push(null);
+        });
+      }
+      return row;
+    });
+    return {cols:cols, rows:rows, semAv:true, aviso: avisoDeFonte(misto)};
+  }
+
+  function montarResumo(){
+    var mesesAtual = detalheMeses(DRE_DET), mesesAnt = detalheMeses(DRE_DET_ANT);
+    var grupos = gruposDoPeriodo();
+    var dreA = agruparDre(mesesAtual), dreB = agruparDre(mesesAnt);
+    var fx = fluxoDe(DADOS_ANO[state.ano]);
+    var fluxoA = agruparFluxo(fx);
+    var bundleAnt = DADOS_ANO[anoAnterior()];
+    var fluxoB = bundleAnt ? agruparFluxo(fluxoDe(bundleAnt)) : null;
+    var indA = contextoIndicadores(DRE_DET, 0), indB = contextoIndicadores(DRE_DET_ANT, 1);
+    var balA = grupos.map(function(g){ return balancoNoMes(g.idx[g.idx.length-1], 0); });
+    var balB = grupos.map(function(g){ return balancoNoMes(g.idx[g.idx.length-1], 1); });
+
+    var cols = grupos.map(function(g){ return {label:g.label, sub:g.sub, acum:false}; });
+    if (grupos.length > 1){
+      dreA = dreA.concat([acumularDre(mesesAtual)]);
+      dreB = dreB.concat([acumularDre(mesesAnt)]);
+      fluxoA = fluxoA.concat([acumularFluxo(fx)]);
+      if (fluxoB) fluxoB = fluxoB.concat([acumularFluxo(fluxoDe(bundleAnt))]);
+      indA = indA.concat([indA[indA.length-1]]);   // posição/razões: repete o fim do ano
+      indB = indB.concat([indB[indB.length-1]]);
+      balA = balA.concat([balA[balA.length-1]]);
+      balB = balB.concat([balB[balB.length-1]]);
+      cols.push({label:'Acum./'+sufixo(anoAtual()), sub:'', acum:true});
+    }
+
+    function valor(L, i, atual){
+      var d = atual ? dreA[i] : dreB[i];
+      var f = atual ? fluxoA[i] : (fluxoB ? fluxoB[i] : null);
+      var b = atual ? balA[i] : balB[i];
+      var n = atual ? indA[i] : indB[i];
+      if (L.src === 'dre'){
+        if (L.k === 'resFin') return d.recFin + d.despFin;
+        var v = d[L.k];
+        if (L.tipo !== 'pct' && !L.receita) v = -v;
+        return v;
+      }
+      if (L.src === 'fluxo') return f ? f[L.k] : null;
+      if (L.src === 'bal'){
+        if (L.k === 'dividaFin') return b.emprestFinanc + b.emprestFinancLP;
+        return b[L.k];
+      }
+      return n ? n[L.k] : null;
+    }
+
+    var misto = podeMisturar(), comBal = temBalanco();
+    var rows = LINHAS_RESUMO.filter(function(L){ return linhaVisivel(L, misto, comBal); }).map(function(L){
+      var row = {label:L.label, kind:L.kind || 'normal', indent:L.indent || 0,
+                 tipo:L.tipo || 'brl', vals:[], ant:[], av:[]};
+      if (L.fonte === 'bal' && multiEntidade() && !selecaoCompleta()) row.label += MARCA_BAL;
+      if (L.kind === 'group'){
+        cols.forEach(function(){ row.vals.push(null); row.ant.push(null); row.av.push(null); });
+      } else {
+        cols.forEach(function(c, i){
+          var v = valor(L, i, true);
+          row.vals.push(v);
+          row.ant.push(valor(L, i, false));
+          row.av.push(L.tipo || L.src !== 'dre' ? null : (dreA[i].rl ? v/Math.abs(dreA[i].rl) : null));
+        });
+      }
+      return row;
+    });
+    return {cols:cols, rows:rows, avBase:'Receita Líquida do período (linhas da DRE)',
+            aviso: avisoDeFonte(misto)};
+  }
+
+  // Uma linha aparece se a fonte dela sobrevive a selecao atual.
+  function linhaVisivel(L, misto, comBal){
+    if (L.fonte === 'misto') return misto;
+    if (L.fonte === 'bal') return comBal;
+    return true;
+  }
+  var ent = function(){ return ROTULO_ENTIDADE.toLowerCase(); };
+  // Marcador das linhas que nao acompanham o filtro (sao sempre da marca inteira).
+  var MARCA_BAL = ' \u2020';
+  function avisoDeFonte(misto){
+    if (!multiEntidade() || misto) return null;
+    return 'Seleção parcial: as linhas marcadas com † vêm do Balanço da ' + EMPRESA +
+           ' inteira — não existe Balanço por ' + ent() + ' (cerca de 73% do valor não tem ' + ent() +
+           ' atribuída, fica centralizado no grupo), enquanto a DRE tem 100% de cobertura. ' +
+           'Já os indicadores que dividem DRE por Balanço (ROE, ROA, Dívida/EBITDA, giros, PMR, PMP, Ciclo) ' +
+           'ficam ocultos aqui: cruzariam o resultado de ' + state.sel.length + ' ' + ent() +
+           '(s) com o patrimônio de todas. Marque “Todas” para vê-los.';
+  }
+  function avisoMarcaInteira(){
+    if (!multiEntidade() || selecaoCompleta()) return null;
+    return 'Esta demonstração é sempre da ' + EMPRESA + ' inteira: não existe por ' + ent() +
+           ' (cerca de 73% do valor do Balanço não tem ' + ent() + ' atribuída, fica centralizado no grupo). ' +
+           'O filtro de ' + ent() + 's vale para a DRE e para as margens, não para esta aba.';
+  }
+
+  var ABAS = [
+    {id:'resumo',      label:'Resumo',          montar:montarResumo},
+    {id:'dre',         label:'DRE',             montar:montarDRE},
+    {id:'balanco',     label:'Balanço',         montar:montarBalanco},
+    {id:'fluxo',       label:'Fluxo de Caixa',  montar:montarFluxo},
+    {id:'indicadores', label:'Indicadores',     montar:montarIndicadores}
+  ];
+
+  // ===================== RENDER =====================
+  var modeloAtual = null;
+
+  function unidadeTexto(){ return state.escala === 1000 ? 'R$ mil' : 'R$'; }
+
+  function render(){
+    aplicarAno(state.ano);
+    DESC_SEL = descDaSelecao();
+    var aba = ABAS.filter(function(a){ return a.id === state.aba; })[0];
+    var m = aba.montar();
+    modeloAtual = m;
+
+    renderControles();
+    var area = document.getElementById('area');
+    area.innerHTML = '';
+
+    var titulos = {
+      resumo:'Resumo executivo — resultado, caixa, patrimônio e indicadores-chave',
+      dre:'Demonstrativo de Resultado (visão gerencial — todos os lançamentos)',
+      balanco:'Balanço Patrimonial — posição no fechamento de cada período',
+      fluxo:'Demonstrativo de Fluxo de Caixa — método indireto',
+      indicadores:'Indicadores financeiros — período a período'
+    };
+    var head = document.createElement('div');
+    head.className = 'titulo';
+    head.innerHTML = '<b>' + titulos[state.aba] + '</b> &nbsp;·&nbsp; ' + rotuloSelecao() +
+      ' &nbsp;·&nbsp; ' + janAte(anoAtual()) + ' &nbsp;·&nbsp; visão ' + state.period +
+      ' &nbsp;·&nbsp; valores em ' + unidadeTexto() +
+      (state.delta ? (' &nbsp;·&nbsp; comparado com ' + anoAnterior()) : '');
+    area.appendChild(head);
+
+    var avisoAba = m.aviso || (m.marcaInteira ? avisoMarcaInteira() : null);
+    if (avisoAba) area.appendChild(el2('aviso', avisoAba));
+    if (state.sel.length === 0){
+      area.appendChild(el2('aviso', 'Nenhuma ' + ROTULO_ENTIDADE.toLowerCase() +
+        ' marcada — marque ao menos uma na barra acima.'));
+      rodape();
+      return;
+    }
+
+    if (state.delta && m.semDelta){
+      var av = document.createElement('div'); av.className = 'aviso'; av.textContent = m.semDelta;
+      area.appendChild(av);
+    }
+    if (state.av && m.semAv){
+      var av2 = document.createElement('div'); av2.className = 'aviso';
+      av2.textContent = 'Análise vertical não se aplica a esta aba — não há uma base única (Receita ou Ativo) que faça sentido para todas as linhas.';
+      area.appendChild(av2);
+    }
+
+    area.appendChild(construirTabela(m));
+    limparSelecao();          // as celulas marcadas somem no redesenho
+
+    var nota = document.createElement('div');
+    nota.className = 'nota';
+    nota.innerHTML = notaDaAba();
+    area.appendChild(nota);
+    rodape();
+  }
+
+  function el2(cls, txt){
+    var d = document.createElement('div');
+    d.className = cls;
+    d.textContent = txt;
+    return d;
+  }
+  function rodape(){
+    document.getElementById('foot-periodo').textContent =
+      'Período: ' + janAte(anoAtual()) + ' (' + state.period + ')';
+    document.getElementById('foot-visao').textContent =
+      rotuloSelecao() + ' · visão gerencial · valores em ' + unidadeTexto();
+    // Balanco e Fluxo podem vir de outra data que a DRE (fontes distintas) — mostra as duas.
+    document.getElementById('snap').textContent = 'Snapshot da DRE: ' + SNAPSHOT +
+      (SNAPSHOT_BALANCO && SNAPSHOT_BALANCO !== SNAPSHOT
+        ? ' · Balanço/Fluxo: ' + SNAPSHOT_BALANCO : '');
+  }
+
+  function notaDaAba(){
+    var comum = 'Mesmos dados e as mesmas fórmulas do painel oficial da ' + EMPRESA +
+      ' — este arquivo é uma leitura tabular, não recalcula nada por conta própria. ' +
+      'Arraste sobre as células (ou Shift/Ctrl+clique) para ver contagem, soma e média da seleção. ' +
+      (multiEntidade()
+        ? ('O filtro de ' + ent() + 's vale para a DRE e para tudo que sai só dela (margens, ' +
+           'Custo de Pessoal/RL, Cobertura de Juros); Balanço e Fluxo de Caixa são sempre da ' +
+           EMPRESA + ' inteira. ')
+        : '') +
+      'O <b>*</b> no rótulo marca período ainda incompleto.';
+    if (state.aba === 'dre') return comum +
+      ' Linhas de custo e despesa aparecem com o sinal invertido, igual ao relatório oficial: ' +
+      'um custo sai positivo, um estorno sai negativo.';
+    if (state.aba === 'balanco') return comum +
+      ' Cada coluna é a posição no fechamento do período, reconstruída a partir do saldo do último ' +
+      'mês carregado descontando o movimento dos meses seguintes. O CHECK só fecha em 03/06/09/12 ' +
+      '(a apuração de resultado é trimestral) — está à mostra, não é ajustado, e a linha de CHECK é sempre ' +
+      'exibida em R$ cheios, mesmo na escala R$ mil.';
+    if (state.aba === 'fluxo') return comum +
+      ' Lucro Líquido e Depreciação saem só de lançamentos contábeis, como na ferramenta oficial; ' +
+      'as variações patrimoniais usam todos os lançamentos. O CHECK compara o saldo por este método ' +
+      'com as Disponibilidades do Balanço e não é forçado a zero. A linha de CHECK é sempre exibida em ' +
+      'R$ cheios, mesmo na escala R$ mil.';
+    if (state.aba === 'indicadores') return comum +
+      ' As margens usam a DRE do próprio período. As razões contra EBITDA, o ROE e o ROA usam o ' +
+      'resultado <b>acumulado no ano</b> até o fim do período (convenção do painel oficial) contra a ' +
+      'posição patrimonial daquela data — não são anualizados. Os prazos e giros usam o <b>mês médio ' +
+      'do período</b> × 30 dias: no modo Mensal isso é exatamente a fórmula oficial.';
+    return comum + ' O saldo de caixa mostrado aqui é o do método indireto; o valor oficial de caixa ' +
+      'é o das Disponibilidades do Balanço, na aba Balanço.';
+  }
+
+  function construirTabela(m){
+    var filtro = state.filtro.trim().toLowerCase();
+    var mostrarDelta = state.delta && !m.semDelta;
+    var mostrarAv = state.av && !m.semAv;
+
+    var tbl = document.createElement('table');
+    tbl.className = 'sheet';
+
+    var thead = document.createElement('thead');
+    var tr = document.createElement('tr');
+    var th0 = document.createElement('th');
+    th0.className = 'c0';
+    th0.innerHTML = 'Conta<span class="sub">valores em ' + unidadeTexto() + '</span>';
+    tr.appendChild(th0);
+    m.cols.forEach(function(c){
+      var th = document.createElement('th');
+      if (c.acum) th.className = 'acum';
+      th.innerHTML = c.label + (c.sub ? '<span class="sub">' + c.sub + '</span>' : '');
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    m.rows.forEach(function(row){
+      if (filtro && row.kind !== 'group' && row.label.toLowerCase().indexOf(filtro) === -1) return;
+      if (filtro && row.kind === 'group') return;
+      var trr = document.createElement('tr');
+      trr.className = row.kind + (row.expansivel ? ' expansivel' : '');
+      var td0 = document.createElement('td');
+      td0.className = 'c0';
+      td0.style.paddingLeft = (10 + (row.indent || 0) * 14) + 'px';
+      td0.title = row.label;
+      td0.innerHTML = (row.expansivel
+        ? '<span class="chev">' + (state.expandido[row.k] ? '▾' : '▸') + '</span>' : '') + row.label;
+      trr.appendChild(td0);
+
+      m.cols.forEach(function(c, i){
+        var td = document.createElement('td');
+        if (c.acum) td.className = 'acum';
+        var v = row.vals[i];
+        if (v === null || v === undefined){ td.innerHTML = ''; trr.appendChild(td); return; }
+        var txt = fmtValor(v, row.tipo);
+        var cls = (typeof v === 'number' && v < 0) ? 'neg' : (txt === '–' ? 'zero' : '');
+        var html = '<span class="' + cls + '">' + txt + '</span>';
+        if (mostrarAv && row.av[i] !== null && row.av[i] !== undefined && isFinite(row.av[i])){
+          html += '<span class="linha2 av">AV ' + fmtPct(row.av[i]) + '</span>';
+        }
+        if (mostrarDelta){
+          var d = fmtDelta(v, row.ant[i], row.tipo);
+          html += '<span class="linha2 ' + (d ? (d.dir > 0 ? 'd-pos' : d.dir < 0 ? 'd-neg' : 'd-nil') : 'd-nil') +
+                  '">' + (d ? d.txt : '–') + '</span>';
+        }
+        td.innerHTML = html;
+        // Valor cru na celula: e o que a selecao soma. Guardar o numero (e nao
+        // reparsear o texto formatado) evita somar as sublinhas de AV e de Δ.
+        if (typeof v === 'number' && isFinite(v)){
+          td.dataset.v = v;
+          td.dataset.tipo = row.tipo;
+        }
+        trr.appendChild(td);
+      });
+      if (row.expansivel){
+        td0.onclick = function(){
+          state.expandido[row.k] = !state.expandido[row.k];
+          sincronizarChecks(); render();
+        };
+      }
+      tbody.appendChild(trr);
+    });
+    tbl.appendChild(tbody);
+    return tbl;
+  }
+
+  // ===================== CONTROLES =====================
+  function seg(container, itens, ativo, onPick){
+    container.innerHTML = '';
+    itens.forEach(function(it){
+      var b = document.createElement('button');
+      b.textContent = it.label;
+      if (it.value === ativo) b.className = 'on';
+      b.onclick = function(){ onPick(it.value); };
+      container.appendChild(b);
+    });
+  }
+
+  function renderControles(){
+    seg(document.getElementById('seg-ano'),
+      ANOS_DISPONIVEIS.map(function(a){ return {label:a, value:a}; }), state.ano,
+      function(v){ state.ano = v; render(); });
+    seg(document.getElementById('seg-periodo'), [
+      {label:'Mensal', value:'mensal'},
+      {label:'Trimestral', value:'trimestral'},
+      {label:'Anual', value:'anual'}
+    ], state.period, function(v){ state.period = v; render(); });
+    seg(document.getElementById('seg-escala'), [
+      {label:'R$', value:1},
+      {label:'R$ mil', value:1000}
+    ], state.escala, function(v){ state.escala = v; render(); });
+
+    renderEntidades();
+
+    var tabs = document.getElementById('tabs');
+    tabs.innerHTML = '';
+    ABAS.forEach(function(a){
+      var b = document.createElement('button');
+      b.textContent = a.label;
+      if (a.id === state.aba) b.className = 'on';
+      b.onclick = function(){ state.aba = a.id; render(); };
+      tabs.appendChild(b);
+    });
+  }
+
+  // Chips de selecao. Clique alterna uma; "Todas" e "Limpar" fazem o atalho.
+  function renderEntidades(){
+    var barra = document.getElementById('entbar');
+    if (!multiEntidade()){ barra.hidden = true; return; }
+    barra.hidden = false;
+    barra.innerHTML = '';
+    var rot = document.createElement('span');
+    rot.className = 'ctl-label';
+    rot.textContent = ROTULO_ENTIDADE + 's';
+    barra.appendChild(rot);
+
+    var bTodas = document.createElement('button');
+    bTodas.className = 'btn mini';
+    bTodas.textContent = 'Todas';
+    bTodas.onclick = function(){ state.sel = ENTIDADES.map(function(e){ return e.id; }); render(); };
+    barra.appendChild(bTodas);
+
+    var bNenhuma = document.createElement('button');
+    bNenhuma.className = 'btn mini';
+    bNenhuma.textContent = 'Limpar';
+    bNenhuma.onclick = function(){ state.sel = []; render(); };
+    barra.appendChild(bNenhuma);
+
+    ENTIDADES.forEach(function(e){
+      var c = document.createElement('button');
+      var marcada = state.sel.indexOf(e.id) !== -1;
+      c.className = 'chip' + (marcada ? ' on' : '');
+      c.textContent = e.nome;
+      c.title = marcada ? 'Clique para tirar ' + e.nome : 'Clique para incluir ' + e.nome;
+      c.onclick = function(ev){
+        // Alt+clique isola: fica so essa. Atalho pra ver uma loja sozinha rapido.
+        if (ev.altKey){ state.sel = [e.id]; render(); return; }
+        var i = state.sel.indexOf(e.id);
+        if (i === -1) state.sel.push(e.id); else state.sel.splice(i, 1);
+        // Mantem a ordem de ENTIDADES, nao a ordem dos cliques.
+        state.sel = ENTIDADES.map(function(x){ return x.id; })
+                             .filter(function(id){ return state.sel.indexOf(id) !== -1; });
+        render();
+      };
+      barra.appendChild(c);
+    });
+
+    var cont = document.createElement('span');
+    cont.className = 'entcount';
+    cont.textContent = state.sel.length + ' de ' + ENTIDADES.length + ' · Alt+clique isola uma';
+    barra.appendChild(cont);
+  }
+
+  function sincronizarChecks(){
+    document.getElementById('ck-delta').checked = state.delta;
+    document.getElementById('ck-av').checked = state.av;
+    document.getElementById('ck-detalhe').checked = todasExpandidas();
+  }
+  // Contas da DRE que tem drill-down no ano carregado.
+  function contasComDetalhe(){ return Object.keys(DESC_SEL || {}); }
+  function todasExpandidas(){
+    var ks = contasComDetalhe();
+    return ks.length > 0 && ks.every(function(k){ return !!state.expandido[k]; });
+  }
+
+  // ===================== SELEÇÃO DE CÉLULAS (soma / média) =====================
+  // Estilo planilha: clique e arraste para marcar um intervalo, Shift+clique para
+  // estender, Ctrl/Cmd+clique para somar celulas avulsas. O balao mostra contagem,
+  // soma e media do que esta marcado. Le o valor cru de data-v, nunca o texto —
+  // assim as sublinhas de AV e de Δ nunca entram na conta.
+  var selCels = [], ancora = null, arrastando = false, ultimoPonto = {x:0, y:0};
+
+  function tdSelecionavel(alvo){
+    return alvo && alvo.closest ? alvo.closest('td[data-v]') : null;
+  }
+  function posDaCelula(td){
+    var tr = td.parentElement, tbody = tr.parentElement;
+    return { r: Array.prototype.indexOf.call(tbody.rows, tr), c: td.cellIndex, tbody: tbody };
+  }
+  function intervalo(a, b){
+    var r1 = Math.min(a.r, b.r), r2 = Math.max(a.r, b.r);
+    var c1 = Math.min(a.c, b.c), c2 = Math.max(a.c, b.c);
+    var out = [];
+    for (var r = r1; r <= r2; r++){
+      var linha = a.tbody.rows[r];
+      if (!linha) continue;
+      for (var c = c1; c <= c2; c++){
+        var td = linha.cells[c];
+        if (td && td.dataset && td.dataset.v !== undefined) out.push(td);
+      }
+    }
+    return out;
+  }
+  function pintarSelecao(){
+    Array.prototype.forEach.call(document.querySelectorAll('table.sheet td.sel'), function(td){
+      td.classList.remove('sel');
+    });
+    selCels.forEach(function(td){ td.classList.add('sel'); });
+    var btn = document.getElementById('btn-limpar-sel');
+    if (btn) btn.hidden = selCels.length === 0;
+  }
+  function limparSelecao(){
+    selCels = []; ancora = null;
+    pintarSelecao();
+    var caixa = document.getElementById('selinfo');
+    if (caixa) caixa.hidden = true;
+  }
+
+  function rotuloTipo(t){
+    return t === 'pct' ? 'percentuais' : t === 'ratio' ? 'índices' : t === 'dias' ? 'prazos' : 'valores';
+  }
+  function mostrarInfo(){
+    var caixa = document.getElementById('selinfo');
+    if (selCels.length < 2){ caixa.hidden = true; return; }
+    var vals = selCels.map(function(td){ return parseFloat(td.dataset.v); })
+                      .filter(function(v){ return isFinite(v); });
+    if (!vals.length){ caixa.hidden = true; return; }
+    var tipos = {};
+    selCels.forEach(function(td){ tipos[td.dataset.tipo] = 1; });
+    var lista = Object.keys(tipos);
+    var mista = lista.length > 1;
+    var tipo = mista ? 'brl' : lista[0];
+    var soma = vals.reduce(function(t, v){ return t + v; }, 0);
+    var media = soma / vals.length;
+    // Somar percentuais, indices ou prazos nao produz numero com significado — a
+    // media sim. Nesses casos a soma fica de fora, em vez de sair um total que
+    // ninguem deveria usar.
+    var somavel = !mista && (tipo === 'brl' || tipo === 'check');
+    // Numa selecao mista (R$ com %, prazo com indice) nem a soma nem a media
+    // significam alguma coisa — mostra so a contagem e diz por que.
+    caixa.innerHTML = mista
+      ? ('<span class="rot">Células</span><b>' + vals.length + '</b>' +
+         '<span class="mista">seleção mista (R$, %, índice ou prazo juntos) — ' +
+         'soma e média não se aplicam</span>')
+      : ('<span class="rot">Células</span><b>' + vals.length + '</b>' +
+         (somavel ? ('&nbsp;&nbsp;<span class="rot">Soma</span><b>' + fmtValor(soma, tipo) + '</b>') : '') +
+         '&nbsp;&nbsp;<span class="rot">Média</span><b>' + fmtValor(media, tipo) + '</b>' +
+         (somavel ? '' : '<span class="mista">' + rotuloTipo(tipo) + ' — soma não se aplica</span>'));
+    caixa.hidden = false;
+    posicionarInfo();
+  }
+  function posicionarInfo(){
+    var caixa = document.getElementById('selinfo');
+    if (!caixa || caixa.hidden) return;
+    var larg = caixa.offsetWidth, alt = caixa.offsetHeight;
+    var x = Math.min(ultimoPonto.x + 14, window.innerWidth - larg - 10);
+    var y = ultimoPonto.y + 18;
+    if (y + alt > window.innerHeight - 10) y = ultimoPonto.y - alt - 12;
+    caixa.style.left = Math.max(10, x) + 'px';
+    caixa.style.top = Math.max(10, y) + 'px';
+  }
+
+  document.addEventListener('mousedown', function(e){
+    if (e.button !== 0) return;
+    ultimoPonto = {x: e.clientX, y: e.clientY};
+    var td = tdSelecionavel(e.target);
+    if (!td){ limparSelecao(); return; }
+    e.preventDefault();
+    var pos = posDaCelula(td);
+    if (e.shiftKey && ancora && ancora.tbody === pos.tbody){
+      selCels = intervalo(ancora, pos);
+    } else if (e.ctrlKey || e.metaKey){
+      var i = selCels.indexOf(td);
+      if (i === -1) selCels.push(td); else selCels.splice(i, 1);
+      ancora = pos;
+    } else {
+      selCels = [td]; ancora = pos; arrastando = true;
+    }
+    pintarSelecao(); mostrarInfo();
+  });
+
+  document.addEventListener('mousemove', function(e){
+    if (!arrastando) return;
+    if (!e.buttons){ arrastando = false; return; }
+    ultimoPonto = {x: e.clientX, y: e.clientY};
+    var td = tdSelecionavel(e.target);
+    if (!td || !ancora) return;
+    var pos = posDaCelula(td);
+    if (pos.tbody !== ancora.tbody) return;
+    selCels = intervalo(ancora, pos);
+    pintarSelecao(); mostrarInfo();
+  });
+
+  document.addEventListener('mouseup', function(e){
+    if (arrastando){ ultimoPonto = {x: e.clientX, y: e.clientY}; posicionarInfo(); }
+    arrastando = false;
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') limparSelecao();
+  });
+
+  // ===================== BOOT =====================
+  document.getElementById('ck-delta').onchange = function(){ state.delta = this.checked; render(); };
+  document.getElementById('ck-av').onchange = function(){ state.av = this.checked; render(); };
+  // O checkbox e um atalho de abrir/fechar TODAS; o clique na linha continua individual.
+  document.getElementById('ck-detalhe').onchange = function(){
+    var abrir = this.checked;
+    contasComDetalhe().forEach(function(k){ state.expandido[k] = abrir; });
+    render();
+  };
+  document.getElementById('btn-limpar-sel').onclick = limparSelecao;
+  var buscaTimer;
+  document.getElementById('busca').oninput = function(){
+    var v = this.value;
+    clearTimeout(buscaTimer);
+    buscaTimer = setTimeout(function(){ state.filtro = v; render(); }, 160);
+  };
+
+  sincronizarChecks();
+  render();
+})();
+</script>
+</body>
+</html>

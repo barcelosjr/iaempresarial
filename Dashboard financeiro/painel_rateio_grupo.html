@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rateio do Grupo — Grupo Mult</title>
+<style>
+:root{
+  --bg:#F7F7F8; --card:#FFFFFF; --ink:#1D1D1F; --muted:#6E6E73; --muted-2:#9A9A9A;
+  --border:#E8E8ED; --surface:#F5F5F7;
+  --accent:#C3002F; --accent-dark:#8C0026;
+  --total-bg:#FBE4E7; --total-ink:#8C0026;
+  --pos:#1E7E34; --pos-chip:#E7F4EB; --neg:#B02A37; --neg-chip:#FBEAEC;
+  --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+  --sans: -apple-system, 'SF Pro Text', Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block}
+button{font-family:inherit;cursor:pointer}
+
+.topbar{background:#111111;color:#fff}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-title{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.01em}
+.brand-sub{font-size:11.5px;color:#B8B8BD;margin-top:1px}
+.topbar-fonte{font-size:11.5px;color:#B8B8BD;text-align:right}
+.topbar-fonte b{color:#fff;font-weight:600}
+
+.wrap{max-width:1200px;margin:0 auto;padding:28px 24px 64px}
+
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.page-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:#fff;color:var(--muted);font-size:12.5px;font-weight:600;
+  padding:7px 13px;border-radius:999px;transition:all .15s}
+.chip:hover{border-color:var(--accent)}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+.legend-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;
+  font-size:12px;font-weight:600;color:var(--muted);padding:5px 11px 5px 8px;border-radius:999px;transition:opacity .15s}
+.legend-chip.off{opacity:.35}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kpi-grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+.kpi-card{padding:18px 20px}
+.kpi-label{font-size:12px;color:var(--muted);font-weight:500}
+.kpi-value{font-size:27px;font-weight:650;letter-spacing:-.01em;margin-top:6px}
+.kpi-foot{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+.delta{font-weight:700}
+.delta.up{color:var(--neg)}
+.delta.down{color:var(--pos)}
+.delta.flat{color:var(--muted)}
+
+.section-card{padding:20px 22px;margin-bottom:16px}
+.section-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.section-title{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+
+.chart-wrap{width:100%;overflow-x:auto}
+.axis-label{font-size:10.5px;fill:var(--muted-2)}
+.grid-line{stroke:var(--border);stroke-dasharray:3,4;stroke-width:1}
+.chart-dot{opacity:0;transform-box:fill-box;transform-origin:center;animation:dotIn .35s ease forwards}
+.chart-line-fade{opacity:0;animation:lineFadeIn .5s ease forwards}
+@keyframes dotIn{from{opacity:0;transform:translateY(4px) scale(.5)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes lineFadeIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .chart-dot{animation:none!important;opacity:1!important}
+  .chart-line-fade{animation:none!important;opacity:1!important}
+}
+
+.hbars{display:flex;flex-direction:column;gap:12px}
+.hbar-row{display:grid;grid-template-columns:130px 1fr 96px;align-items:center;gap:12px}
+.hbar-name{font-size:12.5px;font-weight:600}
+.hbar-track{height:10px;background:var(--surface);border-radius:6px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:6px}
+.hbar-val{font-size:12.5px;text-align:right;color:var(--muted)}
+.hbar-val b{color:var(--ink)}
+
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:920px}
+thead th{position:sticky;top:0;background:var(--surface);text-align:right;font-weight:700;color:var(--muted);
+  padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th:first-child{text-align:left}
+tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td:first-child{text-align:left;font-weight:600}
+.cell-name{display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
+tbody tr.total-row td{background:var(--total-bg);color:var(--total-ink);font-weight:800;border-top:2px solid var(--total-ink);border-bottom:2px solid var(--total-ink)}
+.tot-col{font-weight:700}
+.row-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.footer-note{font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:22px;line-height:1.6}
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">GRUPO MULT — Consolidado</div>
+        <div class="brand-sub">Rateio do Grupo — Detalhamento por Revenda</div>
+      </div>
+    </div>
+    <div class="topbar-fonte">
+      Fonte: Lançamentos Contábeis<br>
+      Gerado em <b>10/08/2026</b> · uso gerencial interno — não auditado
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="page-head">
+    <div>
+      <div class="page-title">Rateio do Grupo</div>
+      <div class="page-sub" id="periodoTxt">Período: 01/2024 a 06/2026 (base disponível) · Visão gerencial · Valores em R$</div>
+    </div>
+    <div class="chips" id="anoChips"></div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="card section-card">
+    <div class="section-head">
+      <div class="section-title">Evolução mensal — por revenda e consolidado</div>
+      <div class="chips" id="legendChips"></div>
+    </div>
+    <div class="chart-wrap"><div id="chartHost"></div></div>
+  </div>
+
+  <div class="card section-card">
+    <div class="section-head">
+      <div class="section-title" id="participacaoTitle">Participação no total do ano — por revenda</div>
+    </div>
+    <div class="hbars" id="hbarsHost"></div>
+  </div>
+
+  <div class="card section-card">
+    <div class="section-head">
+      <div class="section-title" id="tabelaTitle">Rateio do Grupo por revenda — mês a mês (R$)</div>
+    </div>
+    <div class="table-scroll"><table id="tabelaMensal"></table></div>
+  </div>
+
+  <div class="footer-note">
+    Fonte: Lançamentos Contábeis, filtro <b>[DRE] = "Rateio do Grupo"</b> · Gerado em 10/08/2026 · Uso gerencial interno — não auditado
+  </div>
+
+</main>
+
+<script>
+var MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+var DADOS = {
+  2024: { ateMes: 12,
+    KOBE:        [274074.50,290644.44,315662.27,352989.98,303061.82,299521.28,302389.82,375849.08,381883.73,357202.80,328313.94,368991.25],
+    MIT:         [65412.15,71834.49,77602.83,82514.49,71467.97,73425.41,73925.31,94446.52,98614.08,96130.82,84614.87,97046.37],
+    ROYAL:       [27096.97,29950.32,32973.23,36479.06,34945.47,36882.59,44682.05,45324.04,50240.67,44573.74,39169.05,42036.61],
+    RENAULT:     [24213.91,28039.38,29746.42,34564.86,31141.73,30703.58,27865.73,37744.80,38562.81,37395.54,33719.79,39895.38],
+    'MEGA STORE':[12374.16,13584.46,15251.02,16116.44,14001.58,13727.02,17286.92,25587.20,24544.22,17236.77,16335.48,18220.94],
+    'MULT BOATS':[null,null,null,null,null,null,7637.34,9325.20,7909.76,null,10421.43,4746.98]
+  },
+  2025: { ateMes: 12,
+    KOBE:        [374457.04,352531.39,378921.57,355976.90,396802.26,370380.27,396840.05,401476.44,439145.27,467770.64,423733.87,432878.80],
+    MIT:         [98794.64,95153.79,101901.30,91859.44,102727.07,94579.70,113578.89,113517.85,121043.02,115436.27,98519.76,105967.38],
+    ROYAL:       [45054.69,48665.93,52198.67,50880.48,61488.58,56470.12,67482.46,64546.89,58389.40,62673.98,54822.19,57731.73],
+    RENAULT:     [40596.31,37652.80,38987.35,34833.25,38848.68,35749.04,39292.94,40251.59,44991.06,45421.12,39131.14,41565.50],
+    'MEGA STORE':[16243.25,15372.21,15792.42,15818.52,17179.11,15591.99,20769.85,20777.85,22663.20,1447.62,1421.13,1641.08],
+    'MULT BOATS':[7552.05,6710.61,5634.92,6127.38,7144.79,5272.70,7838.57,7452.67,7262.21,6831.30,5785.90,5859.33]
+  },
+  2026: { ateMes: 6, parcial:true,
+    KOBE:        [490559.16,432745.72,520913.85,494969.79,587817.92,539060.45,null,null,null,null,null,null],
+    MIT:         [111468.32,101802.30,116502.16,106454.18,123659.65,112744.31,null,null,null,null,null,null],
+    ROYAL:       [70022.90,66077.26,77911.33,80753.24,94999.68,78022.16,null,null,null,null,null,null],
+    RENAULT:     [42094.90,40744.14,43216.93,39798.17,48174.34,40980.59,null,null,null,null,null,null],
+    'MEGA STORE':[757.48,null,null,null,null,null,null,null,null,null,null,null],
+    'MULT BOATS':[7985.07,7013.99,12034.15,18729.41,22877.83,16623.92,null,null,null,null,null,null]
+  }
+};
+
+var REVENDAS = [
+  {id:'KOBE', cor:'#C3002F'},
+  {id:'MIT', cor:'#4A5568'},
+  {id:'ROYAL', cor:'#8C6239'},
+  {id:'RENAULT', cor:'#E0A400'},
+  {id:'MEGA STORE', cor:'#2F6F4E'},
+  {id:'MULT BOATS', cor:'#1B4965'}
+];
+var TOTAL_COR = '#8C0026';
+
+var state = { ano: 2026, visiveis: {} };
+REVENDAS.forEach(function(r){ state.visiveis[r.id] = true; });
+state.visiveis['CONSOLIDADO'] = true;
+
+function fmtInt(v){ return Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
+function fmtDespesa(v){
+  if(v===null || v===undefined) return '–';
+  if(Math.abs(v) < 0.5) return '–';
+  return fmtInt(v);
+}
+function fmtBRLPlain(v){
+  if(v===null || v===undefined) return '–';
+  return 'R$ ' + fmtInt(v);
+}
+function fmtPct1(v){ return v.toFixed(1).replace('.', ',') + '%'; }
+
+function totaisPorMes(ano){
+  var d = DADOS[ano];
+  var out = [];
+  for(var m=0;m<12;m++){
+    if(m >= d.ateMes){ out.push(null); continue; }
+    var s = 0, any = false;
+    REVENDAS.forEach(function(r){
+      var v = d[r.id][m];
+      if(v !== null){ s += v; any = true; }
+    });
+    out.push(any ? s : null);
+  }
+  return out;
+}
+
+function totalAnoPorRevenda(ano){
+  var d = DADOS[ano];
+  var out = {};
+  REVENDAS.forEach(function(r){
+    var s = 0;
+    d[r.id].forEach(function(v){ if(v !== null) s += v; });
+    out[r.id] = s;
+  });
+  return out;
+}
+
+function totalAnoConsolidado(ano){
+  var t = totalAnoPorRevenda(ano);
+  var s = 0;
+  Object.keys(t).forEach(function(k){ s += t[k]; });
+  return s;
+}
+
+function el(html){
+  var d = document.createElement('div');
+  d.innerHTML = html.trim();
+  return d.firstChild;
+}
+
+function renderAnoChips(){
+  var host = document.getElementById('anoChips');
+  host.innerHTML = '';
+  [2024,2025,2026].forEach(function(a){
+    var label = a + (DADOS[a].parcial ? ' (parcial)' : '');
+    var b = el('<button class="chip' + (state.ano===a?' active':'') + '">' + label + '</button>');
+    b.addEventListener('click', function(){ state.ano = a; renderAll(); });
+    host.appendChild(b);
+  });
+}
+
+function renderLegendChips(){
+  var host = document.getElementById('legendChips');
+  host.innerHTML = '';
+  var itens = REVENDAS.concat([{id:'CONSOLIDADO', cor:TOTAL_COR}]);
+  itens.forEach(function(r){
+    var on = state.visiveis[r.id];
+    var chip = el('<button class="legend-chip' + (on?'':' off') + '">' +
+      '<span class="legend-dot" style="background:' + r.cor + '"></span>' + titleCase(r.id) + '</button>');
+    chip.addEventListener('click', function(){
+      state.visiveis[r.id] = !state.visiveis[r.id];
+      renderChart();
+      renderLegendChips();
+    });
+    host.appendChild(chip);
+  });
+}
+
+function titleCase(s){
+  if(s === 'CONSOLIDADO') return 'Consolidado';
+  return s.split(' ').map(function(w){ return w.charAt(0) + w.slice(1).toLowerCase(); }).join(' ');
+}
+
+function renderKpis(){
+  var ano = state.ano;
+  var d = DADOS[ano];
+  var totAno = totalAnoConsolidado(ano);
+  var media = totAno / d.ateMes;
+  var porRevenda = totalAnoPorRevenda(ano);
+  var maxRev = null, maxVal = -1;
+  Object.keys(porRevenda).forEach(function(k){ if(porRevenda[k] > maxVal){ maxVal = porRevenda[k]; maxRev = k; } });
+
+  var deltaHtml = '<span class="delta flat">— sem ano anterior comparável</span>';
+  if(DADOS[ano-1]){
+    var totAnt = 0;
+    var d0 = DADOS[ano];
+    REVENDAS.forEach(function(r){
+      for(var m=0;m<d0.ateMes;m++){
+        var v = DADOS[ano-1][r.id][m];
+        if(v !== null) totAnt += v;
+      }
+    });
+    if(totAnt > 0){
+      var variacao = (totAno - totAnt) / totAnt * 100;
+      var subiu = totAno > totAnt;
+      var cls = Math.abs(variacao) < 0.05 ? 'flat' : (subiu ? 'up' : 'down');
+      var seta = Math.abs(variacao) < 0.05 ? '—' : (subiu ? '↑' : '↓');
+      deltaHtml = '<span class="delta ' + cls + '">' + seta + ' ' + fmtPct1(Math.abs(variacao)) + '</span> vs. ' +
+        (ano-1) + ' (mesmos ' + d0.ateMes + ' meses)';
+    }
+  }
+
+  var cards = [
+    { label:'Total do ano — Consolidado', valor: fmtBRLPlain(totAno).replace('R$ ', 'R$ ' ), foot: 'Soma de todas as revendas · ' + d.ateMes + ' meses' },
+    { label:'Média mensal', valor: fmtBRLPlain(media), foot: 'Total do ano / meses com lançamento' },
+    { label:'Variação vs. ano anterior', valor: null, foot: null, deltaHtml: deltaHtml },
+    { label:'Maior rateio no ano', valor: titleCase(maxRev), foot: fmtBRLPlain(maxVal) + ' no ano' }
+  ];
+
+  var host = document.getElementById('kpiGrid');
+  host.innerHTML = '';
+  cards.forEach(function(c){
+    var valorHtml = c.valor !== null ? ('<div class="kpi-value num">' + c.valor + '</div>') :
+      ('<div class="kpi-value num" style="font-size:19px">' + c.deltaHtml + '</div>');
+    var footHtml = c.foot ? c.foot : '';
+    host.appendChild(el(
+      '<div class="card kpi-card">' +
+        '<div class="kpi-label">' + c.label + '</div>' +
+        valorHtml +
+        '<div class="kpi-foot">' + footHtml + '</div>' +
+      '</div>'
+    ));
+  });
+}
+
+function renderChart(){
+  var ano = state.ano;
+  var d = DADOS[ano];
+  var w = 1000, h = 300, padL = 56, padR = 20, padT = 20, padB = 30;
+  var plotW = w - padL - padR, plotH = h - padT - padB;
+
+  var totais = totaisPorMes(ano);
+
+  var allVals = [];
+  REVENDAS.forEach(function(r){
+    if(state.visiveis[r.id]) d[r.id].forEach(function(v){ if(v !== null) allVals.push(v); });
+  });
+  if(state.visiveis['CONSOLIDADO']) totais.forEach(function(v){ if(v !== null) allVals.push(v); });
+  var maxV = Math.max.apply(null, allVals.concat([1])) * 1.15;
+
+  function x(i){ return padL + (i / 11) * plotW; }
+  function y(v){ return padT + plotH - (v / maxV) * plotH; }
+
+  var svg = '<svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMinYMin meet">';
+
+  for(var i=0;i<12;i++){
+    svg += '<line class="grid-line" x1="' + x(i) + '" y1="' + padT + '" x2="' + x(i) + '" y2="' + (padT+plotH) + '"/>';
+  }
+  var yTicks = 4;
+  for(var t=0;t<=yTicks;t++){
+    var vv = maxV * t / yTicks;
+    var yy = y(vv);
+    svg += '<text class="axis-label" x="' + (padL-8) + '" y="' + (yy+3) + '" text-anchor="end">' + (vv>=1000? Math.round(vv/1000)+'k' : Math.round(vv)) + '</text>';
+  }
+  for(var m=0;m<12;m++){
+    svg += '<text class="axis-label" x="' + x(m) + '" y="' + (h-6) + '" text-anchor="middle">' + MESES[m] + '</text>';
+  }
+
+  function buildPath(vals){
+    var segs = [], cur = [];
+    for(var i=0;i<12;i++){
+      if(vals[i] === null){
+        if(cur.length){ segs.push(cur); cur = []; }
+        continue;
+      }
+      cur.push([x(i), y(vals[i])]);
+    }
+    if(cur.length) segs.push(cur);
+    return segs.map(function(seg){
+      return 'M ' + seg.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' L ');
+    }).join(' ');
+  }
+
+  var visibleIdx = 0;
+  REVENDAS.forEach(function(r){
+    if(!state.visiveis[r.id]) return;
+    var vals = d[r.id];
+    var seriesDelay = visibleIdx * 90;
+    svg += '<path class="chart-line" data-delay="' + seriesDelay + '" d="' + buildPath(vals) + '" fill="none" stroke="' + r.cor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    for(var i=0;i<12;i++){
+      if(vals[i] === null) continue;
+      var dotDelay = seriesDelay + 200 + i * 35;
+      svg += '<circle class="chart-dot" style="animation-delay:' + dotDelay + 'ms" cx="' + x(i).toFixed(1) + '" cy="' + y(vals[i]).toFixed(1) + '" r="3" fill="' + r.cor + '">' +
+        '<title>' + titleCase(r.id) + ' · ' + MESES[i] + '/' + ano + ': ' + fmtDespesa(vals[i]) + '</title></circle>';
+    }
+    visibleIdx++;
+  });
+
+  if(state.visiveis['CONSOLIDADO']){
+    var totalDelay = visibleIdx * 90 + 250;
+    svg += '<path class="chart-line-fade" style="animation-delay:' + totalDelay + 'ms" d="' + buildPath(totais) + '" fill="none" stroke="' + TOTAL_COR + '" stroke-width="3" stroke-dasharray="7,4" stroke-linecap="round" stroke-linejoin="round"/>';
+    for(var i2=0;i2<12;i2++){
+      if(totais[i2] === null) continue;
+      var dotDelay2 = totalDelay + 150 + i2 * 35;
+      svg += '<circle class="chart-dot" style="animation-delay:' + dotDelay2 + 'ms" cx="' + x(i2).toFixed(1) + '" cy="' + y(totais[i2]).toFixed(1) + '" r="3.5" fill="' + TOTAL_COR + '">' +
+        '<title>Consolidado · ' + MESES[i2] + '/' + ano + ': ' + fmtDespesa(totais[i2]) + '</title></circle>';
+    }
+  }
+
+  svg += '</svg>';
+  var host = document.getElementById('chartHost');
+  host.innerHTML = svg;
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var lines = host.querySelectorAll('path.chart-line');
+  lines.forEach(function(path){
+    if(reduceMotion){ return; }
+    var len = path.getTotalLength();
+    var delay = parseFloat(path.getAttribute('data-delay') || 0);
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        path.style.transition = 'stroke-dashoffset .75s cubic-bezier(.4,0,.2,1) ' + delay + 'ms';
+        path.style.strokeDashoffset = '0';
+      });
+    });
+  });
+}
+
+function renderHbars(){
+  var ano = state.ano;
+  var porRevenda = totalAnoPorRevenda(ano);
+  var totAno = totalAnoConsolidado(ano);
+  var ranked = REVENDAS.map(function(r){ return {id:r.id, cor:r.cor, val:porRevenda[r.id]}; })
+    .filter(function(r){ return r.val > 0; })
+    .sort(function(a,b){ return b.val - a.val; });
+  var maxV = ranked.length ? ranked[0].val : 1;
+
+  document.getElementById('participacaoTitle').textContent = 'Participação no total de ' + ano + ' — por revenda';
+
+  var host = document.getElementById('hbarsHost');
+  host.innerHTML = '';
+  ranked.forEach(function(r){
+    var pct = totAno > 0 ? (r.val / totAno * 100) : 0;
+    var wPct = Math.max(r.val / maxV * 100, 2);
+    host.appendChild(el(
+      '<div class="hbar-row">' +
+        '<div class="hbar-name">' + titleCase(r.id) + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" style="width:' + wPct + '%;background:' + r.cor + '"></div></div>' +
+        '<div class="hbar-val"><b>' + fmtPct1(pct) + '</b> · ' + fmtBRLPlain(r.val) + '</div>' +
+      '</div>'
+    ));
+  });
+}
+
+function renderTabela(){
+  var ano = state.ano;
+  var d = DADOS[ano];
+  var totais = totaisPorMes(ano);
+  var porRevenda = totalAnoPorRevenda(ano);
+  var totAno = totalAnoConsolidado(ano);
+
+  document.getElementById('tabelaTitle').textContent = 'Rateio do Grupo por revenda — mês a mês, ' + ano + ' (R$)';
+
+  var ranked = REVENDAS.slice().sort(function(a,b){ return porRevenda[b.id] - porRevenda[a.id]; });
+
+  var thead = '<thead><tr><th>Revenda</th>' + MESES.map(function(m){ return '<th>' + m + '</th>'; }).join('') + '<th class="tot-col">Total Ano</th></tr></thead>';
+
+  var rows = ranked.map(function(r){
+    var vals = d[r.id];
+    var cells = vals.map(function(v, i){ return '<td>' + (i >= d.ateMes ? '–' : fmtDespesa(v)) + '</td>'; }).join('');
+    return '<tr><td><span class="cell-name"><span class="row-dot" style="background:' + r.cor + '"></span>' + titleCase(r.id) + '</span></td>' + cells +
+      '<td class="tot-col">' + fmtDespesa(porRevenda[r.id]) + '</td></tr>';
+  }).join('');
+
+  var totalRow = '<tr class="total-row"><td>CONSOLIDADO</td>' +
+    totais.map(function(v, i){ return '<td>' + (i >= d.ateMes ? '–' : fmtDespesa(v)) + '</td>'; }).join('') +
+    '<td class="tot-col">' + fmtDespesa(totAno) + '</td></tr>';
+
+  document.getElementById('tabelaMensal').innerHTML = thead + '<tbody>' + rows + totalRow + '</tbody>';
+}
+
+function renderAll(){
+  renderAnoChips();
+  renderLegendChips();
+  renderKpis();
+  renderChart();
+  renderHbars();
+  renderTabela();
+}
+
+renderAll();
+</script>
+</body>
+</html>

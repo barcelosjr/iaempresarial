@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Blueprint do painel "Rateio do Grupo" — visão focada em uma única linha da DRE
+  (bloco 3. DESPESAS OPERACIONAIS, linha 27 de estrutura_financeira_completa.md),
+  aberta por revenda e mês, com consolidado.
+
+  Base visual: painel_financeiro.html (Consolidado) — mesma identidade Grupo Mult
+  (#C3002F), mesmo padrão de header/filtro de Ano usado nos painéis "por marca".
+
+  Este arquivo é o rascunho de estrutura (layout + dados brutos já validados via
+  DAX). Aprovado o layout, gera-se o HTML (mesmo padrão dos demais painéis em
+  "Dashboard financeiro/").
+-->
+<dashboard id="painel_rateio_grupo" titulo="Rateio do Grupo — por Revenda">
+
+  <fonte>
+    <tabela>lancamentos</tabela>
+    <medida>VALOR_AJUSTADO</medida>
+    <filtro>TRIM([DRE]) = "Rateio do Grupo"</filtro>
+    <periodoDisponivel>01/2024 a 06/2026</periodoDisponivel>
+    <visao>gerencial</visao>
+    <observacao>Não é medida oficial do modelo semântico — é a soma direta de VALOR_AJUSTADO para esta conta, mesmo padrão usado no drill-down por DESCRICAO_CONTA dos demais painéis (gerar_dados_consolidado_ano.py).</observacao>
+  </fonte>
+
+  <observacoes>
+    <item>Revendas SEM nenhum lançamento nesta conta em todo o período (omitidas do painel): OMODA, CORRETORA, MULT SOLUÇÕES.</item>
+    <item>MULT BOATS só passa a lançar nesta conta a partir de 07/2024 (meses anteriores sem dado).</item>
+    <item>MEGA STORE cai para quase zero a partir de 10/2025 e some da base a partir de 02/2026 (sem lançamento em 02–06/2026) — sinalizar no painel, não tratar como erro.</item>
+    <item>Valores no Power BI já vêm negativos (convenção de despesa). No painel, exibir em módulo (positivo) com indicação visual de despesa — mesma convenção do bloco "3. DESPESAS OPERACIONAIS" da DRE.</item>
+    <item>2026 é ano parcial: dado só até 06/2026 (07 e 08/2026 ainda sem lançamento nesta conta).</item>
+  </observacoes>
+
+  <layout baseVisual="Grupo Mult / painel_financeiro.html">
+    <secao id="header">
+      <titulo>Rateio do Grupo</titulo>
+      <subtitulo>Despesa operacional rateada entre as revendas — evolução mensal e por revenda</subtitulo>
+    </secao>
+
+    <secao id="filtros">
+      <filtro tipo="ano" opcoes="2024,2025,2026" default="2026" observacao="2026 parcial (Jan–Jun)"/>
+      <filtro tipo="revenda" opcoes="Consolidado,KOBE,MIT,ROYAL,RENAULT,MEGA STORE,MULT BOATS" default="Consolidado"/>
+    </secao>
+
+    <secao id="kpis">
+      <card titulo="Total do ano — Consolidado" formula="soma de todos os meses e revendas do ano selecionado"/>
+      <card titulo="Média mensal" formula="Total do ano / nº de meses com lançamento"/>
+      <card titulo="Var. vs ano anterior" formula="(Total ano atual − Total ano anterior, mesmos meses) / Total ano anterior" observacao="comparar só meses cobertos em ambos os anos"/>
+      <card titulo="Revenda com maior rateio no ano" formula="MAX(total do ano por revenda)"/>
+    </secao>
+
+    <secao id="tabela-mensal" titulo="Rateio do Grupo por Revenda — mês a mês (R$, módulo)">
+      <colunas>Revenda, Jan, Fev, Mar, Abr, Mai, Jun, Jul, Ago, Set, Out, Nov, Dez, Total Ano</colunas>
+      <linha tipo="revenda" repetePara="cada revenda com lançamento no ano" ordenacao="maior total primeiro"/>
+      <linha tipo="consolidado" destaque="true" posicao="topo ou rodapé fixo"/>
+      <celulaSemDado simbolo="–" observacao="mês sem lançamento para aquela revenda (não é zero)"/>
+    </secao>
+
+    <secao id="grafico-evolucao" titulo="Evolução mensal">
+      <tipo>barras empilhadas por revenda (cor por revenda) + linha de total consolidado</tipo>
+      <eixoX>mês</eixoX>
+      <eixoY>R$ (módulo)</eixoY>
+    </secao>
+
+    <secao id="grafico-participacao" titulo="Participação por revenda no ano selecionado">
+      <tipo>barras horizontais ou rosca — % do total consolidado por revenda</tipo>
+    </secao>
+
+    <secao id="rodape">
+      <texto>Fonte: lancamentos.VALOR_AJUSTADO, filtro [DRE] = "Rateio do Grupo". Período: {periodo}. Visão gerencial (todos os lançamentos).</texto>
+    </secao>
+  </layout>
+
+  <!-- Dados brutos validados via consultar_dax (auditoria da query no rodapé deste arquivo) -->
+  <dados>
+
+    <ano valor="2024" ateMes="12">
+      <revenda nome="KOBE">
+        <m n="1">274074.50</m><m n="2">290644.44</m><m n="3">315662.27</m><m n="4">352989.98</m>
+        <m n="5">303061.82</m><m n="6">299521.28</m><m n="7">302389.82</m><m n="8">375849.08</m>
+        <m n="9">381883.73</m><m n="10">357202.80</m><m n="11">328313.94</m><m n="12">368991.25</m>
+      </revenda>
+      <revenda nome="MIT">
+        <m n="1">65412.15</m><m n="2">71834.49</m><m n="3">77602.83</m><m n="4">82514.49</m>
+        <m n="5">71467.97</m><m n="6">73425.41</m><m n="7">73925.31</m><m n="8">94446.52</m>
+        <m n="9">98614.08</m><m n="10">96130.82</m><m n="11">84614.87</m><m n="12">97046.37</m>
+      </revenda>
+      <revenda nome="ROYAL">
+        <m n="1">27096.97</m><m n="2">29950.32</m><m n="3">32973.23</m><m n="4">36479.06</m>
+        <m n="5">34945.47</m><m n="6">36882.59</m><m n="7">44682.05</m><m n="8">45324.04</m>
+        <m n="9">50240.67</m><m n="10">44573.74</m><m n="11">39169.05</m><m n="12">42036.61</m>
+      </revenda>
+      <revenda nome="RENAULT">
+        <m n="1">24213.91</m><m n="2">28039.38</m><m n="3">29746.42</m><m n="4">34564.86</m>
+        <m n="5">31141.73</m><m n="6">30703.58</m><m n="7">27865.73</m><m n="8">37744.80</m>
+        <m n="9">38562.81</m><m n="10">37395.54</m><m n="11">33719.79</m><m n="12">39895.38</m>
+      </revenda>
+      <revenda nome="MEGA STORE">
+        <m n="1">12374.16</m><m n="2">13584.46</m><m n="3">15251.02</m><m n="4">16116.44</m>
+        <m n="5">14001.58</m><m n="6">13727.02</m><m n="7">17286.92</m><m n="8">25587.20</m>
+        <m n="9">24544.22</m><m n="10">17236.77</m><m n="11">16335.48</m><m n="12">18220.94</m>
+      </revenda>
+      <revenda nome="MULT BOATS">
+        <m n="7">7637.34</m><m n="8">9325.20</m><m n="9">7909.76</m>
+        <m n="11">10421.43</m><m n="12">4746.98</m>
+        <!-- sem lançamento: 01–06/2024 (ainda não existia esta conta na marca) e 10/2024 -->
+      </revenda>
+    </ano>
+
+    <ano valor="2025" ateMes="12">
+      <revenda nome="KOBE">
+        <m n="1">374457.04</m><m n="2">352531.39</m><m n="3">378921.57</m><m n="4">355976.90</m>
+        <m n="5">396802.26</m><m n="6">370380.27</m><m n="7">396840.05</m><m n="8">401476.44</m>
+        <m n="9">439145.27</m><m n="10">467770.64</m><m n="11">423733.87</m><m n="12">432878.80</m>
+      </revenda>
+      <revenda nome="MIT">
+        <m n="1">98794.64</m><m n="2">95153.79</m><m n="3">101901.30</m><m n="4">91859.44</m>
+        <m n="5">102727.07</m><m n="6">94579.70</m><m n="7">113578.89</m><m n="8">113517.85</m>
+        <m n="9">121043.02</m><m n="10">115436.27</m><m n="11">98519.76</m><m n="12">105967.38</m>
+      </revenda>
+      <revenda nome="ROYAL">
+        <m n="1">45054.69</m><m n="2">48665.93</m><m n="3">52198.67</m><m n="4">50880.48</m>
+        <m n="5">61488.58</m><m n="6">56470.12</m><m n="7">67482.46</m><m n="8">64546.89</m>
+        <m n="9">58389.40</m><m n="10">62673.98</m><m n="11">54822.19</m><m n="12">57731.73</m>
+      </revenda>
+      <revenda nome="RENAULT">
+        <m n="1">40596.31</m><m n="2">37652.80</m><m n="3">38987.35</m><m n="4">34833.25</m>
+        <m n="5">38848.68</m><m n="6">35749.04</m><m n="7">39292.94</m><m n="8">40251.59</m>
+        <m n="9">44991.06</m><m n="10">45421.12</m><m n="11">39131.14</m><m n="12">41565.50</m>
+      </revenda>
+      <revenda nome="MEGA STORE">
+        <m n="1">16243.25</m><m n="2">15372.21</m><m n="3">15792.42</m><m n="4">15818.52</m>
+        <m n="5">17179.11</m><m n="6">15591.99</m><m n="7">20769.85</m><m n="8">20777.85</m>
+        <m n="9">22663.20</m><m n="10">1447.62</m><m n="11">1421.13</m><m n="12">1641.08</m>
+      </revenda>
+      <revenda nome="MULT BOATS">
+        <m n="1">7552.05</m><m n="2">6710.61</m><m n="3">5634.92</m><m n="4">6127.38</m>
+        <m n="5">7144.79</m><m n="6">5272.70</m><m n="7">7838.57</m><m n="8">7452.67</m>
+        <m n="9">7262.21</m><m n="10">6831.30</m><m n="11">5785.90</m><m n="12">5859.33</m>
+      </revenda>
+    </ano>
+
+    <ano valor="2026" ateMes="6" parcial="true">
+      <revenda nome="KOBE">
+        <m n="1">490559.16</m><m n="2">432745.72</m><m n="3">520913.85</m>
+        <m n="4">494969.79</m><m n="5">587817.92</m><m n="6">539060.45</m>
+      </revenda>
+      <revenda nome="MIT">
+        <m n="1">111468.32</m><m n="2">101802.30</m><m n="3">116502.16</m>
+        <m n="4">106454.18</m><m n="5">123659.65</m><m n="6">112744.31</m>
+      </revenda>
+      <revenda nome="ROYAL">
+        <m n="1">70022.90</m><m n="2">66077.26</m><m n="3">77911.33</m>
+        <m n="4">80753.24</m><m n="5">94999.68</m><m n="6">78022.16</m>
+      </revenda>
+      <revenda nome="RENAULT">
+        <m n="1">42094.90</m><m n="2">40744.14</m><m n="3">43216.93</m>
+        <m n="4">39798.17</m><m n="5">48174.34</m><m n="6">40980.59</m>
+      </revenda>
+      <revenda nome="MEGA STORE">
+        <m n="1">757.48</m>
+        <!-- sem lançamento: 02–06/2026 -->
+      </revenda>
+      <revenda nome="MULT BOATS">
+        <m n="1">7985.07</m><m n="2">7013.99</m><m n="3">12034.15</m>
+        <m n="4">18729.41</m><m n="5">22877.83</m><m n="6">16623.92</m>
+      </revenda>
+    </ano>
+
+  </dados>
+
+  <auditoria>
+    <query><![CDATA[
+EVALUATE
+VAR _B = FILTER('lancamentos', TRIM('lancamentos'[DRE]) = "Rateio do Grupo")
+VAR _P = ADDCOLUMNS(_B, "@E", TRIM('lancamentos'[EMPRESA]), "@K", VALUE(RIGHT('lancamentos'[PERIODO], 4)) * 100 + VALUE(LEFT('lancamentos'[PERIODO], 2)), "@V", 'lancamentos'[VALOR_AJUSTADO])
+RETURN GROUPBY(_P, [@E], [@K], "@Valor", SUMX(CURRENTGROUP(), [@V]))
+ORDER BY [@K] ASC, [@E] ASC
+    ]]></query>
+    <linhasRetornadas>168</linhasRetornadas>
+  </auditoria>
+
+</dashboard>

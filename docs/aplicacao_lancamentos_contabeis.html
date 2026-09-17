@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aplicar em lancamentos_contabeis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+*{box-sizing:border-box}
+
+  :root{
+    /* Paleta institucional herdada de design_system_relatorios.md §4.1 */
+    --grafite-900:#23272E; --grafite-700:#3D434C;
+    --cinza-500:#8A9099; --cinza-300:#D9DCE0; --cinza-100:#F4F5F7;
+    --azul-800:#1F4E79; --azul-100:#DCE6F1;
+    --verde:#1E7E34; --vermelho:#B02A37; --ambar:#8A6100;
+
+    --ground:#FBFBFC;           /* neutro com leve viés azul, não cinza puro */
+    --surface:#FFFFFF;
+    --surface-2:var(--cinza-100);
+    --ink:var(--grafite-900);
+    --ink-2:var(--grafite-700);
+    --ink-3:var(--cinza-500);
+    --rule:var(--cinza-300);
+    --rule-soft:#E9EBEE;
+    --accent:var(--azul-800);
+    --accent-soft:var(--azul-100);
+    --code-bg:#F6F7F9;
+    --code-ink:#1B2733;
+
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --sans:'IBM Plex Sans','Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    --mono:'IBM Plex Mono','Consolas','SF Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#14171B; --surface:#1A1E24; --surface-2:#20252C;
+      --ink:#E8EAED; --ink-2:#C2C7CE; --ink-3:#8E959E;
+      --rule:#2E343C; --rule-soft:#252A31;
+      --accent:#7FB0DC; --accent-soft:#1E2C3A;
+      --code-bg:#1B2027; --code-ink:#DDE3EA;
+      --verde:#5FB775; --vermelho:#E0707C; --ambar:#D6A64B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14171B; --surface:#1A1E24; --surface-2:#20252C;
+    --ink:#E8EAED; --ink-2:#C2C7CE; --ink-3:#8E959E;
+    --rule:#2E343C; --rule-soft:#252A31;
+    --accent:#7FB0DC; --accent-soft:#1E2C3A;
+    --code-bg:#1B2027; --code-ink:#DDE3EA;
+    --verde:#5FB775; --vermelho:#E0707C; --ambar:#D6A64B;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Estrutura ---------- */
+  .wrap{display:grid;grid-template-columns:1fr;max-width:1400px;margin:0 auto}
+  @media (min-width:1080px){
+    .wrap{grid-template-columns:250px minmax(0,1fr);gap:48px;padding-right:32px}
+  }
+
+  /* ---------- Sumário ---------- */
+  .toc{display:none}
+  @media (min-width:1080px){
+    .toc{
+      display:block;position:sticky;top:0;align-self:start;
+      max-height:100vh;overflow-y:auto;padding:40px 0 40px 32px;
+      border-right:1px solid var(--rule-soft);
+    }
+  }
+  .toc-eyebrow{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--ink-3);font-weight:600;margin-bottom:14px;
+  }
+  .toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+  .toc a{
+    display:flex;gap:9px;padding:5px 10px 5px 0;
+    color:var(--ink-2);text-decoration:none;font-size:13px;line-height:1.4;
+    border-left:2px solid transparent;padding-left:10px;
+  }
+  .toc a:hover{color:var(--accent);border-left-color:var(--rule)}
+  .toc a .n{color:var(--ink-3);font-family:var(--mono);font-size:11px;flex:0 0 16px;padding-top:1px}
+  .toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+  /* ---------- Coluna principal ---------- */
+  main{padding:40px 24px 96px;min-width:0}
+  @media (min-width:1080px){ main{padding:56px 0 120px} }
+  .prose{max-width:70ch}
+
+  /* ---------- Cabeçalho ---------- */
+  .doc-head{border-bottom:2px solid var(--accent);padding-bottom:26px;margin-bottom:14px}
+  .emissor{
+    font-size:11px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--accent);font-weight:600;margin-bottom:14px;
+  }
+  h1{
+    font-family:var(--serif);font-weight:500;font-size:clamp(30px,4.4vw,46px);
+    line-height:1.12;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance;
+  }
+  .standfirst{font-size:17px;line-height:1.6;color:var(--ink-2);max-width:62ch;margin:0}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:6px 22px;margin:26px 0 44px;
+    font-size:12.5px;color:var(--ink-3);
+  }
+  .meta b{color:var(--ink-2);font-weight:500}
+
+  /* ---------- Seções ---------- */
+  section{margin-bottom:56px;scroll-margin-top:24px}
+  h2{
+    font-family:var(--serif);font-weight:500;font-size:27px;line-height:1.2;
+    letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;
+    display:flex;align-items:baseline;gap:12px;
+  }
+  h2 .num{
+    font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);
+    flex:0 0 auto;padding-top:2px;
+  }
+  .h2-rule{height:1px;background:var(--rule);margin:14px 0 24px}
+  h3{
+    font-family:var(--sans);font-weight:600;font-size:15.5px;letter-spacing:-.005em;
+    margin:34px 0 10px;color:var(--ink);
+  }
+  h4{
+    font-family:var(--sans);font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-3);margin:26px 0 8px;
+  }
+  p{margin:0 0 15px;max-width:70ch}
+  ul,ol.steps{margin:0 0 15px;padding-left:20px;max-width:70ch}
+  li{margin-bottom:7px}
+  a{color:var(--accent);text-underline-offset:2px}
+  strong{font-weight:600}
+  code{
+    font-family:var(--mono);font-size:.875em;background:var(--code-bg);
+    padding:1px 5px;border-radius:3px;color:var(--code-ink);
+    border:1px solid var(--rule-soft);
+  }
+
+  /* ---------- Blocos de código ---------- */
+  pre{
+    background:var(--code-bg);border:1px solid var(--rule-soft);border-left:3px solid var(--accent);
+    border-radius:4px;padding:16px 18px;overflow-x:auto;margin:0 0 18px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--code-ink);
+  }
+  pre code{background:none;border:0;padding:0;font-size:inherit}
+  .code-label{
+    font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-3);margin-bottom:5px;
+  }
+
+  /* ---------- Tabelas ---------- */
+  .tw{overflow-x:auto;margin:0 0 20px;border:1px solid var(--rule-soft);border-radius:4px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+  th{
+    text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--rule);
+    background:var(--surface-2);white-space:nowrap;
+  }
+  td{padding:9px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top;line-height:1.5}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.mono{font-family:var(--mono);font-size:12px}
+  .t-tight td,.t-tight th{padding-top:6px;padding-bottom:6px}
+
+  /* ---------- Chips ---------- */
+  .chip{
+    display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+    padding:2px 7px;border-radius:3px;white-space:nowrap;text-transform:uppercase;
+  }
+  .chip-ok{background:rgba(30,126,52,.12);color:var(--verde)}
+  .chip-no{background:rgba(176,42,55,.12);color:var(--vermelho)}
+  .chip-warn{background:rgba(138,97,0,.13);color:var(--ambar)}
+  .chip-neutral{background:var(--surface-2);color:var(--ink-3)}
+  .chip-accent{background:var(--accent-soft);color:var(--accent)}
+
+  /* ---------- Callouts ---------- */
+  .callout{
+    border:1px solid var(--rule);border-left:3px solid var(--ink-3);
+    background:var(--surface);border-radius:4px;padding:16px 18px;margin:0 0 20px;max-width:72ch;
+  }
+  .callout p:last-child{margin-bottom:0}
+  .callout .lead{
+    font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+    margin-bottom:7px;color:var(--ink-3);
+  }
+  .callout.crit{border-left-color:var(--vermelho)}
+  .callout.crit .lead{color:var(--vermelho)}
+  .callout.warn{border-left-color:var(--ambar)}
+  .callout.warn .lead{color:var(--ambar)}
+  .callout.good{border-left-color:var(--verde)}
+  .callout.good .lead{color:var(--verde)}
+  .callout.info{border-left-color:var(--accent)}
+  .callout.info .lead{color:var(--accent)}
+
+  /* ---------- Cartões de rota ---------- */
+  .routes{display:grid;gap:16px;margin:0 0 22px}
+  @media (min-width:720px){ .routes{grid-template-columns:1fr 1fr} }
+  .route{border:1px solid var(--rule);border-radius:5px;padding:20px;background:var(--surface)}
+  .route.pick{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+  .route h3{margin:0 0 4px;font-size:16px}
+  .route .sub{font-size:12px;color:var(--ink-3);margin:0 0 14px;font-family:var(--mono)}
+  .route ul{padding-left:17px;margin:0;font-size:13.5px}
+  .route li{margin-bottom:5px}
+
+  /* ---------- Fases ---------- */
+  .phase{
+    display:grid;grid-template-columns:auto 1fr;gap:0 18px;
+    padding:16px 0;border-bottom:1px solid var(--rule-soft);
+  }
+  .phase:last-child{border-bottom:0}
+  .phase .pnum{
+    font-family:var(--mono);font-size:12px;font-weight:500;color:var(--surface);
+    background:var(--accent);width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .phase h3{margin:2px 0 4px;font-size:15px}
+  .phase p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2)}
+  .phase .est{font-size:11.5px;color:var(--ink-3);font-family:var(--mono)}
+
+  /* ---------- Swatches ---------- */
+  .swatches{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}
+  .sw{display:flex;align-items:center;gap:8px;font-size:11.5px;font-family:var(--mono);color:var(--ink-2)}
+  .sw i{width:20px;height:20px;border-radius:3px;border:1px solid var(--rule);display:block}
+
+  footer{
+    border-top:1px solid var(--rule);margin-top:20px;padding-top:20px;
+    font-size:12px;color:var(--ink-3);max-width:70ch;
+  }
+  ::selection{background:var(--accent-soft);color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* --- complementos deste documento --- */
+  .titlemono{font-family:var(--mono);font-size:.72em;font-weight:500;letter-spacing:-.01em}
+  h2 .titlemono{font-size:.8em}
+  td.spacer{border-bottom-color:transparent}
+  ol.steps{counter-reset:none}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Sumário">
+  <div class="toc-eyebrow">Sumário</div>
+  <ol>
+    <li><a href="#situacao"><span class="n">01</span><span>O que mudou</span></a></li>
+    <li><a href="#ambiente"><span class="n">02</span><span>Ambiente</span></a></li>
+    <li><a href="#tabela"><span class="n">03</span><span>A tabela lancamentos</span></a></li>
+    <li><a href="#contagem"><span class="n">04</span><span>Contagem real</span></a></li>
+    <li><a href="#calendario"><span class="n">05</span><span>dCalendario e o diário</span></a></li>
+    <li><a href="#correcoes"><span class="n">06</span><span>Correções ao plano</span></a></li>
+    <li><a href="#publicacao"><span class="n">07</span><span>Regra de publicação</span></a></li>
+    <li><a href="#conferencias"><span class="n">08</span><span>Conferências de partida</span></a></li>
+    <li><a href="#roteiro"><span class="n">09</span><span>Roteiro ajustado</span></a></li>
+    <li><a href="#pendencias"><span class="n">10</span><span>Pendências</span></a></li>
+  </ol>
+</nav>
+
+<main>
+<div class="prose">
+
+<header class="doc-head">
+  <div class="emissor">Grupo Mult · Controladoria</div>
+  <h1>Aplicar o plano em <span class="titlemono">lancamentos_contabeis</span></h1>
+  <p class="standfirst">Documento complementar ao <em>projeto_powerbi_nativo.html</em>. Registra o que a posse do arquivo de origem muda no plano, corrige os números do modelo e fixa a ordem de execução.</p>
+</header>
+
+<div class="meta">
+  <span><b>Arquivo</b> lancamentos_contabeis.pbix · 7,5 MB</span>
+  <span><b>Baixado do serviço</b> 02/09/2026</span>
+  <span><b>Análise</b> 08/09/2026</span>
+  <span><b>Ferramentas</b> prontas em 09/09/2026</span>
+  <span><b>Modelo conferido ao vivo</b> 09/09/2026</span>
+  <span><b>Complementa</b> projeto_powerbi_nativo.html</span>
+</div>
+
+<section id="situacao">
+  <h2><span class="num">01</span>O que mudou desde o plano</h2>
+  <div class="h2-rule"></div>
+
+  <p>O plano original abre a §12 com o risco número um: <em>“Existe o .pbix original? Não foi encontrado nesta pasta.”</em> Ele existe. É o <code>lancamentos_contabeis.pbix</code> em <code>POWER BI\DIRETORIA\FINANCEIRO</code>, e a identificação é direta — está gravada dentro do próprio pacote.</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Parte do pacote</th><th>Conteúdo</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Connections</td><td class="mono">DatasetId 7f8dbbc0-9cb6-4ff7-bb58-60fc4dcb8458<br>ReportId 57cfebd8-b375-4044-97d9-659d0b1cf2c9<br>Workspace 6142a272-21e4-4713-b05e-4cdba12e072b</td></tr>
+        <tr><td class="mono">DataModel</td><td>7,5 MB — backup VertiPaq real (XPress9). Não é casca de conexão dinâmica.</td></tr>
+        <tr><td class="mono">Metadata</td><td>CreatedFrom <b>Cloud</b>, release 2026.04 — baixado do serviço, não criado localmente</td></tr>
+        <tr><td class="mono">Report/definition</td><td>Formato PBIR. <b>1 página</b>, 5 visuais: uma tabela e três segmentações de exploração</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>O <code>DatasetId</code> e o <code>WorkspaceId</code> batem exatamente com as coordenadas da §02 do plano. O <code>powerbi/dax_financeiro.py</code> confirma pelo outro lado, logo no cabeçalho: <em>“modelo semântico real (dataset <code>lancamentos_contabeis</code>, tabela <code>lancamentos</code>)”</em>.</p>
+
+  <div class="callout good">
+    <div class="lead">A consequência</div>
+    <p>A §03 do plano — “o obstáculo do acesso” — deixa de ser obstáculo. A <b>Saída A</b>, levar <code>dDRE</code>, <code>dBalanco</code>, <code>dFluxo</code>, <code>dCalendario</code> e as medidas para dentro do modelo, era a recomendada mas dependia de “quem tem a posse do modelo”. A posse está aqui. Some a necessidade de modelo composto (Saída B) e o risco de segunda verdade (Saída C).</p>
+  </div>
+
+  <p>O relatório embutido no arquivo é descartável — uma página com uma tabela e três segmentações, feita para olhar os dados. <b>O ativo é o modelo</b>; as seis páginas da §08 do plano serão construídas do zero.</p>
+</section>
+
+<section id="ambiente">
+  <h2><span class="num">02</span>Ambiente desta máquina</h2>
+  <div class="h2-rule"></div>
+
+  <h3>Instalado e verificado</h3>
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Ferramenta</th><th>Versão</th><th>Local</th></tr></thead>
+      <tbody>
+        <tr><td>Power BI Desktop x64</td><td class="mono">2.153.910.0</td><td class="mono">C:\Program Files\Microsoft Power BI Desktop</td></tr>
+        <tr><td>Power BI Report Builder</td><td class="mono">15.7.1819.28</td><td class="mono">C:\Program Files\Power BI Report Builder</td></tr>
+        <tr><td>Tabular Editor 2 <span class="chip chip-ok">novo</span></td><td class="mono">2.28.0</td><td class="mono">C:\Users\Controladoria\Ferramentas\TabularEditor2</td></tr>
+        <tr><td>DAX Studio <span class="chip chip-ok">novo</span></td><td class="mono">3.6.1</td><td class="mono">C:\Users\Controladoria\Ferramentas\DaxStudio</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>As duas ferramentas novas foram instaladas em versão portátil, sob o perfil do usuário — esta conta não é administrador, e a versão portátil dispensa elevação. O pacote do DAX Studio foi conferido contra o SHA256 publicado no release e bate.</p>
+
+  <h4>Ferramentas Externas <span class="chip chip-ok">registrado</span></h4>
+  <p>As duas aparecem na faixa do Desktop. O registro foi feito em 09/09/2026, copiando os arquivos de <code>C:\Users\Controladoria\Ferramentas\_external_tools\</code> para a pasta do Power BI — operação que exige shell elevado. Os scripts continuam ali, caso a máquina seja trocada ou o Desktop reinstalado:</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Arquivo</th><th>Para quê</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">registrar_elevado.cmd</td><td>Duplo clique. Abre o UAC e faz o registro</td></tr>
+        <tr><td class="mono">registrar.ps1</td><td>O script em si. Recusa rodar sem elevação</td></tr>
+        <tr><td class="mono">porta_modelo.ps1</td><td>Descobre o <code>localhost:porta</code> do modelo aberto — conecta o Tabular Editor sem passar pela faixa</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <div class="lead">Por que o Tabular Editor não é opcional</div>
+    <p>É ele que cria o <b>grupo de cálculo</b> da escala R$ / R$ mil da §06 do plano. Sem grupo de cálculo, a alternativa é duplicar mais de sessenta medidas — e manter as duas versões sincronizadas para sempre.</p>
+  </div>
+</section>
+
+<section id="tabela">
+  <h2><span class="num">03</span>A tabela de trabalho é <span class="titlemono">lancamentos</span></h2>
+  <div class="h2-rule"></div>
+
+  <p>O diagrama gravado no arquivo mostra quatro tabelas, e não uma:</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Tabela</th><th>Papel</th><th>Uso no projeto</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">lancamentos</td><td>Tabela de fatos consolidada</td><td><span class="chip chip-ok">única fonte</span> Todo o DAX do projeto lê daqui</td></tr>
+        <tr><td class="mono">lancamentos_extras</td><td>Origem, já acrescentada em <code>lancamentos</code></td><td><span class="chip chip-no">não referenciar</span></td></tr>
+        <tr><td class="mono">saldo_inicial_2024</td><td>Origem, já acrescentada em <code>lancamentos</code></td><td><span class="chip chip-no">não referenciar</span></td></tr>
+        <tr><td class="mono">saldo_inicial_2024 parte 2</td><td>Origem, já acrescentada em <code>lancamentos</code></td><td><span class="chip chip-no">não referenciar</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>As três acessórias são as <b>origens</b> que já foram concatenadas na principal. Elas não são dimensões, não devem entrar em relacionamento nenhum e não devem ser somadas. O <code>dax_financeiro.py</code> registra o efeito de ignorar isso: <em>“a tabela <code>saldo_inicial_2024</code> é cópia dessas linhas e não é usada (somá-la duplicaria o saldo)”</em>.</p>
+
+  <div class="callout warn">
+    <div class="lead">Providência antes de acrescentar as tabelas de estrutura</div>
+    <p>Ocultar as três na exibição de relatório (botão direito → <em>Ocultar na exibição de relatório</em>). Quando <code>dDRE</code>, <code>dBalanco</code>, <code>dFluxo</code> e <code>dCalendario</code> entrarem, a lista de campos passa a ter oito tabelas; deixar três origens duplicadas visíveis ao lado das dimensões é convite para alguém arrastar a errada e produzir um número plausível e errado.</p>
+  </div>
+
+  <h3>Colunas que o projeto usa</h3>
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Coluna</th><th>Papel</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">VALOR_AJUSTADO</td><td>A única coluna somada. Sinal econômico já aplicado. <b>Nunca</b> <code>VALOR</code>.</td></tr>
+        <tr><td class="mono">DRE</td><td>Chave de <code>dDRE</code> — exige <code>TRIM</code></td></tr>
+        <tr><td class="mono">Balanço</td><td>Chave de <code>dBalanco</code> — exige <code>TRIM</code></td></tr>
+        <tr><td class="mono">PERIODO</td><td>Texto. Origem da <code>ChavePeriodo</code> — ver §05</td></tr>
+        <tr><td class="mono">EMPRESA</td><td>Segmentação principal</td></tr>
+        <tr><td class="mono">REVENDA</td><td>Segmentação de loja — filtra só a DRE (§09 do plano)</td></tr>
+        <tr><td class="mono">TIPO_LANÇAMENTO</td><td>Visão gerencial × contábil. Recorte da DRE e do resultado no Fluxo</td></tr>
+        <tr><td class="mono">NATUREZA</td><td>D / C — linhas de imobilizado do Fluxo de Caixa</td></tr>
+        <tr><td class="mono">DESCRICAO_CONTA</td><td>Drill-down da matriz da DRE</td></tr>
+        <tr><td class="mono">SEGMENTO</td><td>Oportunidade nova — rentabilidade por linha de negócio</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout crit">
+    <div class="lead">TRIM é obrigatório, não é precaução</div>
+    <p>O <code>dax_financeiro.py</code> mediu: praticamente todos os valores das colunas <code>DRE</code> e <code>Balanço</code> têm espaços extras. <code>'lancamentos'[DRE] = "Serviços Oficina"</code> devolve <b>vazio</b>. Toda comparação de categoria no projeto tem que ser <code>TRIM('lancamentos'[DRE]) = _Categoria</code> — nas sessenta e poucas medidas, sem exceção.</p>
+  </div>
+</section>
+
+<section id="contagem">
+  <h2><span class="num">04</span>Contagem real das categorias</h2>
+  <div class="h2-rule"></div>
+
+  <p>Conferido ao vivo contra o modelo aberto em 09/09/2026, e não mais só contra a documentação. Os números que valem para montar as tabelas de estrutura são estes:</p>
+
+  <div class="callout good">
+    <div class="lead">A dúvida do 35 contra 34 está encerrada</div>
+    <p>A coluna <code>DRE</code> tem hoje <b>35 categorias com movimento</b> — exatamente as 35 da estrutura, com grafia idêntica caractere a caractere, acentuação incluída. Não há categoria órfã em nenhum dos dois sentidos. O “34” do <code>dax_financeiro.py</code> estava defasado.</p>
+  </div>
+
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Estrutura</th><th class="num">Detalhe</th><th class="num">Subtotais</th><th class="num">Indicadores</th><th class="num">Cabeçalhos</th><th class="num">Total</th></tr></thead>
+      <tbody>
+        <tr><td><b>dDRE</b></td><td class="num">35</td><td class="num">6</td><td class="num">3</td><td class="num">7</td><td class="num"><b>51</b></td></tr>
+        <tr><td><b>dBalanco</b></td><td class="num">54</td><td class="num">17 + CHECK</td><td class="num">—</td><td class="num">5</td><td class="num"><b>77</b></td></tr>
+        <tr><td><b>dFluxo</b></td><td class="num">35</td><td class="num">incluídos</td><td class="num">—</td><td class="num">—</td><td class="num"><b>35</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>As 35 linhas da DRE e as 54 contas do Balanço foram contadas em duas fontes independentes e batem entre si: a <code>estrutura_financeira_completa.md</code> (§1 e §2) e as listas de constantes do <code>dax_financeiro.py</code>. A composição por bloco:</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>DRE — bloco</th><th class="num">Detalhes</th><th>Balanço — grupo</th><th class="num">Contas</th></tr></thead>
+      <tbody>
+        <tr><td>1. Receita Bruta</td><td class="num">10</td><td>Disponibilidades</td><td class="num">2</td></tr>
+        <tr><td>2. Custos</td><td class="num">5</td><td>Valores a Receber</td><td class="num">7</td></tr>
+        <tr><td>3. Despesas Operacionais</td><td class="num">12</td><td>Estoques</td><td class="num">3</td></tr>
+        <tr><td>4. Outras Receitas/Despesas</td><td class="num">4</td><td>Realizável a LP</td><td class="num">1</td></tr>
+        <tr><td>5. Depreciação e Amortização</td><td class="num">1</td><td>Investimentos</td><td class="num">2</td></tr>
+        <tr><td>6. Resultado Financeiro</td><td class="num">2</td><td>Imobilizado de Uso</td><td class="num">12</td></tr>
+        <tr><td>7. Impostos sobre o Lucro</td><td class="num">1</td><td>Intangível</td><td class="num">2</td></tr>
+        <tr><td class="spacer"></td><td class="num"></td><td>Fornecedores</td><td class="num">4</td></tr>
+        <tr><td class="spacer"></td><td class="num"></td><td>Empréstimos e Financiamentos</td><td class="num">5</td></tr>
+        <tr><td class="spacer"></td><td class="num"></td><td>Outras Obrigações</td><td class="num">6</td></tr>
+        <tr><td class="spacer"></td><td class="num"></td><td>Passivo Não Circulante</td><td class="num">4</td></tr>
+        <tr><td class="spacer"></td><td class="num"></td><td>Patrimônio Líquido</td><td class="num">6</td></tr>
+        <tr><td><b>Total</b></td><td class="num"><b>35</b></td><td><b>Total</b></td><td class="num"><b>54</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <div class="lead">O Balanço tem, sim, uma conta sem movimento</div>
+    <p>São <b>53 contas com lançamento</b> na base contra as <b>54</b> da estrutura. A que não tem movimento é <code>Reservas de Capital</code> — e a própria <code>estrutura_financeira_completa.md</code> já a anota como <em>“(sem lançamento na base atualmente)”</em>. Não é erro nem descoberta: é uma conta prevista e ainda não usada.</p>
+    <p><b>A <code>dBalanco</code> vai com as 54 linhas.</b> Conta prevista sem movimento aparece como travessão; suprimi-la faria a estrutura mudar sozinha no dia em que alguém lançar nela. Ao montar a tabela, atenção: no arquivo normativo o rótulo dessa linha carrega a anotação entre asteriscos — só o nome da conta entra na coluna <code>CategoriaBalanco</code>.</p>
+  </div>
+
+  <p>Nas duas colunas, <b>100% dos valores têm espaço à esquerda</b> — três caracteres na <code>DRE</code>, seis no <code>Balanço</code>. Confirma que o <code>TRIM</code> da §03 não é precaução: sem ele, toda comparação de categoria devolve vazio.</p>
+</section>
+
+<section id="calendario">
+  <h2><span class="num">05</span>dCalendario agora, e o lançamento diário depois</h2>
+  <div class="h2-rule"></div>
+
+  <p>Nesta primeira versão <code>PERIODO</code> continua no formato <code>MM/AAAA</code>. Está previsto um arquivo novo, com lançamento diário, mas isso é outro momento — o projeto não deve esperar por ele.</p>
+
+  <div class="callout crit">
+    <div class="lead">O calendário é diário, não mensal — e isso não é escolha</div>
+    <p>A leitura óbvia do plano leva a uma <code>dCalendario</code> com uma linha por mês: 33 linhas, dia 1 de cada mês. <b>O Power BI recusa marcar isso como tabela de datas</b> — <em>“a coluna de data não pode ter intervalos de datas”</em> —, porque exige uma sequência de dias contígua, sem buracos. E sem a tabela marcada não há <code>SAMEPERIODLASTYEAR</code>, <code>DATESYTD</code> nem acumulado nativo, que é justamente o que a <code>dCalendario</code> existe para destravar.</p>
+    <p>O desenho que funciona é o padrão para fato de granularidade mensal: <b>calendário diário e contíguo</b>, começando em 01/01/2024, e cada lançamento <b>ancorado no dia 1 do seu mês</b> por uma coluna <code>DataRef</code>. O relacionamento é por data. Os totais mensais continuam exatos — todos os lançamentos de 06/2026 estão em 01/06/2026, e qualquer seleção que inclua junho os pega.</p>
+  </div>
+
+  <p>Anos inteiros, não o intervalo dos dados: um calendário que termina em setembro faz <code>DATESYTD</code> e <code>SAMEPERIODLASTYEAR</code> devolverem resultado parcial em silêncio. O calendário construído vai até <b>31/12/2030</b> — 2.557 dias — para não precisar ser reeditado a cada virada de ano.</p>
+
+  <div class="callout warn">
+    <div class="lead">A contrapartida do calendário largo</div>
+    <p>De 2027 a 2030 não há movimento. Segmentação de ano e matriz com meses em coluna vão listar períodos vazios se nada os contiver. Resolva no visual — filtro de nível de visual descartando linhas sem valor — ou com uma coluna sinalizadora na <code>dCalendario</code>. Não encurte o calendário: a folga é deliberada.</p>
+  </div>
+
+
+  <p>O que vale fazer agora é deixar a troca barata. Toda a dependência do formato do texto cabe em <b>uma</b> coluna calculada:</p>
+
+  <div class="code-label">Duas colunas calculadas em lancamentos</div>
+  <pre><code>ChavePeriodo =
+      VALUE(RIGHT('lancamentos'[PERIODO], 4)) * 100
+    + VALUE(LEFT('lancamentos'[PERIODO], 2))
+
+DataRef =
+DATE(
+    VALUE(RIGHT('lancamentos'[PERIODO], 4)),
+    VALUE(LEFT('lancamentos'[PERIODO], 2)),
+    1
+)</code></pre>
+
+  <p>Se essas duas forem as <b>únicas</b> expressões do modelo que leem <code>PERIODO</code> — e as medidas nunca tocarem no texto, só na <code>dCalendario</code> —, a chegada do arquivo diário vira uma tarefa contida: <code>DataRef</code> passa a ser a data real do lançamento e mais nada muda. Nem o calendário, que já é diário; nem o relacionamento; nem nenhuma das sessenta medidas.</p>
+
+  <p>A <code>ChavePeriodo</code> continua existindo dos dois lados, mas não é o relacionamento: serve às medidas do Balanço, que acumulam comparando <code>ChavePeriodo &lt;= período selecionado</code>.</p>
+
+  <div class="callout good">
+    <div class="lead">O formato é uniforme — conferido</div>
+    <p>A coluna tem <b>33 valores distintos, todos em <code>MM/AAAA</code></b>, de <code>01/2024</code> a <code>09/2026</code>. A linha <code>01/01/2024</code> que o <code>dax_financeiro.py</code> descreve <b>não existe mais</b>: o saldo de abertura foi reclassificado para <code>01/2024</code> e hoje são 564 linhas com <code>TIPO_LANÇAMENTO</code> em branco. A expressão acima cobre a base inteira, sem exceção — a validação abaixo devolve zero chaves em branco.</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="lead">Os dois últimos meses estão parciais</div>
+    <p>A base roda entre 12 mil e 15 mil linhas por mês. <code>08/2026</code> tem 10.803 e <code>09/2026</code> tem 4.569 — meses ainda abertos. Não é defeito, mas qualquer leitura de “último mês” e qualquer comparação contra o ano anterior precisam disso à vista, senão a queda aparente vira diagnóstico errado.</p>
+  </div>
+
+  <p>Relacione <code>dCalendario[Date] → lancamentos[DataRef]</code>, um-para-muitos, filtro único, e marque a tabela como tabela de datas por <code>Date</code>. Um relacionamento só, e é por data. Ordene <code>MesRotulo</code> por <code>MesNum</code> e <code>AnoMes</code> por <code>ChavePeriodo</code>, senão a matriz sai em ordem alfabética — Abr, Ago, Dez, Fev.</p>
+</section>
+
+<section id="correcoes">
+  <h2><span class="num">06</span>Correções ao plano original</h2>
+  <div class="h2-rule"></div>
+
+  <p>O plano continua válido de ponta a ponta. Estes pontos, levantados na análise do arquivo, substituem o que está escrito lá:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>§</th><th>Onde estava</th><th>O que vale</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">03</td><td>Três saídas para o obstáculo do acesso; a Saída A dependia de posse do modelo</td><td><span class="chip chip-ok">resolvido</span> Saída A, direta</td></tr>
+        <tr><td class="mono">04</td><td>“Uma única tabela de fatos”</td><td>Quatro tabelas. <code>lancamentos</code> é a de trabalho; as outras três são origens já acrescentadas — ocultar</td></tr>
+        <tr><td class="mono">04</td><td>“Confirme o que já existe de medida antes de criar duplicata”</td><td><span class="chip chip-ok">resolvido</span> O modelo tem <b>zero medidas</b>. Campo limpo</td></tr>
+        <tr><td class="mono">04</td><td>Coluna DRE com 35 distintos; Balanço com 53</td><td><span class="chip chip-ok">conferido</span> DRE: 35 na base e 35 na estrutura, grafia idêntica. Balanço: 54 na estrutura, 53 com movimento — falta <code>Reservas de Capital</code>, já prevista</td></tr>
+        <tr><td class="mono">04</td><td>“PERIODO é texto MM/AAAA, 33 distintos”</td><td><span class="chip chip-ok">confirmado</span> 33 valores, todos <code>MM/AAAA</code>. O <code>01/01/2024</code> do <code>dax_financeiro.py</code> não existe mais</td></tr>
+        <tr><td class="mono">12</td><td>“Existe o .pbix original?” — confirmar</td><td><span class="chip chip-ok">resolvido</span> Existe. É este arquivo</td></tr>
+        <tr><td class="mono">12</td><td>TIPO_LANÇAMENTO = “None” — confirmar comportamento</td><td><span class="chip chip-ok">resolvido</span> São as <b>564</b> linhas de abertura, hoje em <code>01/2024</code>. Não têm classificação de DRE, logo não entram nela de qualquer forma</td></tr>
+        <tr><td class="mono">12</td><td>Nível de compatibilidade do modelo — verificar</td><td><span class="chip chip-ok">resolvido</span> <b>1600</b>. Grupo de cálculo e cadeia de formato dinâmica são viáveis — a escala R$ / R$ mil sai como planejado</td></tr>
+        <tr><td class="mono">12</td><td>Valores <code>7.11</code> e <code>7.12</code> em EMPRESA — decisão de negócio</td><td><span class="chip chip-ok">resolvido</span> 210 linhas com <code>DRE</code> <b>e</b> <code>Balanço</code> em branco. Não aparecem em nenhum dos três demonstrativos; nenhum filtro necessário</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="publicacao">
+  <h2><span class="num">07</span>Regra de publicação</h2>
+  <div class="h2-rule"></div>
+
+  <div class="callout crit">
+    <div class="lead">Regra do projeto</div>
+    <p><b>Quem publica é o usuário. Ninguém mais publica nada, em nenhuma hipótese.</b> Vale para o modelo semântico, para o relatório, para qualquer artefato no workspace <code>6142a272-…</code> e para qualquer destino externo.</p>
+  </div>
+
+  <p>A regra existe porque o dataset <code>7f8dbbc0-…</code> está em produção: os vinte painéis HTML de <code>Dashboard financeiro/build/</code> e as ferramentas MCP do projeto leem dele. Publicar é sobrescrever produção — e o <code>Connections</code> deste arquivo grava <code>DatasetId</code> <b>e</b> <code>ReportId</code>, o que significa que o Desktop vai propor exatamente essa substituição, com um clique e sem atrito.</p>
+
+  <h3>Como o trabalho é entregue</h3>
+  <ol class="steps">
+    <li>O <code>.pbix</code> alterado fica na pasta de trabalho, salvo em disco.</li>
+    <li>O que precisa de ação no serviço é <b>descrito</b> — passo a passo, com o destino nomeado — e não executado.</li>
+    <li>Você abre, confere e publica.</li>
+  </ol>
+
+  <div class="callout warn">
+    <div class="lead">Duas cautelas para a hora em que você publicar</div>
+    <p><b>Credencial.</b> O arquivo veio do serviço sem credencial da fonte. A primeira atualização no Desktop vai pedir de novo — se a origem dos dados não estiver documentada, esse é o ponto onde tudo trava. Vale descobrir antes de investir dias no DAX.</p>
+    <p><b>Retrato de 02/09.</b> O arquivo é uma cópia daquela data. Se o modelo mudou no serviço desde então, republicar reverte a mudança. Publicar primeiro num workspace de teste, rodar a bateria da §11 do plano lá, e só depois promover.</p>
+  </div>
+</section>
+
+<section id="conferencias">
+  <h2><span class="num">08</span>Conferências antes de escrever medida</h2>
+  <div class="h2-rule"></div>
+
+  <p>Quatro consultas contra o modelo aberto no Desktop. Evitam a falha silenciosa que o plano descreve: <em>“qualquer diferença de acentuação ou espaço faz a linha somar zero silenciosamente”</em>.</p>
+
+  <div class="callout good">
+    <div class="lead">Executadas em 09/09/2026 — resultado</div>
+    <p>Todas as quatro rodaram contra o modelo aberto. <b>DRE:</b> 35 categorias, casamento exato com a estrutura. <b>Balanço:</b> 53 com movimento contra 54 previstas, falta apenas <code>Reservas de Capital</code>. <b>PERIODO:</b> 33 valores, todos <code>MM/AAAA</code>. <b>Compatibilidade:</b> 1600.</p>
+    <p>Além delas, a lógica dos seis subtotais da DRE foi conferida contra os números de aceite da §11 do plano, em ROYAL e KOBE, T2/2026, visão gerencial: <b>as doze linhas batem</b>, com diferença na ordem de 10⁻⁸ — ruído de ponto flutuante, não divergência contábil.</p>
+    <p>A conferência foi repetida depois da fase 2, desta vez recortando o período <b>só pela <code>dCalendario</code></b>, sem tocar em <code>PERIODO</code>. As doze linhas batem de novo — o relacionamento por data e a ancoragem em <code>DataRef</code> estão corretos de ponta a ponta.</p>
+    <p>O mesmo foi feito para o Balanço antes de escrever as medidas: ROYAL, posição de 06/2026, regra cumulativa desde 01/2024. Disponibilidades, Total do Ativo Circulante, Total do Ativo, Total do Passivo Circulante e Total do Patrimônio Líquido batem, e o <b>CHECK fecha em zero</b> — 06/2026 é fechamento de trimestre, que é quando ele deve fechar.</p>
+  </div>
+
+  <p>O utilitário <code>consulta_dax.ps1</code>, na pasta das ferramentas, executa qualquer consulta DAX contra o modelo aberto e devolve CSV — somente leitura. Serve para repetir estas conferências a cada mudança de base.</p>
+
+  <div class="callout warn">
+    <div class="lead">Ao montar as matrizes: a medida entra primeiro</div>
+    <p>As três dimensões de estrutura — <code>dDRE</code>, <code>dBalanco</code>, <code>dFluxo</code> — são desconectadas de propósito. Se o visual receber as linhas e as colunas antes da medida, o Power BI para com <em>“não é possível determinar os relacionamentos entre os campos”</em> (<code>InvalidUnconstrainedJoin</code>): ele vê duas tabelas sem caminho entre si. Quem as liga é a medida — o <code>SWITCH</code> lê a dimensão e o <code>CALCULATE</code> filtra <code>lancamentos</code>, que está ligada à <code>dCalendario</code>.</p>
+    <p>Ordem que funciona: <b>medida em Valores</b>, depois as linhas, depois as colunas. Não é defeito do modelo.</p>
+  </div>
+
+  <h3>1 · O inventário das categorias</h3>
+  <p>Resolveu o 35 contra 34: devolveu <b>35 categorias</b>, todas presentes na estrutura e com grafia idêntica. Repetir a cada mudança de base — categoria nova aparece aqui antes de aparecer em qualquer relatório.</p>
+  <div class="code-label">DAX Studio</div>
+  <pre><code>EVALUATE
+SUMMARIZECOLUMNS(
+    'lancamentos'[DRE],
+    "Categoria", TRIM(MAX('lancamentos'[DRE])),
+    "Linhas",    COUNTROWS('lancamentos'),
+    "Valor",     SUM('lancamentos'[VALOR_AJUSTADO])
+)
+ORDER BY [Categoria]</code></pre>
+  <p>Repita trocando <code>[DRE]</code> por <code>[Balanço]</code>. Guarde as duas saídas: são o gabarito contra o qual a <code>dDRE</code> e a <code>dBalanco</code> serão conferidas.</p>
+
+  <h3>2 · Estrutura contra base, nos dois sentidos</h3>
+  <p>Rodar assim que a <code>dDRE</code> existir. Se devolver linha, há categoria fora de lugar — e o subtotal correspondente está errado neste exato momento.</p>
+  <div class="code-label">DAX Studio</div>
+  <pre><code>DEFINE
+    VAR _Base =
+        DISTINCT(
+            SELECTCOLUMNS('lancamentos', "Cat", TRIM('lancamentos'[DRE]))
+        )
+    VAR _Estrutura =
+        DISTINCT(
+            SELECTCOLUMNS(
+                FILTER(dDRE, dDRE[Tipo] = "DETALHE"),
+                "Cat", TRIM(dDRE[CategoriaDRE])
+            )
+        )
+EVALUATE
+UNION(
+    ADDCOLUMNS(EXCEPT(_Base, _Estrutura), "Situacao", "Na base, fora da dDRE"),
+    ADDCOLUMNS(EXCEPT(_Estrutura, _Base), "Situacao", "Na dDRE, sem movimento na base")
+)</code></pre>
+
+  <h3>3 · Chaves de período</h3>
+  <p>Confirma que a <code>ChavePeriodo</code> cobre tudo, inclusive as 564 linhas de abertura, e que nenhuma virou erro. Rodada em 09/09/2026: 33 períodos, 33 chaves, <b>zero em branco</b>, de 202401 a 202609.</p>
+  <div class="code-label">DAX Studio</div>
+  <pre><code>EVALUATE
+ROW(
+    "Periodos distintos", DISTINCTCOUNT('lancamentos'[PERIODO]),
+    "Chaves distintas",   DISTINCTCOUNT('lancamentos'[ChavePeriodo]),
+    "Chaves em branco",   CALCULATE(
+                              COUNTROWS('lancamentos'),
+                              ISBLANK('lancamentos'[ChavePeriodo])
+                          ),
+    "Chave minima",       MIN('lancamentos'[ChavePeriodo]),
+    "Chave maxima",       MAX('lancamentos'[ChavePeriodo])
+)</code></pre>
+  <p><b>“Chaves em branco” tem que ser zero.</b> Qualquer valor acima disso é lançamento que sumiu do relatório sem aviso.</p>
+
+  <h3>8 · A bateria de aceite — resultado</h3>
+  <p>Executada em 09/09/2026 contra o modelo com as sete fases aplicadas: 127 medidas, seis tabelas, o grupo de cálculo no lugar. Depois de corrigidos os formatos e o sinal da DRE, o resultado final é <b>28 passaram, 2 falharam</b> — e as duas que restam são o CHECK do Fluxo, que depende de conciliação contábil, não de DAX.</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Teste</th><th>Resultado</th></tr></thead>
+      <tbody>
+        <tr><td>Os 6 subtotais da DRE, ROYAL e KOBE, T2/2026</td><td><span class="chip chip-ok">12 de 12</span></td></tr>
+        <tr><td>Os três meses somam o trimestre</td><td><span class="chip chip-ok">passou</span></td></tr>
+        <tr><td>Soma das revendas da KOBE = total da marca</td><td><span class="chip chip-ok">266.456.928,52 dos dois lados</span></td></tr>
+        <tr><td>CHECK do Balanço fecha em 03/06/09/12</td><td><span class="chip chip-ok">16 de 16 fechamentos</span></td></tr>
+        <tr><td>Divergência esperada visível fora dos fechamentos</td><td><span class="chip chip-ok">32 de 32 meses</span></td></tr>
+        <tr><td>OMODA 2025 sem NaN nem Infinity</td><td><span class="chip chip-ok">tudo em branco</span></td></tr>
+        <tr><td>Guarda de revenda nos 11 indicadores mistos</td><td><span class="chip chip-ok">11 de 11</span></td></tr>
+        <tr><td>DRE muda com revenda; Balanço não muda</td><td><span class="chip chip-ok">passou</span></td></tr>
+        <tr><td>CHECK do Fluxo dentro de R$ 5,00</td><td><span class="chip chip-no">6 fechamentos fora</span></td></tr>
+        <tr><td>Toda medida numérica com formato</td><td><span class="chip chip-ok">127 de 127</span></td></tr>
+        <tr><td>Negativo com sinal de menos; zero como 0</td><td><span class="chip chip-ok">83 monetárias, 13 percentuais</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout good">
+    <div class="lead">Formato — resolvido, com convenção nova</div>
+    <p>A bateria achou 91 das 127 medidas sem formato. O <code>fase8_formatos.csx</code> aplicou as quatro famílias de uma vez, e a rodada seguinte fechou em 127 de 127.</p>
+    <p>A convenção adotada <b>não</b> é a do design system, por decisão do usuário em 09/09/2026: negativo com sinal de menos — <code>- 689.000</code> no valor, <code>-50,0%</code> no percentual — e zero exibido como <code>0</code>, não como travessão. O §2 e o §7 do design system pedem parênteses e travessão, e proíbem o sinal <code>-</code>. O desvio está registrado no cabeçalho do script, para não ser lido como descuido daqui a seis meses.</p>
+  </div>
+
+  <div class="callout crit">
+    <div class="lead">O CHECK do Fluxo — agora com o mapa completo</div>
+    <p>Varrendo todos os fechamentos de trimestre de 2024 a 2026: <b>ROYAL 4 fora de 28</b> (09/2024: −199,25 · 09/2025: <b>120.000,00</b> · 12/2025: 2.423.864,34 · 06/2026: 4.189,03) e <b>KOBE 2 fora de 28</b> (12/2025: −104.276,37 · 06/2026: 498,52). Vinte e dois de 28 fecham em cada empresa.</p>
+    <p>O <code>120.000,00</code> exato de 09/2025 é a melhor pista que apareceu: número redondo assim raramente vem de arredondamento — parece lançamento único. Começaria por ele.</p>
+  </div>
+
+  <p>Três verificações não são automatizáveis e ficam para a tela: conferir o total contra o painel HTML em três marcas e três períodos, ver se os quatro níveis de hierarquia se distinguem, e trocar a escala para Milhares para confirmar que o CHECK continua em R$ cheios.</p>
+
+  <h3>7 · O sinal das linhas de detalhe da DRE</h3>
+  <p>Levantado ao montar a fase 7, e muda o que aparece na tela em 24 das 35 linhas de detalhe. As fontes do projeto se contradizem:</p>
+  <ul>
+    <li>O <b>plano</b> (§06) manda multiplicar a linha de detalhe por <code>dDRE[Direcao]</code>, e o <code>dax_financeiro.py</code> confirma: custos são <b>exibidos positivos</b>. Foi assim que a fase 3 saiu.</li>
+    <li>O <b>design system</b> (§2) manda o contrário — <em>“linhas subtrativas saem entre parênteses”</em> —, e o Layout de exemplo de <code>estrutura_financeira_completa.md</code> §1 mostra <code>Custo de Veículos Novos … (4.200.000)</code>.</li>
+  </ul>
+  <p>O empate tem regra de desempate escrita, e ela é do design system: <em>“em conflito de exibição de sinal, o Layout de exemplo é a verdade final”</em>. A §7 do mesmo documento também proíbe o sinal <code>-</code> e manda usar parênteses.</p>
+
+  <div class="callout good">
+    <div class="lead">Aplicado em 09/09/2026 — e conferido</div>
+    <p><code>VALOR_AJUSTADO</code> já traz o custo negativo, e o formato <code>#.##0;- #.##0;0</code> renderiza <code>(4.200.000)</code> sozinho. <b>Os subtotais não mudam</b> — eles sempre somaram o valor bruto —, então os seis números de aceite da ROYAL continuam idênticos, e essa é a forma de conferir que a troca saiu certa. A medida corrigida está no item 1 de <code>fase7_medidas_apoio.dax</code>. A coluna <code>dDRE[Direcao]</code> passa a ser informativa — não apague.</p>
+    <p><b>Feito.</b> O multiplicador saiu, os custos passaram a sair com o sinal contábil, e a conferência que importa passou: os seis subtotais da ROYAL em T2/2026 continuam em 10.871.399,79 / 2.701.542,28 / 1.119.875,66 / 1.057.644,31 / 897.659,93 / 606.304,55.</p>
+  </div>
+
+  <h3>6 · A convenção dos indicadores</h3>
+  <p>Levantado ao construir a fase 6, e é uma decisão de negócio, não um detalhe técnico. As duas fontes do projeto discordam sobre o que entra no denominador:</p>
+  <ul>
+    <li>Os <b>painéis HTML</b> — o que a diretoria lê hoje — usam o <b>acumulado no ano</b> até o período (<code>curYtd.ebitda</code>, <code>curYtd.lucro</code>) no ROE, no ROA e nas razões contra EBITDA, sem anualizar.</li>
+    <li>O <code>powerbi/dax_kpis.py</code> usa o <b>EBITDA do próprio período</b>.</li>
+  </ul>
+  <p>Implementei como o painel, porque é o número já em uso. A troca, se a diretoria decidir o contrário, é mecânica: <code>[DRE EBITDA YTD]</code> vira <code>[DRE EBITDA]</code> em três medidas e <code>[DRE Lucro Liquido YTD]</code> vira <code>[DRE Lucro Liquido]</code> em duas. Nada mais muda.</p>
+
+  <h3>5 · O CHECK do Fluxo de Caixa</h3>
+  <p>Rodado em 09/09/2026 para ROYAL e KOBE, mês a mês, em oito posições cada. O CHECK fecha <b>exatamente em zero</b> em onze delas — inclusive vários fechamentos de trimestre —, o que confirma que o mecanismo está certo. As cinco que restam:</p>
+
+  <div class="tw">
+    <table class="t-tight">
+      <thead><tr><th>Empresa</th><th>Período</th><th class="num">CHECK (R$)</th></tr></thead>
+      <tbody>
+        <tr><td>ROYAL</td><td class="mono">09/2024</td><td class="num">(199,25)</td></tr>
+        <tr><td>ROYAL</td><td class="mono">12/2025</td><td class="num">2.423.864,34</td></tr>
+        <tr><td>ROYAL</td><td class="mono">06/2026</td><td class="num">4.189,03</td></tr>
+        <tr><td>KOBE</td><td class="mono">12/2025</td><td class="num">(104.276,37)</td></tr>
+        <tr><td>KOBE</td><td class="mono">06/2026</td><td class="num">498,52</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Três hipóteses já foram testadas e <b>descartadas</b>, para não serem refeitas:</p>
+  <ul>
+    <li><b>As contas de PL excluídas</b> — Reservas de Lucros, Reservas de Incentivos Fiscais e Prejuízos Acumulados. Elas se movem também nos meses em que o CHECK fecha em zero, logo não são a causa. A exclusão delas está correta.</li>
+    <li><b>Assimetria de NATUREZA na depreciação acumulada</b> — as linhas de imobilizado por NATUREZA capturam só parte do movimento. Mas esse movimento existe em todos os meses, inclusive nos que fecham.</li>
+    <li><b>Lançamentos EXTRA contaminando o patrimônio</b> — conferido: <b>nenhum</b> lançamento EXTRA tem a coluna <code>Balanço</code> preenchida. A premissa do recorte contábil está válida.</li>
+  </ul>
+
+  <div class="callout crit">
+    <div class="lead">O que fazer com a divergência</div>
+    <p><b>Nada de tampão.</b> A regra do projeto é explícita: o CHECK fica à mostra, nunca forçado a zero, nunca com linha de ajuste. As cinco divergências devem aparecer na tela como aparecem aqui, e serem conciliadas contra o painel HTML atual mês a mês — que é o gabarito. Dezembro concentra as duas maiores, o que aponta para a apuração de encerramento do exercício como suspeito principal.</p>
+  </div>
+
+  <h3>4 · Nível de compatibilidade</h3>
+  <p>Risco aberto da §12 do plano. Decide se o grupo de cálculo da escala R$ / R$ mil e o parâmetro de campo Mensal/Trimestral/Anual são viáveis, ou se precisam de plano B.</p>
+  <div class="code-label">DAX Studio — consulta DMV</div>
+  <pre><code>SELECT [CATALOG_NAME], [COMPATIBILITY_LEVEL]
+FROM $SYSTEM.DBSCHEMA_CATALOGS</code></pre>
+</section>
+
+<section id="roteiro">
+  <h2><span class="num">09</span>Roteiro ajustado</h2>
+  <div class="h2-rule"></div>
+
+  <p>O roteiro da §10 do plano permanece. A fase 1 encurta — a decisão de arquitetura já está tomada — e ganha uma etapa de conferência que antes estava diluída na fase 3.</p>
+
+  <div class="phase">
+    <div class="pnum">0</div>
+    <div>
+      <h3>Ferramentas <span class="chip chip-ok">feito</span></h3>
+      <p>Tabular Editor 2.28.0 e DAX Studio 3.6.1 instalados, verificados e registrados na faixa Ferramentas Externas do Desktop.</p>
+      <div class="est">concluído</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">1</div>
+    <div>
+      <h3>Abrir, credenciar, conferir <span class="chip chip-ok">feito</span></h3>
+      <p>Arquivo copiado para <code>RELATÓRIOS\DIRETORIA</code> e aberto, tabelas de origem ocultas, as quatro conferências da §08 executadas. Compatibilidade 1600, categorias casadas, formato de período uniforme.</p>
+      <div class="est">concluído em 09/09/2026</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">2</div>
+    <div>
+      <h3>dCalendario e as colunas de período <span class="chip chip-ok">feito</span></h3>
+      <p>Colunas <code>ChavePeriodo</code> e <code>DataRef</code> criadas, calendário diário até 2030, relacionamento <code>lancamentos[DataRef] → dCalendario[Date]</code> ativo e único, tabela marcada como tabela de datas. Validado: 33 períodos, 33 chaves, 33 datas, <b>zero em branco</b>, 33 meses com movimento e nenhum mês órfão.</p>
+      <div class="est">concluído em 09/09/2026</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">3</div>
+    <div>
+      <h3>dDRE e a DRE completa <span class="chip chip-ok">feito</span></h3>
+      <p><code>dDRE</code> com as 51 linhas e as 18 medidas no modelo, com os formatos aplicados. Matriz montada com <code>dCalendario[AnoMes]</code> nas colunas. Conferida contra os números de aceite: os seis subtotais da ROYAL em T2/2026 batem, e os indicadores saem em 24,85% / 10,30% / 5,58%. Resta a hierarquia visual de formatação, que vai na fase 7.</p>
+      <div class="est">concluído em 09/09/2026</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">4</div>
+    <div>
+      <h3>dBalanco <span class="chip chip-ok">feito</span></h3>
+      <p>77 linhas no modelo e 20 medidas aplicadas. Conferido pelas medidas do próprio modelo, ROYAL em 06/2026: Disponibilidades 488.971,40 · Total do Ativo 17.318.258,81 · Total do Passivo Circulante 14.645.211,01 · Total do PL 2.673.047,80, e o <b>CHECK fecha em zero</b>, selo OK. Junho é fechamento de trimestre, que é quando ele deve fechar.</p>
+      <div class="est">concluído em 09/09/2026</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">5</div>
+    <div>
+      <h3>dFluxo <span class="chip chip-accent">gerada, falta conciliar</span></h3>
+      <p>48 linhas na tabela — as 35 numeradas do documento normativo mais 7 subtotais, 4 cabeçalhos e 2 linhas de CHECK. 25 medidas em <code>fase5_medidas_fluxo.dax</code>, cobrindo todas as linhas.</p>
+      <p>A implementação segue o <code>dax_financeiro.py</code>, e com ela o <b>CHECK fecha exatamente em zero em 11 dos 16</b> pares empresa-mês testados. Restam 5 divergências, listadas na §10 — conciliar contra o painel HTML é o trabalho que falta.</p>
+      <div class="est">≈ 1 a 2 dias de conciliação</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">6</div>
+    <div>
+      <h3>Os 28 indicadores <span class="chip chip-accent">gerada</span></h3>
+      <p>Os 28 em <code>fase6_medidas_indicadores.dax</code>, mais 16 medidas de componente (magnitudes de custo, posições do Balanço, dívida financeira, acumulado no ano). <b>11 carregam a guarda de revenda</b> — ROE, ROA, as três razões contra EBITDA, os três giros, PMR, PMP e Ciclo devolvem branco quando há filtro de loja ativo.</p>
+      <p>Todo denominador usa <code>DIVIDE()</code>. O caso de borda da bateria de aceite foi verificado: <b>OMODA não tem nenhuma linha em 2025</b> — a empresa sequer aparece na consulta. Como <code>DIVIDE()</code> devolve branco com denominador zero ou vazio, o resultado é travessão na tela, nunca NaN nem Infinity.</p>
+      <div class="est">≈ meio dia para aplicar</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">7</div>
+    <div>
+      <h3>Tema, formatação e páginas <span class="chip chip-accent">gerada</span></h3>
+      <p>Quatro entregáveis: <code>fase7_tema.json</code> (paleta do §5 do design system, só os nove tokens), <code>fase7_grupo_calculo_escala.csx</code> (script do Tabular Editor que cria a escala R$ / R$ mil, com CHECK e indicadores fora dela), <code>fase7_medidas_apoio.dax</code> (cores da hierarquia, selos de CHECK, títulos e os avisos de tela) e <code>fase7_paginas.md</code> (montagem das seis páginas, com checklist de entrega).</p>
+      <div class="est">≈ 1 dia para aplicar</div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="pnum">8</div>
+    <div>
+      <h3>Validação <span class="chip chip-ok">rodada</span></h3>
+      <p>A bateria virou script — <code>fase8_bateria_aceite.ps1</code> — e roda contra o modelo aberto, em modo somente leitura. Estado em 09/09/2026: <b>28 passaram, 2 falharam</b>, e as duas são o CHECK do Fluxo. Repita a cada atualização de base.</p>
+      <p>Entrega: o <code>.pbix</code> fica na pasta de trabalho. <b>A publicação é sua</b> (§07).</p>
+      <div class="est">rodada em 09/09/2026</div>
+    </div>
+  </div>
+
+  <p>Total aproximado: <b>10 a 15 dias úteis</b>. Uma versão só com a DRE, entregável e útil, sai em 3 a 4 dias — vale entregar assim e iterar.</p>
+</section>
+
+<section id="pendencias">
+  <h2><span class="num">10</span>Pendências</h2>
+  <div class="h2-rule"></div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Item</th><th>Quem resolve</th><th>Quando</th></tr></thead>
+      <tbody>
+        <tr><td>Meses <code>08/2026</code> e <code>09/2026</code> parciais — como rotular na tela</td><td><code>[Rotulo Periodo Parcial]</code>, na fase 7</td><td><span class="chip chip-ok">resolvido</span></td></tr>
+        <tr><td>Sinal das linhas de detalhe da DRE</td><td>Multiplicador removido; subtotais conferidos</td><td><span class="chip chip-ok">resolvido</span></td></tr>
+        <tr><td>Períodos de 2027 a 2030 aparecem vazios em segmentações</td><td><code>[Periodo Tem Movimento]</code>, no filtro de nível de visual</td><td><span class="chip chip-ok">resolvido</span></td></tr>
+        <tr><td><b>CHECK do Fluxo: 6 fechamentos fora da tolerância em 56 testados</b> — começar pelo 120.000,00 exato de 09/2025</td><td>Conciliação contábil</td><td><span class="chip chip-warn">fase 5</span></td></tr>
+        <tr><td>Formato de todas as medidas</td><td><code>fase8_formatos.csx</code>, aplicado</td><td><span class="chip chip-ok">resolvido</span></td></tr>
+        <tr><td>A KOBE tem <b>12</b> revendas, não 10 como diz o plano, mais 143 linhas sem revenda atribuída</td><td>Confirmar se KOBE GV USADOS e KOBE VI USADOS são revendas ou reclassificação</td><td>fase 8</td></tr>
+        <tr><td>Dividendos ficam fora do subtotal da seção III, divergindo do documento normativo</td><td>Confirmar com a contabilidade</td><td>fase 5</td></tr>
+        <tr><td>Licença Pro/PPU e papel de Contributor no workspace</td><td>Você ou TI</td><td><span class="chip chip-warn">antes da fase 8</span></td></tr>
+        <tr><td>Conflito de paleta: cor por marca × paleta única do design system</td><td>Decisão de negócio</td><td>fase 7</td></tr>
+        <tr><td><b>As duas fontes do projeto discordam da convenção dos indicadores</b> — os painéis HTML usam o acumulado no ano; <code>dax_kpis.py</code> usa o período. Implementado como no painel</td><td>Confirmar com a diretoria</td><td><span class="chip chip-warn">fase 6</span></td></tr>
+        <tr><td>Arquivo com lançamento diário</td><td>Você</td><td><span class="chip chip-neutral">outro momento</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <p>Documento complementar a <em>projeto_powerbi_nativo.html</em>. Fatos do modelo lidos do pacote <code>lancamentos_contabeis.pbix</code> em 08/09/2026 e das fontes normativas <code>estrutura_financeira_completa.md</code> e <code>powerbi/dax_financeiro.py</code>. Em 09/09/2026 o modelo foi consultado ao vivo, em modo somente leitura, pelo AdomdClient do próprio Power BI Desktop: inventário das colunas <code>DRE</code>, <code>Balanço</code>, <code>PERIODO</code>, <code>TIPO_LANÇAMENTO</code> e <code>EMPRESA</code>, nível de compatibilidade, e conferência dos seis subtotais da DRE contra os números de aceite de ROYAL e KOBE. As contagens desta página são as do modelo, não as da documentação. Uso gerencial interno — não auditado.</p>
+</footer>
+
+</div>
+</main>
+</div>
+
+</body>
+</html>

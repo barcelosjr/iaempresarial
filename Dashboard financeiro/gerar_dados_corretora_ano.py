@@ -111,6 +111,32 @@ def _acumulado_uma_empresa(cliente, coluna: str, ate: int) -> dict[str, float]:
     return out
 
 
+def _dre_desc_uma_empresa(cliente, de: int, ate: int, mes_final: int) -> dict[str, dict[str, list[float]]]:
+    dfd = cliente.execute_dax(
+        f"EVALUATE\n"
+        f"VAR _P = ADDCOLUMNS('lancamentos', \"@E\", TRIM('lancamentos'[EMPRESA]), "
+        f"\"@C\", TRIM('lancamentos'[DRE]), \"@D\", TRIM('lancamentos'[DESCRICAO_CONTA]), "
+        f"\"@K\", {fin._expr_chave()})\n"
+        f"VAR _F = FILTER(_P, [@E] = \"{EMPRESA}\" && [@K] >= {de} && "
+        f"[@K] <= {ate} && [@C] <> \"\")\n"
+        'RETURN GROUPBY(_F, [@C], [@D], [@K], "@Valor", '
+        "SUMX(CURRENTGROUP(), 'lancamentos'[VALOR_AJUSTADO]))"
+    )
+    dre_desc: dict[str, dict[str, list[float]]] = {}
+    for _, r in dfd.iterrows():
+        conta = str(r["[@C]"]).strip()
+        chave = DRE_CHAVES.get(conta)
+        if chave is None:
+            continue
+        mes = int(r["[@K]"]) % 100
+        if not 1 <= mes <= mes_final:
+            continue
+        desc = str(r["[@D]"]).strip()
+        arr = dre_desc.setdefault(chave, {}).setdefault(desc, [0.0] * mes_final)
+        arr[mes - 1] += float(r["[@Valor]"] or 0)
+    return dre_desc
+
+
 def gerar(ano: int, mes_final: int) -> dict:
     cliente = PowerBIClient()
     ate_ano = ano * 100 + mes_final
@@ -188,28 +214,10 @@ def gerar(ano: int, mes_final: int) -> dict:
             saldo_ini += float(r["[@Valor]"] or 0)
 
     print("// Consultando drill-down DESCRICAO_CONTA…", file=sys.stderr)
-    dfd = cliente.execute_dax(
-        f"EVALUATE\n"
-        f"VAR _P = ADDCOLUMNS('lancamentos', \"@E\", TRIM('lancamentos'[EMPRESA]), "
-        f"\"@C\", TRIM('lancamentos'[DRE]), \"@D\", TRIM('lancamentos'[DESCRICAO_CONTA]), "
-        f"\"@K\", {fin._expr_chave()})\n"
-        f"VAR _F = FILTER(_P, [@E] = \"{EMPRESA}\" && [@K] >= {ano*100+1} && "
-        f"[@K] <= {ate_ano} && [@C] <> \"\")\n"
-        'RETURN GROUPBY(_F, [@C], [@D], [@K], "@Valor", '
-        "SUMX(CURRENTGROUP(), 'lancamentos'[VALOR_AJUSTADO]))"
-    )
-    dre_desc: dict[str, dict[str, list[float]]] = {}
-    for _, r in dfd.iterrows():
-        conta = str(r["[@C]"]).strip()
-        chave = DRE_CHAVES.get(conta)
-        if chave is None:
-            continue
-        mes = int(r["[@K]"]) % 100
-        if not 1 <= mes <= mes_final:
-            continue
-        desc = str(r["[@D]"]).strip()
-        arr = dre_desc.setdefault(chave, {}).setdefault(desc, [0.0] * mes_final)
-        arr[mes - 1] += float(r["[@Valor]"] or 0)
+    dre_desc = _dre_desc_uma_empresa(cliente, ano * 100 + 1, ate_ano, mes_final)
+
+    print("// Consultando drill-down DESCRICAO_CONTA do ano anterior (comparação)…", file=sys.stderr)
+    dre_desc_ant = _dre_desc_uma_empresa(cliente, (ano - 1) * 100 + 1, ate_ant, mes_final)
 
     return {
         "meses": mes_final,
@@ -222,6 +230,7 @@ def gerar(ano: int, mes_final: int) -> dict:
         "fcCont": fc_cont,
         "saldoIni": saldo_ini,
         "dreDesc": dre_desc,
+        "dreDescAnt": dre_desc_ant,
     }
 
 
@@ -293,6 +302,16 @@ def emitir(dados: dict) -> None:
         print(f"{ind}  {chave}: {{")
         descs = sorted(dados["dreDesc"][chave])
         linhas_desc = [f"'{d}':{_lista(dados['dreDesc'][chave][d])}" for d in descs]
+        print(",\n".join(f"{ind}    {it}" for it in linhas_desc))
+        print(f"{ind}  }}{',' if i < len(chaves)-1 else ''}")
+    print(f"{ind}}},")
+
+    print(f"{ind}dreDescAnt: {{")
+    chaves = sorted(dados["dreDescAnt"])
+    for i, chave in enumerate(chaves):
+        print(f"{ind}  {chave}: {{")
+        descs = sorted(dados["dreDescAnt"][chave])
+        linhas_desc = [f"'{d}':{_lista(dados['dreDescAnt'][chave][d])}" for d in descs]
         print(",\n".join(f"{ind}    {it}" for it in linhas_desc))
         print(f"{ind}  }}{',' if i < len(chaves)-1 else ''}")
     print(f"{ind}}}")

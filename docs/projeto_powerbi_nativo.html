@@ -1,0 +1,1024 @@
+<title>Blueprint Financeiro Power BI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    /* Paleta institucional herdada de design_system_relatorios.md §4.1 */
+    --grafite-900:#23272E; --grafite-700:#3D434C;
+    --cinza-500:#8A9099; --cinza-300:#D9DCE0; --cinza-100:#F4F5F7;
+    --azul-800:#1F4E79; --azul-100:#DCE6F1;
+    --verde:#1E7E34; --vermelho:#B02A37; --ambar:#8A6100;
+
+    --ground:#FBFBFC;           /* neutro com leve viés azul, não cinza puro */
+    --surface:#FFFFFF;
+    --surface-2:var(--cinza-100);
+    --ink:var(--grafite-900);
+    --ink-2:var(--grafite-700);
+    --ink-3:var(--cinza-500);
+    --rule:var(--cinza-300);
+    --rule-soft:#E9EBEE;
+    --accent:var(--azul-800);
+    --accent-soft:var(--azul-100);
+    --code-bg:#F6F7F9;
+    --code-ink:#1B2733;
+
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --sans:'IBM Plex Sans','Segoe UI',-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    --mono:'IBM Plex Mono','Consolas','SF Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#14171B; --surface:#1A1E24; --surface-2:#20252C;
+      --ink:#E8EAED; --ink-2:#C2C7CE; --ink-3:#8E959E;
+      --rule:#2E343C; --rule-soft:#252A31;
+      --accent:#7FB0DC; --accent-soft:#1E2C3A;
+      --code-bg:#1B2027; --code-ink:#DDE3EA;
+      --verde:#5FB775; --vermelho:#E0707C; --ambar:#D6A64B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#14171B; --surface:#1A1E24; --surface-2:#20252C;
+    --ink:#E8EAED; --ink-2:#C2C7CE; --ink-3:#8E959E;
+    --rule:#2E343C; --rule-soft:#252A31;
+    --accent:#7FB0DC; --accent-soft:#1E2C3A;
+    --code-bg:#1B2027; --code-ink:#DDE3EA;
+    --verde:#5FB775; --vermelho:#E0707C; --ambar:#D6A64B;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Estrutura ---------- */
+  .wrap{display:grid;grid-template-columns:1fr;max-width:1400px;margin:0 auto}
+  @media (min-width:1080px){
+    .wrap{grid-template-columns:250px minmax(0,1fr);gap:48px;padding-right:32px}
+  }
+
+  /* ---------- Sumário ---------- */
+  .toc{display:none}
+  @media (min-width:1080px){
+    .toc{
+      display:block;position:sticky;top:0;align-self:start;
+      max-height:100vh;overflow-y:auto;padding:40px 0 40px 32px;
+      border-right:1px solid var(--rule-soft);
+    }
+  }
+  .toc-eyebrow{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--ink-3);font-weight:600;margin-bottom:14px;
+  }
+  .toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+  .toc a{
+    display:flex;gap:9px;padding:5px 10px 5px 0;
+    color:var(--ink-2);text-decoration:none;font-size:13px;line-height:1.4;
+    border-left:2px solid transparent;padding-left:10px;
+  }
+  .toc a:hover{color:var(--accent);border-left-color:var(--rule)}
+  .toc a .n{color:var(--ink-3);font-family:var(--mono);font-size:11px;flex:0 0 16px;padding-top:1px}
+  .toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+  /* ---------- Coluna principal ---------- */
+  main{padding:40px 24px 96px;min-width:0}
+  @media (min-width:1080px){ main{padding:56px 0 120px} }
+  .prose{max-width:70ch}
+
+  /* ---------- Cabeçalho ---------- */
+  .doc-head{border-bottom:2px solid var(--accent);padding-bottom:26px;margin-bottom:14px}
+  .emissor{
+    font-size:11px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--accent);font-weight:600;margin-bottom:14px;
+  }
+  h1{
+    font-family:var(--serif);font-weight:500;font-size:clamp(30px,4.4vw,46px);
+    line-height:1.12;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance;
+  }
+  .standfirst{font-size:17px;line-height:1.6;color:var(--ink-2);max-width:62ch;margin:0}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:6px 22px;margin:26px 0 44px;
+    font-size:12.5px;color:var(--ink-3);
+  }
+  .meta b{color:var(--ink-2);font-weight:500}
+
+  /* ---------- Seções ---------- */
+  section{margin-bottom:56px;scroll-margin-top:24px}
+  h2{
+    font-family:var(--serif);font-weight:500;font-size:27px;line-height:1.2;
+    letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;
+    display:flex;align-items:baseline;gap:12px;
+  }
+  h2 .num{
+    font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);
+    flex:0 0 auto;padding-top:2px;
+  }
+  .h2-rule{height:1px;background:var(--rule);margin:14px 0 24px}
+  h3{
+    font-family:var(--sans);font-weight:600;font-size:15.5px;letter-spacing:-.005em;
+    margin:34px 0 10px;color:var(--ink);
+  }
+  h4{
+    font-family:var(--sans);font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-3);margin:26px 0 8px;
+  }
+  p{margin:0 0 15px;max-width:70ch}
+  ul,ol.steps{margin:0 0 15px;padding-left:20px;max-width:70ch}
+  li{margin-bottom:7px}
+  a{color:var(--accent);text-underline-offset:2px}
+  strong{font-weight:600}
+  code{
+    font-family:var(--mono);font-size:.875em;background:var(--code-bg);
+    padding:1px 5px;border-radius:3px;color:var(--code-ink);
+    border:1px solid var(--rule-soft);
+  }
+
+  /* ---------- Blocos de código ---------- */
+  pre{
+    background:var(--code-bg);border:1px solid var(--rule-soft);border-left:3px solid var(--accent);
+    border-radius:4px;padding:16px 18px;overflow-x:auto;margin:0 0 18px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--code-ink);
+  }
+  pre code{background:none;border:0;padding:0;font-size:inherit}
+  .code-label{
+    font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-3);margin-bottom:5px;
+  }
+
+  /* ---------- Tabelas ---------- */
+  .tw{overflow-x:auto;margin:0 0 20px;border:1px solid var(--rule-soft);border-radius:4px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+  th{
+    text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--rule);
+    background:var(--surface-2);white-space:nowrap;
+  }
+  td{padding:9px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top;line-height:1.5}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.mono{font-family:var(--mono);font-size:12px}
+  .t-tight td,.t-tight th{padding-top:6px;padding-bottom:6px}
+
+  /* ---------- Chips ---------- */
+  .chip{
+    display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+    padding:2px 7px;border-radius:3px;white-space:nowrap;text-transform:uppercase;
+  }
+  .chip-ok{background:rgba(30,126,52,.12);color:var(--verde)}
+  .chip-no{background:rgba(176,42,55,.12);color:var(--vermelho)}
+  .chip-warn{background:rgba(138,97,0,.13);color:var(--ambar)}
+  .chip-neutral{background:var(--surface-2);color:var(--ink-3)}
+  .chip-accent{background:var(--accent-soft);color:var(--accent)}
+
+  /* ---------- Callouts ---------- */
+  .callout{
+    border:1px solid var(--rule);border-left:3px solid var(--ink-3);
+    background:var(--surface);border-radius:4px;padding:16px 18px;margin:0 0 20px;max-width:72ch;
+  }
+  .callout p:last-child{margin-bottom:0}
+  .callout .lead{
+    font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+    margin-bottom:7px;color:var(--ink-3);
+  }
+  .callout.crit{border-left-color:var(--vermelho)}
+  .callout.crit .lead{color:var(--vermelho)}
+  .callout.warn{border-left-color:var(--ambar)}
+  .callout.warn .lead{color:var(--ambar)}
+  .callout.good{border-left-color:var(--verde)}
+  .callout.good .lead{color:var(--verde)}
+  .callout.info{border-left-color:var(--accent)}
+  .callout.info .lead{color:var(--accent)}
+
+  /* ---------- Cartões de rota ---------- */
+  .routes{display:grid;gap:16px;margin:0 0 22px}
+  @media (min-width:720px){ .routes{grid-template-columns:1fr 1fr} }
+  .route{border:1px solid var(--rule);border-radius:5px;padding:20px;background:var(--surface)}
+  .route.pick{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+  .route h3{margin:0 0 4px;font-size:16px}
+  .route .sub{font-size:12px;color:var(--ink-3);margin:0 0 14px;font-family:var(--mono)}
+  .route ul{padding-left:17px;margin:0;font-size:13.5px}
+  .route li{margin-bottom:5px}
+
+  /* ---------- Fases ---------- */
+  .phase{
+    display:grid;grid-template-columns:auto 1fr;gap:0 18px;
+    padding:16px 0;border-bottom:1px solid var(--rule-soft);
+  }
+  .phase:last-child{border-bottom:0}
+  .phase .pnum{
+    font-family:var(--mono);font-size:12px;font-weight:500;color:var(--surface);
+    background:var(--accent);width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .phase h3{margin:2px 0 4px;font-size:15px}
+  .phase p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2)}
+  .phase .est{font-size:11.5px;color:var(--ink-3);font-family:var(--mono)}
+
+  /* ---------- Swatches ---------- */
+  .swatches{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}
+  .sw{display:flex;align-items:center;gap:8px;font-size:11.5px;font-family:var(--mono);color:var(--ink-2)}
+  .sw i{width:20px;height:20px;border-radius:3px;border:1px solid var(--rule);display:block}
+
+  footer{
+    border-top:1px solid var(--rule);margin-top:20px;padding-top:20px;
+    font-size:12px;color:var(--ink-3);max-width:70ch;
+  }
+  ::selection{background:var(--accent-soft);color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Sumário">
+  <div class="toc-eyebrow">Sumário</div>
+  <ol>
+    <li><a href="#rota"><span class="n">01</span><span>Decisão de rota</span></a></li>
+    <li><a href="#instalar"><span class="n">02</span><span>Instalação</span></a></li>
+    <li><a href="#acesso"><span class="n">03</span><span>O obstáculo do acesso</span></a></li>
+    <li><a href="#modelo"><span class="n">04</span><span>O modelo como está</span></a></li>
+    <li><a href="#construir"><span class="n">05</span><span>Tabelas de estrutura</span></a></li>
+    <li><a href="#dax"><span class="n">06</span><span>As medidas DAX</span></a></li>
+    <li><a href="#kpis"><span class="n">07</span><span>Os 28 indicadores</span></a></li>
+    <li><a href="#visual"><span class="n">08</span><span>Especificação visual</span></a></li>
+    <li><a href="#invioláveis"><span class="n">09</span><span>Regras invioláveis</span></a></li>
+    <li><a href="#roteiro"><span class="n">10</span><span>Roteiro por fases</span></a></li>
+    <li><a href="#validacao"><span class="n">11</span><span>Validação</span></a></li>
+    <li><a href="#riscos"><span class="n">12</span><span>Riscos em aberto</span></a></li>
+    <li><a href="#retomar"><span class="n">13</span><span>Retomar em outra sessão</span></a></li>
+  </ol>
+</nav>
+
+<main>
+  <header class="doc-head">
+    <div class="emissor">Grupo Mult · Controladoria</div>
+    <h1>Reconstrução dos painéis financeiros nativamente no Power BI</h1>
+    <p class="standfirst">Plano de execução para levar a DRE, o Balanço Patrimonial e o Fluxo de Caixa — hoje painéis HTML gerados por script — para dentro do Power BI, como relatório nativo sobre o modelo semântico já publicado.</p>
+  </header>
+
+  <div class="meta">
+    <span><b>Escopo</b> 9 painéis por marca + consolidado + planilha tabular</span>
+    <span><b>Modelo</b> <code>lancamentos</code></span>
+    <span><b>Base</b> 01/2024 – 09/2026</span>
+    <span><b>Levantamento</b> 08/09/2026</span>
+  </div>
+
+  <!-- ============ 01 ============ -->
+  <section id="rota">
+    <h2><span class="num">01</span>Decisão de rota</h2>
+    <div class="h2-rule"></div>
+
+    <p>As duas rotas não competem — elas atendem consumidores diferentes. A recomendação é fazer o <strong>.pbix primeiro</strong> e tratar o Report Builder como uma segunda entrega, só se houver demanda por PDF formal mensal.</p>
+
+    <div class="routes">
+      <div class="route pick">
+        <h3>Power BI Desktop (.pbix)</h3>
+        <p class="sub">recomendado — rota principal</p>
+        <ul>
+          <li>Matriz interativa, expandir/recolher, segmentações de Empresa, Revenda, Ano e Período</li>
+          <li>Substitui os 9 painéis por <strong>um</strong> relatório com filtro de marca</li>
+          <li>Licença Pro basta para publicar em workspace</li>
+          <li>É onde os KPIs, gráficos de evolução e cartões fazem sentido</li>
+          <li class="chip chip-no" style="margin-top:8px">não dá controle milimétrico de página impressa</li>
+        </ul>
+      </div>
+      <div class="route">
+        <h3>Report Builder (.rdl)</h3>
+        <p class="sub">segunda entrega — só para PDF formal</p>
+        <ul>
+          <li>Controle de layout ponto a ponto: é o produto feito para demonstrativo contábil impresso</li>
+          <li>Cabeçalho e rodapé repetidos, quebra de página controlada, paginação — atende <code>design_system_relatorios.md</code> §4 ao pé da letra</li>
+          <li>Exportação para PDF/Excel nativa e fiel</li>
+          <li class="chip chip-warn" style="margin-top:8px">exige PPU ou capacidade Fabric/Premium para publicar no serviço</li>
+          <li class="chip chip-no">sem interatividade rica; filtro vira parâmetro</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="lead">O que se ganha e o que se perde</div>
+      <p><strong>Ganha:</strong> fonte única de verdade. Hoje a estrutura da DRE está escrita <em>três</em> vezes — no DAX de <code>powerbi/dax_financeiro.py</code>, no JS dos painéis e no JS da planilha. No Power BI ela vira uma tabela de dimensão e um conjunto de medidas, e todo consumidor lê do mesmo lugar. Ganha também atualização automática, segurança por workspace e RLS por empresa, se quiserem.</p>
+      <p><strong>Perde:</strong> a seleção de células com soma e média da planilha tabular (é recurso de Excel, não existe em Power BI) e o bloqueio efetivo de exportação — no Power BI, quem tem permissão de leitura no modelo sempre consegue extrair.</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section id="instalar">
+    <h2><span class="num">02</span>Instalação e configuração</h2>
+    <div class="h2-rule"></div>
+
+    <h3>Softwares</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Ferramenta</th><th>Para quê</th><th>Como obter</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Power BI Desktop</strong></td><td>Construir o relatório. Obrigatório.</td><td>Microsoft Store (atualiza sozinho) ou instalador MSI em <code>aka.ms/pbidesktopstore</code>. Use 64-bit.</td></tr>
+          <tr><td><strong>Tabular Editor 2</strong></td><td>Criar grupos de cálculo e editar medidas em massa. Gratuito e open-source. Praticamente obrigatório para o item de escala R$/R$ mil.</td><td><code>github.com/TabularEditor/TabularEditor</code> → release mais recente. Aparece na aba <em>Ferramentas Externas</em> do Desktop.</td></tr>
+          <tr><td><strong>DAX Studio</strong></td><td>Testar medidas isoladamente, medir performance, inspecionar o modelo. Fortemente recomendado.</td><td><code>daxstudio.org</code></td></tr>
+          <tr><td><strong>Report Builder</strong></td><td>Só se a rota .rdl for adiante.</td><td><code>aka.ms/pbireportbuilder</code></td></tr>
+          <tr><td>ALM Toolkit</td><td>Comparar/mesclar versões do modelo. Opcional, útil quando houver mais de uma pessoa mexendo.</td><td><code>alm-toolkit.com</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Contas e permissões</h3>
+    <p>Antes de abrir o Desktop, confirme cada item — a falta de qualquer um aparece só lá na frente, como erro genérico:</p>
+    <ol class="steps">
+      <li>Conta Microsoft com <strong>licença Power BI Pro</strong> (ou PPU). Conta gratuita não publica em workspace compartilhado.</li>
+      <li>Permissão <strong>Build</strong> sobre o modelo semântico. Sem ela o Desktop lista o dataset mas não conecta.</li>
+      <li>Papel de <strong>Contributor</strong> ou <strong>Member</strong> no workspace de destino, para publicar.</li>
+      <li>Se for usar modelo composto (§03): a configuração de locatário <em>"Permitir conexões DirectQuery com modelos semânticos do Power BI"</em> precisa estar habilitada, e o dataset precisa permitir. Isso é ajuste de administrador — peça antes de começar.</li>
+      <li>Para .rdl no serviço: <strong>PPU</strong> na sua conta ou o workspace em <strong>capacidade Fabric/Premium</strong>.</li>
+    </ol>
+
+    <h3>Coordenadas do modelo</h3>
+    <div class="tw">
+      <table class="t-tight">
+        <tbody>
+          <tr><td>Workspace ID</td><td class="mono">6142a272-21e4-4713-b05e-4cdba12e072b</td></tr>
+          <tr><td>Dataset ID (modelo contábil, o dos painéis)</td><td class="mono">7f8dbbc0-9cb6-4ff7-bb58-60fc4dcb8458</td></tr>
+          <tr><td>Dataset ID (<code>controlador</code>, caixa — fora do escopo)</td><td class="mono">8ad7a5d3-5bda-4f41-b4ed-47a3b8bc4aaa</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>No Desktop: <strong>Obter dados → Modelos semânticos do Power BI</strong> → escolha o workspace acima. Não use "SQL Server Analysis Services" nem conector genérico.</p>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section id="acesso">
+    <h2><span class="num">03</span>O obstáculo do acesso — decida isto antes de tudo</h2>
+    <div class="h2-rule"></div>
+
+    <p>Este é o ponto que define o resto do projeto, e é onde a maioria das migrações trava. A estrutura da DRE precisa de <strong>tabelas novas</strong> (a lista ordenada de linhas). E uma conexão dinâmica comum não deixa você criar tabela nenhuma.</p>
+
+    <div class="callout crit">
+      <div class="lead">A limitação</div>
+      <p>Conectado ao modelo semântico publicado por <em>Live Connection</em>, o Power BI Desktop permite <strong>criar medidas no relatório</strong>, mas <strong>não permite</strong> criar tabelas, colunas calculadas ou relacionamentos. Sem tabela de estrutura não há matriz de DRE com subtotais na ordem certa.</p>
+    </div>
+
+    <h3>As três saídas, em ordem de preferência</h3>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Saída</th><th>Como</th><th>Custo / risco</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>A. Levar a estrutura para dentro do modelo semântico</strong> <span class="chip chip-ok">recomendado</span></td>
+            <td>Adicionar <code>dDRE</code>, <code>dBalanco</code>, <code>dFluxo</code>, <code>dCalendario</code> e as medidas no próprio modelo publicado — pelo .pbix de origem, se existir, ou por <em>Editar modelo de dados</em> no serviço.</td>
+            <td>Exige quem tem a posse do modelo. Em troca, <strong>todo</strong> consumidor passa a enxergar as medidas: o relatório novo, o Excel, e as ferramentas MCP deste projeto, que hoje reescrevem a DRE em DAX cru.</td>
+          </tr>
+          <tr>
+            <td><strong>B. Modelo composto</strong></td>
+            <td>Conectar e clicar em <em>Fazer alterações neste modelo</em>. O Desktop passa a DirectQuery e libera tabelas locais.</td>
+            <td>Depende da configuração de locatário. A estrutura fica presa a <em>este</em> .pbix — outro relatório não herda. Performance cai um pouco.</td>
+          </tr>
+          <tr>
+            <td><strong>C. Importar os dados</strong></td>
+            <td>Trazer <code>lancamentos</code> por importação, com modelo próprio.</td>
+            <td><span class="chip chip-no">evitar</span> Cria uma segunda verdade que vai divergir do modelo oficial. Só se as saídas A e B forem bloqueadas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="lead">Por que a saída A vale o incômodo</div>
+      <p>Hoje o subtotal de EBITDA existe em três implementações independentes. Se alguém acrescentar uma categoria à coluna <code>DRE</code>, as três precisam ser atualizadas à mão, e nada avisa quando uma fica para trás. Colocando a estrutura no modelo, acrescentar uma linha vira acrescentar uma <em>linha de tabela</em> — e todos os relatórios se corrigem juntos.</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section id="modelo">
+    <h2><span class="num">04</span>O modelo como está hoje</h2>
+    <div class="h2-rule"></div>
+
+    <p>Levantado ao vivo em 08/09/2026. Uma única tabela de fatos, sem dimensões e sem tabela de datas.</p>
+
+    <h3>Tabela <code>lancamentos</code> — 15 colunas</h3>
+    <div class="tw">
+      <table class="t-tight">
+        <thead><tr><th>Coluna</th><th>Conteúdo</th><th class="num">Distintos</th><th>Papel na reconstrução</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">EMPRESA</td><td>KOBE, ROYAL, MIT, MEGA STORE, MULT BOATS, OMODA, MULT SOLUÇÕES, CORRETORA, RENAULT, <span class="chip chip-warn">7.11</span> <span class="chip chip-warn">7.12</span></td><td class="num">11</td><td>Segmentação principal</td></tr>
+          <tr><td class="mono">REVENDA</td><td>KOBE GV, KOBE SH, … ROYAL ENFIELD VI, MIT VITÓRIA, MULT CORRETORA…</td><td class="num">25</td><td>Segmentação de loja — <strong>vale para todas as marcas</strong>, não só KOBE</td></tr>
+          <tr><td class="mono">PERIODO</td><td>Texto <code>"MM/AAAA"</code>. 202401 a 202609.</td><td class="num">33</td><td>Ver alerta abaixo</td></tr>
+          <tr><td class="mono">DRE</td><td>Categoria da linha da DRE</td><td class="num">35</td><td>Chave da <code>dDRE</code></td></tr>
+          <tr><td class="mono">Balanço</td><td>Categoria da linha do Balanço</td><td class="num">53</td><td>Chave da <code>dBalanco</code></td></tr>
+          <tr><td class="mono">VALOR_AJUSTADO</td><td>Valor com sinal econômico já aplicado</td><td class="num">—</td><td><strong>É esta a coluna somada</strong>, nunca <code>VALOR</code></td></tr>
+          <tr><td class="mono">TIPO_LANÇAMENTO</td><td><code>CONTÁBIL</code>, <code>EXTRA</code>, <code>None</code></td><td class="num">3</td><td>Visão gerencial × contábil</td></tr>
+          <tr><td class="mono">NATUREZA</td><td><code>D</code> / <code>C</code></td><td class="num">2</td><td>Linhas de imobilizado no Fluxo de Caixa</td></tr>
+          <tr><td class="mono">DESCRICAO_CONTA</td><td>Descrição contábil</td><td class="num">—</td><td>Drill-down da DRE</td></tr>
+          <tr><td class="mono">CONTA</td><td>Código contábil</td><td class="num">—</td><td>Auditoria</td></tr>
+          <tr><td class="mono">SEGMENTO</td><td>Veículos Novos, Usados, Peças, Oficina, Funilaria, Boutique, Administração…</td><td class="num">11</td><td>Análise por linha de negócio <span class="chip chip-accent">oportunidade nova</span></td></tr>
+          <tr><td class="mono">CENTRO_CUSTO</td><td>Código</td><td class="num">—</td><td>Não usado hoje</td></tr>
+          <tr><td class="mono">DESCRICAO_CC</td><td>Descrição do centro de custo</td><td class="num">—</td><td>Não usado hoje</td></tr>
+          <tr><td class="mono">HISTORICO_PADRAO</td><td>Código de histórico</td><td class="num">—</td><td>Não usado hoje</td></tr>
+          <tr><td class="mono">VALOR</td><td>Valor bruto</td><td class="num">—</td><td><span class="chip chip-no">não usar</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <div class="lead">O maior problema técnico do modelo</div>
+      <p><code>PERIODO</code> é <strong>texto</strong> no formato <code>"MM/AAAA"</code>, e não existe tabela de datas. Por isso todo o DAX atual carrega esta expressão para conseguir comparar períodos:</p>
+      <pre><code>VALUE(RIGHT('lancamentos'[PERIODO], 4)) * 100 + VALUE(LEFT('lancamentos'[PERIODO], 2))</code></pre>
+      <p>Isso é caro, impede inteligência de tempo nativa (<code>SAMEPERIODLASTYEAR</code>, <code>DATESYTD</code>, acumulados) e obriga a reescrever à mão toda comparação. <strong>Criar a <code>dCalendario</code> é a primeira tarefa do projeto</strong> — sem ela metade das medidas fica feia e lenta.</p>
+    </div>
+
+    <h3>O que ainda não existe no modelo</h3>
+    <ul>
+      <li>Tabela de datas — logo, nenhuma inteligência de tempo</li>
+      <li>Dimensões de estrutura para DRE, Balanço e Fluxo de Caixa</li>
+      <li>Medidas de demonstrativo. As funções <code>INFO.*</code> foram recusadas pelo modelo (nível de compatibilidade antigo), então confirme com o DAX Studio o que já existe de medida antes de criar duplicata.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section id="construir">
+    <h2><span class="num">05</span>As tabelas de estrutura</h2>
+    <div class="h2-rule"></div>
+
+    <p>Quatro tabelas novas. Três delas são <strong>desconectadas</strong> — sem relacionamento com <code>lancamentos</code>. Elas existem só para dar linhas à matriz; quem faz o cruzamento é o <code>SWITCH</code> da medida. Esse é o padrão consagrado de demonstrativo financeiro em DAX.</p>
+
+    <h3>dCalendario</h3>
+    <p>Conectada, esta sim. Como <code>lancamentos</code> não tem coluna de data, crie uma coluna de chave numérica dos dois lados e relacione por ela — não invente uma data fictícia de dia 1.</p>
+    <div class="code-label">Tabela calculada</div>
+    <pre><code>dCalendario =
+VAR _Chaves =
+    DISTINCT(
+        SELECTCOLUMNS(
+            'lancamentos',
+            "ChavePeriodo",
+                VALUE(RIGHT('lancamentos'[PERIODO],4)) * 100
+              + VALUE(LEFT('lancamentos'[PERIODO],2))
+        )
+    )
+RETURN
+ADDCOLUMNS(
+    _Chaves,
+    "Ano",        INT([ChavePeriodo] / 100),
+    "MesNum",     MOD([ChavePeriodo], 100),
+    "MesRotulo",  SWITCH(MOD([ChavePeriodo],100),
+                    1,"Jan",2,"Fev",3,"Mar",4,"Abr",5,"Mai",6,"Jun",
+                    7,"Jul",8,"Ago",9,"Set",10,"Out",11,"Nov",12,"Dez"),
+    "Trimestre",  "T" & ROUNDUP(MOD([ChavePeriodo],100) / 3, 0),
+    "AnoMes",     FORMAT(MOD([ChavePeriodo],100),"00") & "/" & INT([ChavePeriodo]/100),
+    "DataRef",    DATE(INT([ChavePeriodo]/100), MOD([ChavePeriodo],100), 1)
+)</code></pre>
+    <p>Em <code>lancamentos</code>, crie a coluna calculada <code>ChavePeriodo</code> com a mesma expressão e relacione <code>dCalendario[ChavePeriodo] → lancamentos[ChavePeriodo]</code>, um-para-muitos, filtro único. Marque a tabela como tabela de datas usando <code>DataRef</code>.</p>
+
+    <h3>dDRE — 51 linhas</h3>
+    <p>São <strong>35 linhas de detalhe</strong> (uma para cada valor distinto da coluna <code>DRE</code>, conferido ao vivo), <strong>6 subtotais</strong>, <strong>3 indicadores</strong> e <strong>7 cabeçalhos de bloco</strong>. Colunas da tabela:</p>
+    <div class="tw">
+      <table class="t-tight">
+        <thead><tr><th>Coluna</th><th>Tipo</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Ordem</td><td>Inteiro</td><td>Classificação da matriz. Use passo 10 (10, 20, 30…) para poder inserir linha depois sem renumerar tudo.</td></tr>
+          <tr><td class="mono">Bloco</td><td>Texto</td><td><code>1. RECEITA BRUTA DE VENDAS E SERVIÇOS</code> … <code>7. IMPOSTOS SOBRE O LUCRO</code></td></tr>
+          <tr><td class="mono">Linha</td><td>Texto</td><td>Rótulo exibido, exatamente como em <code>estrutura_financeira_completa.md</code></td></tr>
+          <tr><td class="mono">Tipo</td><td>Texto</td><td><code>DETALHE</code> · <code>SUBTOTAL</code> · <code>INDICADOR</code> · <code>CABECALHO</code></td></tr>
+          <tr><td class="mono">CategoriaDRE</td><td>Texto</td><td>Valor exato da coluna <code>DRE</code>. Vazio em subtotal e indicador.</td></tr>
+          <tr><td class="mono">Direcao</td><td>Inteiro</td><td><code>+1</code> receitas · <code>-1</code> custos, despesas e deduções. É o multiplicador de exibição.</td></tr>
+          <tr><td class="mono">Nivel</td><td>Inteiro</td><td>Recuo e peso da fonte na matriz</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="lead">De onde tirar as 51 linhas</div>
+      <p>Não digite do zero. <code>estrutura_financeira_completa.md</code> §1 já traz a estrutura completa, na ordem, com tipo e direção por linha — é o documento normativo do projeto. Monte a planilha a partir dele e cole no Power BI com <em>Inserir dados</em>. Confira depois que as 35 <code>CategoriaDRE</code> batem exatamente com os 35 valores distintos da coluna <code>DRE</code>: qualquer diferença de acentuação ou espaço faz a linha somar zero silenciosamente.</p>
+    </div>
+
+    <h4>Resumo dos blocos</h4>
+    <div class="tw">
+      <table class="t-tight">
+        <thead><tr><th>Bloco</th><th class="num">Detalhes</th><th>Fecha com</th></tr></thead>
+        <tbody>
+          <tr><td>1. Receita Bruta de Vendas e Serviços</td><td class="num">10</td><td><strong>= RECEITA LÍQUIDA</strong></td></tr>
+          <tr><td>2. Custos das Mercadorias e Serviços</td><td class="num">5</td><td><strong>= LUCRO BRUTO</strong> + % Margem Bruta</td></tr>
+          <tr><td>3. Despesas Operacionais</td><td class="num">12</td><td>—</td></tr>
+          <tr><td>4. Outras Receitas/Despesas</td><td class="num">4</td><td><strong>= EBITDA</strong> + % EBITDA/RL</td></tr>
+          <tr><td>5. Depreciação e Amortização</td><td class="num">1</td><td><strong>= EBIT</strong></td></tr>
+          <tr><td>6. Resultado Financeiro</td><td class="num">2</td><td><strong>= LAIR</strong></td></tr>
+          <tr><td>7. Impostos sobre o Lucro</td><td class="num">1</td><td><strong>= LUCRO LÍQUIDO</strong> + % Margem Líquida</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Três linhas do bloco 1 — Comissão sobre Seguros, sobre Consórcios e sobre Intermediação — só têm movimento na CORRETORA. Mantenha na estrutura e deixe a matriz esconder linha vazia por marca, ou use a adaptação por ramo descrita em <code>estrutura_financeira_completa.md</code> §1.2.</p>
+
+    <h3>dBalanco</h3>
+    <p>Mesmo desenho: <strong>53 linhas de detalhe</strong> mais os subtotais Disponibilidades, Valores a Receber, Estoques, Total do Ativo Circulante, Realizável a LP, Investimentos, Imobilizado de Uso, Intangível, Total do Ativo Não Circulante, <strong>Total do Ativo</strong>, Fornecedores, Empréstimos e Financiamentos, Outras Obrigações, Total do Passivo Circulante, Total do Passivo Não Circulante, Total do Patrimônio Líquido, <strong>Total do Passivo + PL</strong> e a linha de <strong>CHECK</strong>. Sem coluna <code>Direcao</code>: o Balanço soma direto, sem multiplicador.</p>
+
+    <h3>dFluxo</h3>
+    <p>35 linhas, e é a mais delicada, porque cada linha tem uma <em>origem</em> diferente. Acrescente a coluna <code>Origem</code> com os valores <code>DRE</code>, <code>VARIACAO</code>, <code>NATUREZA</code>, <code>SALDO</code>, <code>SUBTOTAL</code> — e uma coluna <code>ContaBalanco</code> para as linhas de variação. O mapa conta a conta está em <code>estrutura_financeira_completa.md</code> §3.</p>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section id="dax">
+    <h2><span class="num">06</span>As medidas</h2>
+    <div class="h2-rule"></div>
+
+    <p>O conjunto completo passa de 60 medidas. Aqui estão os <em>padrões</em> — quem os entende escreve o resto mecanicamente. A implementação de referência, já validada contra a contabilidade, está em <code>powerbi/dax_financeiro.py</code>: leve esse arquivo junto.</p>
+
+    <h3>Base e visão</h3>
+    <div class="code-label">DAX</div>
+    <pre><code>Valor Base = SUM('lancamentos'[VALOR_AJUSTADO])
+
+-- Visão gerencial (padrão) = todos os lançamentos.
+-- Visão contábil = só TIPO_LANÇAMENTO = "CONTÁBIL".
+-- Os dois números diferem; sempre rotule qual está na tela.
+Valor Contabil =
+CALCULATE([Valor Base], TRIM('lancamentos'[TIPO_LANÇAMENTO]) = "CONTÁBIL")</code></pre>
+
+    <h3>DRE — a medida que lê a estrutura</h3>
+    <div class="code-label">DAX</div>
+    <pre><code>DRE Valor =
+VAR _Tipo      = SELECTEDVALUE(dDRE[Tipo])
+VAR _Categoria = SELECTEDVALUE(dDRE[CategoriaDRE])
+VAR _Direcao   = SELECTEDVALUE(dDRE[Direcao])
+
+VAR _Detalhe =
+    CALCULATE([Valor Base], TRIM('lancamentos'[DRE]) = _Categoria)
+
+VAR _RL       = [DRE Receita Liquida]
+VAR _Custos   = [DRE Custos]
+VAR _LB       = _RL + _Custos
+VAR _Desp     = [DRE Despesas Operacionais]
+VAR _Outras   = [DRE Outras Receitas Despesas]
+VAR _EBITDA   = _LB + _Desp + _Outras
+VAR _DA       = [DRE Depreciacao]
+VAR _EBIT     = _EBITDA + _DA
+VAR _ResFin   = [DRE Resultado Financeiro]
+VAR _LAIR     = _EBIT + _ResFin
+VAR _IR       = [DRE IR CSLL]
+VAR _Lucro    = _LAIR + _IR
+
+RETURN
+SWITCH(
+    TRUE(),
+    _Tipo = "CABECALHO", BLANK(),
+    _Tipo = "DETALHE",   _Detalhe * _Direcao,
+    _Tipo = "SUBTOTAL",
+        SWITCH(SELECTEDVALUE(dDRE[Linha]),
+            "= RECEITA LÍQUIDA",                _RL,
+            "= LUCRO BRUTO",                    _LB,
+            "= EBITDA",                         _EBITDA,
+            "= EBIT (Resultado Operacional)",   _EBIT,
+            "= LAIR (Resultado antes do IR)",   _LAIR,
+            "= LUCRO LÍQUIDO DO EXERCÍCIO",     _Lucro
+        ),
+    BLANK()
+)</code></pre>
+
+    <div class="callout warn">
+      <div class="lead">A armadilha do sinal</div>
+      <p>O <code>* _Direcao</code> aparece <strong>só</strong> na linha de detalhe. Os subtotais somam os valores <em>brutos</em>, sem multiplicador — porque no <code>VALOR_AJUSTADO</code> o custo já vem negativo e portanto já subtrai. Aplicar a direção duas vezes inverte o resultado, e o erro passa despercebido porque o EBITDA continua "plausível". Nunca use <code>ABS()</code>: um estorno vem com o sinal invertido de propósito e precisa se compensar dentro do grupo.</p>
+    </div>
+
+    <h4>Medidas auxiliares de bloco</h4>
+    <p>Cada uma soma as categorias do seu bloco a partir da própria <code>dDRE</code> — assim, acrescentar uma categoria nova à tabela já entra no subtotal, sem editar DAX:</p>
+    <pre><code>DRE Receita Liquida =
+VAR _Cats =
+    CALCULATETABLE(
+        VALUES(dDRE[CategoriaDRE]),
+        dDRE[Bloco] = "1. RECEITA BRUTA DE VENDAS E SERVIÇOS",
+        dDRE[Tipo] = "DETALHE",
+        ALL(dDRE)
+    )
+RETURN
+CALCULATE([Valor Base], TRIM('lancamentos'[DRE]) IN _Cats)</code></pre>
+
+    <h3>Balanço — acumulado desde a origem</h3>
+    <p>Regra de período oposta à da DRE: soma <strong>tudo desde 01/2024</strong> até o período selecionado.</p>
+    <pre><code>Balanco Valor =
+VAR _Ate = MAX(dCalendario[ChavePeriodo])
+VAR _Categoria = SELECTEDVALUE(dBalanco[CategoriaBalanco])
+RETURN
+CALCULATE(
+    [Valor Base],
+    TRIM('lancamentos'[Balanço]) = _Categoria,
+    REMOVEFILTERS(dCalendario),
+    dCalendario[ChavePeriodo] &lt;= _Ate
+)</code></pre>
+
+    <h3>Fluxo de Caixa — a parte difícil</h3>
+    <p>Três origens distintas na mesma coluna. O padrão de variação:</p>
+    <pre><code>-- Ativo: saldo sobe, caixa desce  ->  multiplica por -1
+-- Passivo: saldo sobe, caixa sobe ->  mantém
+FC Variacao Conta =
+VAR _Ate    = MAX(dCalendario[ChavePeriodo])
+VAR _Ant    = CALCULATE(MAX(dCalendario[ChavePeriodo]),
+                dCalendario[ChavePeriodo] &lt; _Ate, ALL(dCalendario))
+VAR _Conta  = SELECTEDVALUE(dFluxo[ContaBalanco])
+VAR _Sinal  = SELECTEDVALUE(dFluxo[SinalVariacao])   -- -1 ativo, +1 passivo
+VAR _Atual  = CALCULATE([Valor Base], TRIM('lancamentos'[Balanço]) = _Conta,
+                REMOVEFILTERS(dCalendario), dCalendario[ChavePeriodo] &lt;= _Ate)
+VAR _Antes  = CALCULATE([Valor Base], TRIM('lancamentos'[Balanço]) = _Conta,
+                REMOVEFILTERS(dCalendario), dCalendario[ChavePeriodo] &lt;= _Ant)
+RETURN (_Atual - _Antes) * _Sinal</code></pre>
+
+    <div class="callout crit">
+      <div class="lead">Duas regras do Fluxo que não podem ser suavizadas</div>
+      <p><strong>1.</strong> Lucro Líquido e Depreciação saem <strong>só</strong> de <code>TIPO_LANÇAMENTO = "CONTÁBIL"</code>; as variações patrimoniais usam todos os lançamentos. Lançamento <code>EXTRA</code> não tem classificação de Balanço — incluí-lo no resultado faria o fluxo explicar um caixa que não se moveu.</p>
+      <p><strong>2.</strong> É <strong>proibido</strong> criar linha de ajuste ou tampão. O CHECK compara o saldo final calculado com as DISPONIBILIDADES do Balanço, tolerância de R$ 5,00, e fica à mostra. A base apura resultado por trimestre, então fora de 03/06/09/12 o CHECK <em>não</em> fecha — isso é esperado e deve ser reportado, nunca escondido.</p>
+    </div>
+
+    <h3>Comparativo com o ano anterior</h3>
+    <p>Depois da <code>dCalendario</code>, isto deixa de ser array pré-calculado e vira uma linha:</p>
+    <pre><code>DRE Valor AA =
+CALCULATE([DRE Valor], SAMEPERIODLASTYEAR(dCalendario[DataRef]))
+
+DRE Valor Δ% =
+VAR _A = [DRE Valor]
+VAR _B = [DRE Valor AA]
+RETURN IF(_B &lt;&gt; 0, DIVIDE(_A - _B, ABS(_B)))</code></pre>
+
+    <h3>Escala R$ / R$ mil</h3>
+    <p>Faça com <strong>grupo de cálculo</strong> no Tabular Editor, não com medida duplicada — dois itens (<em>Unidade</em>, <em>Milhares</em>), o segundo dividindo por 1000. Um grupo serve as 60+ medidas de uma vez.</p>
+
+    <div class="callout warn">
+      <div class="lead">Exceção do CHECK</div>
+      <p>As linhas de CHECK devem ignorar a escala e aparecer sempre em R$ cheios. Na escala "milhares", uma divergência de R$ 43 vira <code>–</code> e some da tela. Trate o CHECK fora do grupo de cálculo.</p>
+    </div>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section id="kpis">
+    <h2><span class="num">07</span>Os 28 indicadores</h2>
+    <div class="h2-rule"></div>
+
+    <p>Exatamente os que os painéis atuais entregam, com as fórmulas como estão implementadas. <strong>Convenção importante:</strong> as razões contra EBITDA, o ROE e o ROA usam o resultado <strong>acumulado no ano</strong> até o período, contra a posição patrimonial daquela data — e <strong>não</strong> são anualizados. Os prazos e giros usam o mês de referência × 30 dias.</p>
+
+    <h4>Rentabilidade</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Indicador</th><th>Fórmula</th><th>Melhor se</th></tr></thead>
+      <tbody>
+        <tr><td>Margem Bruta</td><td class="mono">Lucro Bruto ÷ RL</td><td>maior</td></tr>
+        <tr><td>Margem EBITDA</td><td class="mono">EBITDA ÷ RL</td><td>maior</td></tr>
+        <tr><td>Margem EBIT</td><td class="mono">EBIT ÷ RL</td><td>maior</td></tr>
+        <tr><td>Margem Líquida</td><td class="mono">Lucro Líquido ÷ RL</td><td>maior</td></tr>
+        <tr><td>EBIT / Lucro Bruto</td><td class="mono">EBIT ÷ Lucro Bruto</td><td>maior</td></tr>
+        <tr><td>ROE</td><td class="mono">Lucro acum. no ano ÷ Patrimônio Líquido</td><td>maior</td></tr>
+        <tr><td>ROA</td><td class="mono">Lucro acum. no ano ÷ Total do Ativo</td><td>maior</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Liquidez — posição no fim do período</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Indicador</th><th>Fórmula</th><th>Melhor se</th></tr></thead>
+      <tbody>
+        <tr><td>Liquidez Corrente</td><td class="mono">Ativo Circulante ÷ Passivo Circulante</td><td>maior</td></tr>
+        <tr><td>Liquidez Seca</td><td class="mono">(Ativo Circulante − Estoques) ÷ Passivo Circulante</td><td>maior</td></tr>
+        <tr><td>Liquidez Imediata</td><td class="mono">Disponibilidades ÷ Passivo Circulante</td><td>maior</td></tr>
+        <tr><td>Liquidez Geral</td><td class="mono">Total do Ativo ÷ (PC + PNC)</td><td>maior</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Endividamento e alavancagem</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Indicador</th><th>Fórmula</th><th>Melhor se</th></tr></thead>
+      <tbody>
+        <tr><td>Dívida Bruta s/ Floor Plan</td><td class="mono">Empréstimos CP + Empréstimos LP</td><td>menor</td></tr>
+        <tr><td>Dívida Líquida s/ Floor Plan</td><td class="mono">Dívida Bruta − Disponibilidades</td><td>menor</td></tr>
+        <tr><td>Dívida Bruta / EBITDA</td><td class="mono">Dívida Bruta ÷ EBITDA acum.</td><td>menor</td></tr>
+        <tr><td>Dívida Líquida / EBITDA</td><td class="mono">Dívida Líquida ÷ EBITDA acum.</td><td>menor</td></tr>
+        <tr><td>Dívida Bruta / PL</td><td class="mono">Dívida Bruta ÷ Patrimônio Líquido</td><td>menor</td></tr>
+        <tr><td>Floor Plan / EBITDA</td><td class="mono">(FP Novos + FP Usados + FP Peças) ÷ EBITDA acum.</td><td>menor</td></tr>
+        <tr><td>Composição da Dívida (CP)</td><td class="mono">Empréstimos CP ÷ Dívida Bruta</td><td>menor</td></tr>
+        <tr><td>Endividamento Geral</td><td class="mono">Total do Passivo ÷ Total do Ativo</td><td>menor</td></tr>
+        <tr><td>Cobertura de Juros</td><td class="mono">EBIT ÷ Despesas Financeiras</td><td>maior</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Eficiência operacional — mês de referência × 30 dias</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Indicador</th><th>Fórmula</th><th>Melhor se</th></tr></thead>
+      <tbody>
+        <tr><td>Giro do Estoque de VN</td><td class="mono">Estoque VN ÷ Custo VN × 30</td><td>menor</td></tr>
+        <tr><td>Giro do Estoque de VU</td><td class="mono">Estoque VU ÷ Custo VU × 30</td><td>menor</td></tr>
+        <tr><td>Giro do Estoque de Peças</td><td class="mono">Estoque Peças ÷ (Custo Peças + Custo Oficina) × 30</td><td>menor</td></tr>
+        <tr><td>PMR</td><td class="mono">Contas a Receber ÷ RL × 30</td><td>menor</td></tr>
+        <tr><td>PMP</td><td class="mono">Fornecedores Diversos ÷ Custo Total × 30</td><td>maior</td></tr>
+        <tr><td>Ciclo Financeiro</td><td class="mono">(CR÷RL + Estoques÷Custo − Fornec÷Custo) × 30</td><td>menor</td></tr>
+        <tr><td>Custo de Pessoal / RL</td><td class="mono">(Folha + Gastos c/ Funcionários) ÷ RL</td><td>menor</td></tr>
+        <tr><td>Despesas Operacionais / RL</td><td class="mono">Despesas Operacionais ÷ RL</td><td>menor</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout warn">
+      <div class="lead">Proteja todo denominador</div>
+      <p>Empresa nova ou sem movimento produz EBITDA, PL ou Passivo Circulante zerados, e a razão vira <code>NaN</code>. Use <code>DIVIDE()</code> — nunca o operador <code>/</code> — e mostre travessão quando não houver base, como os painéis fazem hoje.</p>
+    </div>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section id="visual">
+    <h2><span class="num">08</span>Especificação visual</h2>
+    <div class="h2-rule"></div>
+
+    <p>O projeto já tem documento normativo de aparência: <code>design_system_relatorios.md</code>. Ele traz duas paletas, e o mapeamento para Power BI é limpo — <strong>.pbix usa a paleta de dashboard (§5); .rdl usa a institucional de PDF (§4)</strong>.</p>
+
+    <h4>Paleta do relatório interativo (.pbix)</h4>
+    <div class="swatches">
+      <span class="sw"><i style="background:#F7F7F8"></i>#F7F7F8 fundo</span>
+      <span class="sw"><i style="background:#FFFFFF"></i>#FFFFFF card</span>
+      <span class="sw"><i style="background:#1D1D1F"></i>#1D1D1F texto</span>
+      <span class="sw"><i style="background:#6E6E73"></i>#6E6E73 rótulo</span>
+      <span class="sw"><i style="background:#E8E8ED"></i>#E8E8ED borda</span>
+      <span class="sw"><i style="background:#D97757"></i>#D97757 acento</span>
+      <span class="sw"><i style="background:#1E7E34"></i>#1E7E34 positivo</span>
+      <span class="sw"><i style="background:#B02A37"></i>#B02A37 negativo</span>
+    </div>
+
+    <h4>Paleta do relatório paginado (.rdl)</h4>
+    <div class="swatches">
+      <span class="sw"><i style="background:#23272E"></i>#23272E grafite-900</span>
+      <span class="sw"><i style="background:#3D434C"></i>#3D434C grafite-700</span>
+      <span class="sw"><i style="background:#8A9099"></i>#8A9099 cinza-500</span>
+      <span class="sw"><i style="background:#D9DCE0"></i>#D9DCE0 filete</span>
+      <span class="sw"><i style="background:#F4F5F7"></i>#F4F5F7 subtotal</span>
+      <span class="sw"><i style="background:#1F4E79"></i>#1F4E79 azul-800</span>
+      <span class="sw"><i style="background:#DCE6F1"></i>#DCE6F1 azul-100</span>
+    </div>
+
+    <p>Gere um arquivo de tema JSON com esses valores e aplique em <em>Exibição → Temas → Procurar temas</em>. Faça isso <strong>antes</strong> de formatar qualquer visual, senão você formata objeto por objeto e perde o trabalho ao trocar o tema.</p>
+
+    <h3>Formatação de número — regra única</h3>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Caso</th><th>Formato</th><th>Exemplo</th></tr></thead>
+      <tbody>
+        <tr><td>Valor monetário</td><td>milhar com ponto, sem centavos, sem "R$" repetido na célula</td><td class="mono">16.777.905</td></tr>
+        <tr><td>Negativo</td><td><strong>entre parênteses</strong>, nunca com sinal de menos</td><td class="mono">(675.000)</td></tr>
+        <tr><td>Zero / sem movimento</td><td>travessão</td><td class="mono">–</td></tr>
+        <tr><td>Percentual</td><td>1 casa decimal, vírgula</td><td class="mono">13,3%</td></tr>
+        <tr><td>CHECK</td><td>valor + selo <span class="chip chip-ok">✓ OK</span> ou <span class="chip chip-no">✗ divergência</span></td><td class="mono">0 ✓ OK</td></tr>
+      </tbody>
+    </table></div>
+    <p>No Power BI isso vira formato personalizado na medida: <code>#.##0;(#.##0);–</code>. Configure na propriedade de formato da medida, não no visual — assim vale em toda parte, inclusive na exportação.</p>
+
+    <h3>Hierarquia visual das linhas</h3>
+    <p>Quatro níveis, sempre distinguíveis à primeira vista. Na matriz, faça com formatação condicional lendo <code>dDRE[Tipo]</code> e <code>dDRE[Nivel]</code>:</p>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Nível</th><th>Tratamento</th></tr></thead>
+      <tbody>
+        <tr><td>Cabeçalho de bloco</td><td>caixa alta, negrito, fundo preenchido</td></tr>
+        <tr><td>Detalhe</td><td>peso normal, sem fundo, recuo</td></tr>
+        <tr><td>Subtotal de grupo</td><td>negrito, fundo cinza-claro, filete superior</td></tr>
+        <tr><td>Total-chave</td><td>negrito, fundo destacado, barra lateral de acento 3 px</td></tr>
+        <tr><td>Indicador (%)</td><td>itálico, cor secundária, logo abaixo do total a que se refere</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Páginas do relatório</h3>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Página</th><th>Composição</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Visão geral</strong></td><td>4 cartões de KPI (RL, Lucro Bruto, EBITDA, Lucro Líquido, margem na legenda) + gráfico de área da evolução mensal + painel de indicadores de saúde</td></tr>
+        <tr><td><strong>DRE</strong></td><td>Matriz: linhas = <code>dDRE[Ordem]</code>/<code>Linha</code>, colunas = <code>dCalendario</code>, valor = <code>[DRE Valor]</code>. Drill-down por <code>DESCRICAO_CONTA</code> como nível extra.</td></tr>
+        <tr><td><strong>Balanço</strong></td><td>Matriz de <code>dBalanco</code> + cartão do CHECK com selo</td></tr>
+        <tr><td><strong>Fluxo de Caixa</strong></td><td>Matriz de <code>dFluxo</code> + barras de variação líquida por mês + CHECK</td></tr>
+        <tr><td><strong>Indicadores</strong></td><td>Os 28 da §07, agrupados nos 4 blocos, com Δ contra o mesmo período do ano anterior</td></tr>
+        <tr><td><strong>Planilha</strong></td><td>Matriz densa, todos os meses em coluna, sem cartões — equivale à planilha tabular atual</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Segmentações — o painel de filtros</h3>
+    <p>Empresa (lista), Revenda (lista com seleção múltipla), Ano, e um parâmetro de campo para alternar Mensal / Trimestral / Anual. Sincronize as segmentações entre as páginas em <em>Exibição → Sincronizar segmentações</em>, senão o usuário refiltra a cada aba.</p>
+
+    <div class="callout good">
+      <div class="lead">Um ganho que os painéis atuais não têm</div>
+      <p>A coluna <code>SEGMENTO</code> (Veículos Novos, Usados, Peças, Oficina, Funilaria, Boutique, Mercado Livre, Administração) está no modelo e <strong>nenhum painel usa</strong>. No Power BI ela é só mais uma segmentação — abre análise de rentabilidade por linha de negócio praticamente de graça. Vale considerar já na primeira versão.</p>
+    </div>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section id="invioláveis">
+    <h2><span class="num">09</span>Regras invioláveis</h2>
+    <div class="h2-rule"></div>
+
+    <p>Estas não são preferências. Cada uma corresponde a uma decisão contábil já tomada, e quebrar qualquer uma produz número errado que <em>parece</em> certo.</p>
+
+    <ol class="steps">
+      <li><strong>Somar <code>VALOR_AJUSTADO</code>, nunca <code>VALOR</code>.</strong></li>
+      <li><strong>Nunca usar <code>ABS()</code>.</strong> Estorno vem com sinal invertido de propósito e precisa se compensar dentro do grupo.</li>
+      <li><strong>Direção só no detalhe</strong>, nunca no subtotal.</li>
+      <li><strong>DRE não acumula; Balanço acumula desde 01/2024.</strong> Duas regras de período opostas no mesmo relatório.</li>
+      <li><strong>Nunca somar linhas de detalhe para "conferir" subtotal</strong> — as subtrativas entram com o sinal trocado. Use o subtotal calculado.</li>
+      <li><strong>CHECK sempre à mostra</strong>, nunca forçado a zero, nunca com linha de ajuste. Balanço só fecha em 03/06/09/12 porque a apuração é trimestral; fora disso, reporte a divergência esperada.</li>
+      <li><strong>CHECK ignora a escala</strong> de milhares.</li>
+      <li><strong>Visão gerencial ≠ contábil.</strong> Sempre rotule qual está na tela.</li>
+      <li><strong>Fluxo de Caixa usa resultado contábil</strong>; as variações patrimoniais usam todos os lançamentos.</li>
+      <li><strong>Somente leitura no Power BI</strong>, exceto a adição deliberada das tabelas de estrutura e medidas (§03, saída A).</li>
+    </ol>
+
+    <div class="callout crit">
+      <div class="lead">A regra da revenda — medida, não herdada</div>
+      <p>Existe <code>REVENDA</code> para todas as marcas, e é tentador filtrar tudo por loja. <strong>A DRE aceita; o Balanço e o Fluxo de Caixa não.</strong> Medição feita em 08/09/2026, KOBE, posição de 06/2026:</p>
+      <div class="tw" style="margin-top:12px"><table class="t-tight">
+        <thead><tr><th>Verificação</th><th class="num">Resultado</th></tr></thead>
+        <tbody>
+          <tr><td>Ativo total da KOBE</td><td class="num">155.500.032</td></tr>
+          <tr><td>Parcela sem revenda atribuída</td><td class="num">107.355.273 &nbsp;<span class="chip chip-no">69%</span></td></tr>
+          <tr><td>Revendas em que Ativo = Passivo + PL</td><td class="num">0 de 10</td></tr>
+          <tr><td>Cobertura da DRE por revenda</td><td class="num"><span class="chip chip-ok">100%</span></td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:12px">Ou seja: 69% do patrimônio está centralizado no grupo, e <strong>nenhuma</strong> revenda fecha o balanço sozinha. Portanto, no relatório: a segmentação de Revenda filtra a DRE e tudo que sai só dela (margens, Custo de Pessoal/RL, Cobertura de Juros); o Balanço e o Fluxo permanecem da marca inteira; e os indicadores que <em>dividem</em> DRE por Balanço — ROE, ROA, Dívida/EBITDA, giros, PMR, PMP, Ciclo — devem <strong>desaparecer</strong> quando houver filtro de revenda ativo, porque cruzariam o resultado de N lojas com o patrimônio de todas.</p>
+      <p>Em DAX isso é uma guarda no início da medida:</p>
+      <pre style="margin-top:10px"><code>ROE =
+IF(
+    ISFILTERED('lancamentos'[REVENDA]),
+    BLANK(),   -- indicador misto não existe por revenda
+    DIVIDE([Lucro Acumulado Ano], [Balanco Patrimonio Liquido])
+)</code></pre>
+    </div>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section id="roteiro">
+    <h2><span class="num">10</span>Roteiro por fases</h2>
+    <div class="h2-rule"></div>
+
+    <p>As estimativas supõem uma pessoa com DAX intermediário. São ordens de grandeza para planejar, não compromisso.</p>
+
+    <div class="phase"><div class="pnum">1</div><div>
+      <h3>Acesso e decisão de arquitetura</h3>
+      <p>Instalar as ferramentas, confirmar licença e permissão Build, conectar ao modelo e decidir entre as saídas A, B e C da §03. Nada além disso avança antes desta decisão.</p>
+      <p class="est">≈ meio dia · bloqueia todo o resto</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">2</div><div>
+      <h3>dCalendario e chave de período</h3>
+      <p>Criar a tabela de datas, a coluna de chave em <code>lancamentos</code>, o relacionamento, e marcar como tabela de datas. Validar que a contagem de linhas por mês bate com o modelo antigo.</p>
+      <p class="est">≈ meio dia</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">3</div><div>
+      <h3>dDRE e a DRE completa</h3>
+      <p>Montar as 51 linhas a partir de <code>estrutura_financeira_completa.md</code>, escrever <code>[DRE Valor]</code> e as auxiliares de bloco, montar a matriz e formatar a hierarquia. É a fase mais longa e a que ensina o padrão para as outras duas.</p>
+      <p class="est">≈ 2 a 3 dias</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">4</div><div>
+      <h3>dBalanco</h3>
+      <p>Mesmo padrão, com a regra cumulativa e o CHECK. Mais rápido porque o desenho já está provado.</p>
+      <p class="est">≈ 1 a 2 dias</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">5</div><div>
+      <h3>dFluxo</h3>
+      <p>A mais delicada: três origens, o recorte contábil e o CHECK com tolerância de R$ 5,00. Reserve tempo para conciliar contra o painel atual mês a mês.</p>
+      <p class="est">≈ 2 a 3 dias</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">6</div><div>
+      <h3>Os 28 indicadores</h3>
+      <p>Mecânico depois das três demonstrações prontas — quase todos são razão entre medidas que já existem. Inclui as guardas de <code>DIVIDE</code> e a guarda de revenda.</p>
+      <p class="est">≈ 1 a 2 dias</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">7</div><div>
+      <h3>Tema, formatação e páginas</h3>
+      <p>Tema JSON, formato personalizado das medidas, as 6 páginas, segmentações sincronizadas, grupo de cálculo da escala.</p>
+      <p class="est">≈ 2 dias</p>
+    </div></div>
+
+    <div class="phase"><div class="pnum">8</div><div>
+      <h3>Validação e publicação</h3>
+      <p>Rodar a bateria da §11, corrigir divergências, publicar no workspace, configurar atualização e permissões.</p>
+      <p class="est">≈ 1 dia</p>
+    </div></div>
+
+    <p style="margin-top:20px"><strong>Total aproximado: 10 a 15 dias úteis</strong> para a rota .pbix completa. Uma versão só com a DRE, entregável e útil, sai em 3 a 4 dias — vale entregar assim e iterar.</p>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section id="validacao">
+    <h2><span class="num">11</span>Validação</h2>
+    <div class="h2-rule"></div>
+
+    <p>O relatório novo só está pronto quando reproduz números já conferidos. Estes foram validados contra a ferramenta oficial <code>relatorio_dre</code> e <code>relatorio_balanco</code> nesta sessão — use-os como gabarito.</p>
+
+    <h4>ROYAL · T2/2026 · visão gerencial</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Linha</th><th class="num">Valor esperado</th></tr></thead>
+      <tbody>
+        <tr><td>Receita Líquida</td><td class="num">10.871.399,79</td></tr>
+        <tr><td>Lucro Bruto</td><td class="num">2.701.542,28</td></tr>
+        <tr><td>EBITDA</td><td class="num">1.119.875,66</td></tr>
+        <tr><td>EBIT</td><td class="num">1.057.644,31</td></tr>
+        <tr><td>LAIR</td><td class="num">897.659,93</td></tr>
+        <tr><td>Lucro Líquido</td><td class="num">606.304,55</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>KOBE · T2/2026 · visão gerencial</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Linha</th><th class="num">Valor esperado</th></tr></thead>
+      <tbody>
+        <tr><td>Receita Líquida</td><td class="num">88.742.089,62</td></tr>
+        <tr><td>Lucro Bruto</td><td class="num">12.374.614,04</td></tr>
+        <tr><td>EBITDA</td><td class="num">3.123.149,63</td></tr>
+        <tr><td>EBIT</td><td class="num">1.966.745,40</td></tr>
+        <tr><td>LAIR</td><td class="num">70.583,70</td></tr>
+        <tr><td>Lucro Líquido</td><td class="num">70.583,70</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>ROYAL · Balanço em 06/2026</h4>
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Linha</th><th class="num">Valor esperado</th></tr></thead>
+      <tbody>
+        <tr><td>Disponibilidades</td><td class="num">488.971,40</td></tr>
+        <tr><td>Total do Ativo Circulante</td><td class="num">15.412.759,93</td></tr>
+        <tr><td>Total do Ativo</td><td class="num">17.318.258,81</td></tr>
+        <tr><td>Total do Passivo Circulante</td><td class="num">14.645.211,01</td></tr>
+        <tr><td>Total do Patrimônio Líquido</td><td class="num">2.673.047,80</td></tr>
+        <tr><td>CHECK</td><td class="num">0,00 <span class="chip chip-ok">fecha</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Bateria de aceite</h4>
+    <ol class="steps">
+      <li>Os 6 subtotais da DRE batem, para ROYAL e KOBE, em modo mensal, trimestral e anual.</li>
+      <li>Soma das 10 revendas da KOBE = total da KOBE na DRE, campo a campo. <span class="chip chip-ok">verificado</span></li>
+      <li>CHECK do Balanço fecha em 03, 06, 09 e 12; nos demais meses aparece a divergência esperada, não escondida.</li>
+      <li>CHECK do Fluxo dentro de R$ 5,00 nos fechamentos trimestrais.</li>
+      <li>Nenhum indicador exibe <code>NaN</code> ou <code>Infinity</code> em empresa sem movimento — teste com OMODA em 2025.</li>
+      <li>Com filtro de revenda ativo, ROE, ROA, Dívida/EBITDA, giros, PMR, PMP e Ciclo ficam em branco.</li>
+      <li>Negativos aparecem entre parênteses; zeros como travessão.</li>
+      <li>Total do relatório = total do painel HTML atual, para pelo menos 3 marcas e 3 períodos.</li>
+    </ol>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section id="riscos">
+    <h2><span class="num">12</span>Riscos e decisões em aberto</h2>
+    <div class="h2-rule"></div>
+
+    <div class="tw"><table>
+      <thead><tr><th>Questão</th><th>Situação</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Existe o .pbix original?</strong></td>
+          <td>Não foi encontrado nesta pasta — o projeto se conecta ao modelo publicado por GUID. Se ninguém tiver o arquivo de origem, a saída A da §03 depende de <em>Editar modelo de dados</em> no serviço. <span class="chip chip-warn">confirmar primeiro</span></td>
+        </tr>
+        <tr>
+          <td><strong>Nível de compatibilidade do modelo</strong></td>
+          <td>As funções <code>INFO.*</code> foram recusadas, o que indica modelo antigo. Pode limitar grupos de cálculo e parâmetros de campo. Verifique no DAX Studio antes de contar com esses recursos. <span class="chip chip-warn">verificar</span></td>
+        </tr>
+        <tr>
+          <td><strong>Valores <code>7.11</code> e <code>7.12</code> em EMPRESA</strong></td>
+          <td>Aparecem como se fossem empresa e também como revenda. Os painéis atuais os ignoram. Decidir se são lixo, se devem ser reclassificados ou excluídos por filtro fixo. <span class="chip chip-no">decisão de negócio</span></td>
+        </tr>
+        <tr>
+          <td><strong><code>TIPO_LANÇAMENTO = "None"</code></strong></td>
+          <td>Terceiro valor além de CONTÁBIL e EXTRA. Entra na visão gerencial hoje. Confirmar se é o comportamento desejado.</td>
+        </tr>
+        <tr>
+          <td><strong>Licença para relatório paginado</strong></td>
+          <td>Se a rota .rdl for adiante, precisa de PPU ou capacidade Fabric. Custo a levantar antes de prometer o PDF. <span class="chip chip-warn">orçar</span></td>
+        </tr>
+        <tr>
+          <td><strong>Conflito de paleta</strong></td>
+          <td>Os painéis HTML usam cor por marca (vermelho Nissan, marrom Royal etc.), enquanto <code>design_system_relatorios.md</code> define paleta única. Decidir qual vale no Power BI — a recomendação aqui é seguir o design system e usar a marca só no título.</td>
+        </tr>
+        <tr>
+          <td><strong>Convenção dos indicadores</strong></td>
+          <td>ROE, ROA e as razões contra EBITDA usam acumulado no ano <em>não anualizado</em>. É a convenção atual dos painéis. Confirmar com a diretoria se é assim que querem ler no relatório novo.</td>
+        </tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ 13 ============ -->
+  <section id="retomar">
+    <h2><span class="num">13</span>Retomar isto em outra sessão</h2>
+    <div class="h2-rule"></div>
+
+    <p>Este documento foi escrito para ser autossuficiente, mas há arquivos que precisam viajar junto. Copie para a pasta nova:</p>
+
+    <div class="tw"><table class="t-tight">
+      <thead><tr><th>Arquivo</th><th>Por quê</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">estrutura_financeira_completa.md</td><td><strong>O mais importante.</strong> Documento normativo com as três estruturas linha a linha, ordem, tipo, sinal e os mapas de conta do Fluxo de Caixa.</td></tr>
+        <tr><td class="mono">design_system_relatorios.md</td><td>Paletas, formatação de número, hierarquia visual, checklist de entrega.</td></tr>
+        <tr><td class="mono">powerbi/dax_financeiro.py</td><td>Implementação DAX de referência, já conciliada com a contabilidade. É o gabarito quando uma medida nova discordar.</td></tr>
+        <tr><td class="mono">Dashboard financeiro/build/*.html</td><td>Os painéis atuais — referência visual e fonte dos números de conferência.</td></tr>
+        <tr><td class="mono">Dashboard financeiro/_template_planilha.html</td><td>A planilha tabular, referência para a página "Planilha".</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Contexto para abrir a sessão nova</h3>
+    <div class="callout info">
+      <p style="font-family:var(--mono);font-size:12.5px;line-height:1.7">Estou reconstruindo no Power BI a DRE, o Balanço Patrimonial e o Fluxo de Caixa do Grupo Mult, que hoje são painéis HTML gerados por script. O plano completo está em <code>projeto_powerbi_nativo.html</code>. A estrutura normativa linha a linha está em <code>estrutura_financeira_completa.md</code> e as regras visuais em <code>design_system_relatorios.md</code>. O modelo semântico é o dataset <code>7f8dbbc0-9cb6-4ff7-bb58-60fc4dcb8458</code> no workspace <code>6142a272-21e4-4713-b05e-4cdba12e072b</code>, tabela única <code>lancamentos</code>. Estou na fase [N] do roteiro. Regra do projeto: somente leitura no Power BI, exceto as tabelas de estrutura e medidas que o plano prevê.</p>
+    </div>
+
+    <p>Some a isso a fase em que estiver e o problema concreto. As seções §04 (modelo), §09 (regras invioláveis) e §11 (números de validação) são as que mais economizam tempo de quem chega sem contexto.</p>
+  </section>
+
+  <footer>
+    Fonte: modelo semântico contábil (Power BI · <code>VALOR_AJUSTADO</code>), levantado ao vivo em 08/09/2026 · Números de validação conferidos contra <code>relatorio_dre</code> e <code>relatorio_balanco</code> · Uso gerencial interno — não auditado
+  </footer>
+</main>
+</div>

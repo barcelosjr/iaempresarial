@@ -52,6 +52,14 @@ Particularidades do modelo real (verificadas contra os dados, não presumidas)
    em qualquer mês.
 
 7. **Recorte por ``EMPRESA``.** ``REVENDA`` não é usada nos relatórios.
+
+8. **``TIPO_LANÇAMENTO`` separa contábil de gerencial — só na DRE.** A coluna
+   tem três valores na base: ``CONTÁBIL`` (382.809 linhas), ``EXTRA``
+   (19.832 linhas, os lançamentos gerenciais) e vazio (as 463 linhas do saldo
+   de abertura, que não têm classificação de DRE e portanto não entram nela).
+   A visão **contábil** filtra ``= "CONTÁBIL"``; a **gerencial** não filtra nada
+   (contábil + extra). Ver :func:`dre` — Balanço e Fluxo de Caixa **não** têm
+   esse recorte, por decisão de escopo.
 """
 
 from __future__ import annotations
@@ -70,6 +78,19 @@ COL_VALOR = "VALOR_AJUSTADO"
 COL_DRE = "DRE"
 COL_BALANCO = "Balanço"
 COL_EMPRESA = "EMPRESA"
+#: Marca se o lançamento é contábil ou extracontábil (gerencial). Usada **apenas
+#: na DRE** — ver :func:`dre` e :func:`_filtro_visao`.
+COL_TIPO_LANCAMENTO = "TIPO_LANÇAMENTO"
+
+#: Valor de :data:`COL_TIPO_LANCAMENTO` que marca o lançamento contábil.
+#: O outro valor da base é ``EXTRA`` (gerencial).
+TIPO_CONTABIL = "CONTÁBIL"
+
+#: Visões aceitas por :func:`dre`.
+#:
+#: * ``"gerencial"`` (padrão) — todos os lançamentos, sem filtro.
+#: * ``"contabil"`` — só ``TIPO_LANÇAMENTO = "CONTÁBIL"``.
+VISOES = ("gerencial", "contabil")
 
 # Período mais antigo do modelo (usado como início do acumulado do Balanço).
 CHAVE_INICIO = 202401
@@ -100,6 +121,11 @@ DRE_G2_CUSTOS = [
     "Custo de Serviço de Terceiros",
 ]
 
+# "Despesas Gerais e Rateio do Grupo" — conta antiga, substituída por
+# "Rateio do Grupo" + "Despesas Gerais de Funcionamento". Em 31/07/2026 a
+# CORRETORA (última empresa que ainda lançava nela) foi reclassificada para a
+# estrutura nova. A conta está zerada em toda a base (verificado: 0 linhas,
+# todas as empresas, todos os períodos) e não faz mais parte da estrutura.
 DRE_G3_DESPESAS = [
     "Folha de Pagamento",
     "Despesas Comerciais",
@@ -109,9 +135,10 @@ DRE_G3_DESPESAS = [
     "Taxas e Impostos Diversos",
     "Despesas de Funcionamento",
     "Alugueis e Condomínios",
-    "Despesas Gerais e Rateio do Grupo",
+    "Despesas Gerais de Funcionamento",
     "Outras Despesas Operacionais",
     "Gastos Diversos com Funcionários",
+    "Rateio do Grupo",
 ]
 
 DRE_G4_OUTRAS = [
@@ -530,6 +557,33 @@ def _filtro_entidade(empresa: str | None) -> str:
     return f' && TRIM({_col(COL_EMPRESA)}) = "{escapar_texto(empresa)}"'
 
 
+def _filtro_visao(visao: str) -> str:
+    """Monta a condição de ``TIPO_LANÇAMENTO`` da visão pedida (exclusiva da DRE).
+
+    Args:
+        visao: ``"contabil"`` (só lançamentos contábeis) ou ``"gerencial"``
+            (todos os lançamentos, contábeis + extras).
+
+    Returns:
+        A condição DAX pronta para concatenar, ou string vazia na visão
+        gerencial — que por definição não filtra nada.
+
+    Raises:
+        ValueError: Se ``visao`` não for uma de :data:`VISOES`.
+    """
+    normalizada = str(visao).strip().lower()
+    if normalizada == "gerencial":
+        return ""
+    if normalizada == "contabil":
+        return (
+            f' && TRIM({_col(COL_TIPO_LANCAMENTO)}) = "{escapar_texto(TIPO_CONTABIL)}"'
+        )
+    raise ValueError(
+        f"Visão inválida: {visao!r}. Use um de: {', '.join(VISOES)} "
+        "('contabil' filtra só os lançamentos contábeis; 'gerencial' traz todos)."
+    )
+
+
 def _var_base(nome: str, comparador: str, chave: int, entidade: str) -> str:
     """Monta um ``VAR`` com o recorte de linhas do período.
 
@@ -618,7 +672,12 @@ def _linha(ordem: int, bloco: str, linha: str, tipo: str, expr: str) -> str:
 # --------------------------------------------------------------------------- #
 # DRE
 # --------------------------------------------------------------------------- #
-def dre(periodo: str, empresa: str | None = None, modo: str = "mensal") -> str:
+def dre(
+    periodo: str,
+    empresa: str | None = None,
+    modo: str = "mensal",
+    visao: str = "gerencial",
+) -> str:
     """Monta a DRE completa do intervalo pedido (soma de lançamentos, não cumulativa).
 
     Segue a estrutura, ordem e agrupamento de ``estrutura_financeira_completa.md``,
@@ -663,22 +722,35 @@ def dre(periodo: str, empresa: str | None = None, modo: str = "mensal") -> str:
     acumulado entre anos nem comparação com período anterior (isso é exclusivo
     do Balanço e do Fluxo de Caixa).
 
+    Visão contábil x gerencial (``TIPO_LANÇAMENTO``) — **só a DRE tem esse
+    recorte**; Balanço e Fluxo de Caixa seguem sempre com todos os lançamentos:
+
+    * ``"gerencial"`` (padrão) — **todos** os lançamentos, sem filtro:
+      contábeis (``CONTÁBIL``) + extracontábeis (``EXTRA``).
+    * ``"contabil"`` — apenas ``TIPO_LANÇAMENTO = "CONTÁBIL"``.
+
+    A diferença entre as duas visões são os lançamentos ``EXTRA`` (ajustes
+    gerenciais). **Sempre informe qual visão gerou os números**, já que o mesmo
+    período fecha em resultados diferentes em cada uma.
+
     Args:
         periodo: Período de referência no formato ``"MM/AAAA"`` (ex.: ``"12/2024"``).
         empresa: Filtro opcional por ``EMPRESA`` (ex.: ``"KOBE"``).
             ``None`` devolve o consolidado do grupo.
         modo: ``"mensal"`` (padrão), ``"trimestral"`` ou ``"anual"``.
+        visao: ``"gerencial"`` (padrão, todos os lançamentos) ou ``"contabil"``
+            (só os lançamentos contábeis).
 
     Returns:
         A consulta DAX que devolve as linhas da DRE com
         ``Ordem``, ``Bloco``, ``Linha``, ``Tipo`` e ``Valor``.
 
     Raises:
-        ValueError: Se ``modo`` for inválido, ou se ``periodo`` não for
-            compatível com o modo (ver :func:`intervalo_do_modo`).
+        ValueError: Se ``modo`` ou ``visao`` for inválido, ou se ``periodo`` não
+            for compatível com o modo (ver :func:`intervalo_do_modo`).
     """
     chave_de, chave_ate = intervalo_do_modo(periodo, modo)
-    ent = _filtro_entidade(empresa)
+    ent = _filtro_entidade(empresa) + _filtro_visao(visao)
 
     partes = [
         "EVALUATE",
@@ -743,6 +815,8 @@ def dre(periodo: str, empresa: str | None = None, modo: str = "mensal") -> str:
     )
     ordem += 1
     for conta in DRE_G3_DESPESAS:
+        if not linha_visivel(conta, empresa):
+            continue
         linhas.append(_linha(ordem, b3, conta, "DETALHE", detalhe(conta)))
         ordem += 1
 
@@ -938,6 +1012,22 @@ def fluxo_caixa(
     * **Passivo/PL** (ex.: Fornecedores, Empréstimos): ``Variação = +Σ(período)``
       — crescer o passivo gera caixa.
 
+    Resultado só contábil (``TIPO_LANÇAMENTO``)
+    -------------------------------------------
+    **O Lucro Líquido do Exercício e o add-back de Depreciação usam apenas
+    lançamentos ``TIPO_LANÇAMENTO = "CONTÁBIL"``.** Todo o resto do fluxo — as
+    variações de contas do Balanço, as linhas de investimento e financiamento e
+    o saldo inicial de caixa — usa todos os lançamentos.
+
+    Não é inconsistência, é o que faz o CHECK fechar: **nenhum lançamento
+    ``EXTRA`` tem classificação de Balanço** (verificado na base: todos os
+    19.832 têm a coluna ``Balanço`` vazia). Ou seja, os ajustes gerenciais
+    mexem no resultado sem produzir variação patrimonial nenhuma. Se entrassem
+    no Lucro Líquido, o fluxo passaria a "explicar" um caixa que não se moveu.
+
+    Isso vale **só aqui**. A DRE tem o recorte opcional via ``visao``
+    (padrão gerencial) e o Balanço não tem recorte nenhum.
+
     CHECK — sem tampão
     ------------------
     **Nunca há ajuste de conciliação.** A ``VARIAÇÃO LÍQUIDA DE CAIXA`` é a soma
@@ -986,11 +1076,17 @@ def fluxo_caixa(
 
     partes = [
         "EVALUATE",
-        # Movimento do intervalo: serve para DRE, variações e linhas por NATUREZA.
+        # Movimento do intervalo: serve para as variações e linhas por NATUREZA.
         _var_base_intervalo("_Per", chave_de, chave, ent),
+        # Mesmo intervalo, **só lançamentos contábeis**: é a base do resultado
+        # (Lucro Líquido) e da depreciação. Ver a nota sobre TIPO_LANÇAMENTO no
+        # docstring desta função.
+        _var_base_intervalo(
+            "_PerCont", chave_de, chave, ent + _filtro_visao("contabil")
+        ),
         # Acumulado até o período anterior: usado só para o saldo inicial de caixa.
         _var_base("_AteAnt", "<=", chave_ant, ent),
-        _var_agregado("_AggDre", "_Per", COL_DRE),
+        _var_agregado("_AggDre", "_PerCont", COL_DRE),
         _var_agregado("_AggBal", "_Per", COL_BALANCO),
         _var_agregado("_AggAnt", "_AteAnt", COL_BALANCO),
         # Movimento por conta (Balanço) e natureza, para separar entradas/saídas.
@@ -999,7 +1095,8 @@ def fluxo_caixa(
         'VAR _AggNat = GROUPBY(_NatPrep, [@Cat], [@Nat], "@Valor", '
         "SUMX(CURRENTGROUP(), [@V]))",
         # Idem para a coluna DRE — usado só na depreciação (add-back só NATUREZA=D).
-        f'VAR _NatDrePrep = ADDCOLUMNS(_Per, "@Cat", TRIM({_col(COL_DRE)}), '
+        # Também sobre a base contábil.
+        f'VAR _NatDrePrep = ADDCOLUMNS(_PerCont, "@Cat", TRIM({_col(COL_DRE)}), '
         f'"@Nat", {natureza}, "@V", {_col(COL_VALOR)})',
         'VAR _AggDreNat = GROUPBY(_NatDrePrep, [@Cat], [@Nat], "@Valor", '
         "SUMX(CURRENTGROUP(), [@V]))",
