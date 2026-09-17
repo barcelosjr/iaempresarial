@@ -22,8 +22,9 @@ openpyxl>=3.1,<4
 # Servidor MCP (Model Context Protocol) exposto ao Claude
 mcp>=1.2,<2
 
-# Testes
+# Testes (pdfplumber só é usado para ler o PDF da DMF em tests/test_coaf_especie.py)
 pytest>=8.0,<9
+pdfplumber>=0.11,<1
 
 # Geração de PDF (DMF do COAF, relatórios financeiros)
 reportlab>=5.0,<6

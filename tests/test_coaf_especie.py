@@ -1055,7 +1055,7 @@ def test_novo_cruzamento_de_30k_notifica_de_novo(con, cfg, monkeypatch):
 
     df1 = pd.DataFrame([_lancamento(DATA=date(2026, 3, 10), VALOR=31000.0, TITULO="T1")])
     prep1 = coaf.preparar_lancamentos(df1, cfg, hoje=date(2026, 3, 15))
-    casos1 = coaf.detectar(prep1, cfg)
+    casos1 = coaf.detectar(prep1, cfg, hoje=date(2026, 3, 15))
     coaf.persistir(con, casos1, "grupo")
     coaf.enriquecer_com_incremento(con, casos1, "grupo", 30000.0)
     assert coaf.deve_notificar(casos1[0], 30000.0) is True
@@ -1068,7 +1068,7 @@ def test_novo_cruzamento_de_30k_notifica_de_novo(con, cfg, monkeypatch):
         ]
     )
     prep2 = coaf.preparar_lancamentos(df2, cfg, hoje=date(2026, 3, 26))
-    casos2 = coaf.detectar(prep2, cfg)
+    casos2 = coaf.detectar(prep2, cfg, hoje=date(2026, 3, 26))
     coaf.persistir(con, casos2, "grupo")
     coaf.enriquecer_com_incremento(con, casos2, "grupo", 30000.0)
 
@@ -1085,7 +1085,7 @@ def test_incremento_abaixo_do_limiar_nao_notifica(con, cfg, monkeypatch):
 
     df1 = pd.DataFrame([_lancamento(DATA=date(2026, 3, 10), VALOR=31000.0, TITULO="T1")])
     prep1 = coaf.preparar_lancamentos(df1, cfg, hoje=date(2026, 3, 15))
-    casos1 = coaf.detectar(prep1, cfg)
+    casos1 = coaf.detectar(prep1, cfg, hoje=date(2026, 3, 15))
     coaf.persistir(con, casos1, "grupo")
     coaf.enriquecer_com_incremento(con, casos1, "grupo", 30000.0)
     _notificar(con, cfg, casos1, monkeypatch, email_zoho)
@@ -1097,7 +1097,7 @@ def test_incremento_abaixo_do_limiar_nao_notifica(con, cfg, monkeypatch):
         ]
     )
     prep2 = coaf.preparar_lancamentos(df2, cfg, hoje=date(2026, 3, 26))
-    casos2 = coaf.detectar(prep2, cfg)
+    casos2 = coaf.detectar(prep2, cfg, hoje=date(2026, 3, 26))
     coaf.persistir(con, casos2, "grupo")
     coaf.enriquecer_com_incremento(con, casos2, "grupo", 30000.0)
 
@@ -1111,7 +1111,7 @@ def test_gatilho_do_incremento_endereca_o_novo_cruzamento(con, cfg):
 
     df1 = pd.DataFrame([_lancamento(DATA=date(2026, 3, 10), VALOR=31000.0, TITULO="T1")])
     prep1 = coaf.preparar_lancamentos(df1, cfg, hoje=date(2026, 3, 15))
-    casos1 = coaf.detectar(prep1, cfg)
+    casos1 = coaf.detectar(prep1, cfg, hoje=date(2026, 3, 15))
     coaf.persistir(con, casos1, "grupo")
     estado.registrar_notificacao(
         con, casos1[0]["chave_cliente"], "grupo", "ana@empresa.com",
@@ -1128,7 +1128,7 @@ def test_gatilho_do_incremento_endereca_o_novo_cruzamento(con, cfg):
         ]
     )
     prep2 = coaf.preparar_lancamentos(df2, cfg, hoje=date(2026, 3, 26))
-    casos2 = coaf.detectar(prep2, cfg)
+    casos2 = coaf.detectar(prep2, cfg, hoje=date(2026, 3, 26))
     coaf.enriquecer_com_incremento(con, casos2, "grupo", 30000.0)
 
     assert casos2[0]["gatilho_incremento"]["titulo"] == "T2"

@@ -40,7 +40,7 @@ de módulo ausente). Nunca use `python` puro. Use sempre:
 | COAF — só regerar o histórico (sem consultar o Power BI) | `.venv/Scripts/python.exe analysis/coaf_especie.py --historico --csv` |
 | COAF — reenviar **todos** os casos (após corrigir os responsáveis) | `.venv/Scripts/python.exe analysis/coaf_especie.py --enviar --forcar-envio` |
 
-Rodar sempre a partir da raiz do projeto (`C:\Users\Controladoria\.claude\projects\iaempresarial`).
+Rodar sempre a partir da raiz do projeto (`C:\Users\Julio.b\.claude\projects\iaempresarial`).
 
 ---
 

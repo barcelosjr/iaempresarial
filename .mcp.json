@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "analista-bi": {
-      "command": "C:/Users/Controladoria/.claude/projects/iaempresarial/.venv/Scripts/python.exe",
+      "command": "C:/Users/Julio.b/.claude/projects/iaempresarial/.venv/Scripts/python.exe",
       "args": [
-        "C:/Users/Controladoria/.claude/projects/iaempresarial/mcp_server/server.py"
+        "C:/Users/Julio.b/.claude/projects/iaempresarial/mcp_server/server.py"
       ]
     }
   }
